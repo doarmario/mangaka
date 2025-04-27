@@ -1,0 +1,141 @@
+body {
+    background-color: #292929;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.slider {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.slider-title {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 10px;
+}
+
+.slider-title h2 {
+    color: #f7ebe8; /* Cor do texto */
+    margin: 0;
+}
+
+.slider-itens {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding: 10px 0;
+}
+
+.slider-itens a{
+    text-decoration: none;
+}
+
+.item {
+    min-width: 150px;
+    max-width: 150px;
+    background-color: #252525;
+    text-align: center;
+    box-sizing: border-box;
+    border-radius: 5px; /* Bordas arredondadas */
+    box-shadow: 0 0 9px #171717; /* Sombra */
+    scroll-snap-align: start;
+    margin-right: 15px;
+    transition: .2s;
+}
+.item:hover{
+    transform: translateY(-2px);
+    cursor: pointer;
+}
+
+.item img {
+    width: 100%;
+    height: auto;
+    border-radius: 5px 5px 0 0;
+    object-fit: cover;
+}
+
+.item h3 {
+    margin-top: 0px;
+    color: #f7ebe8; /* Cor do texto */
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    text-align: center;
+    padding: 0 5px;
+}
+
+/* Estilo dos botões de navegação se necessário (não usados no momento) */
+.slider-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    font-size: 2rem;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 50%;
+    z-index: 10;
+}
+
+.prev {
+    left: 10px;
+}
+
+.next {
+    right: 10px;
+}
+
+.slider-button:hover {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+ /* Media Queries para Tablets */
+ @media (min-width: 600px) and (max-width: 1024px) {
+    .slider {
+        max-width: 800px; /* Ajusta a largura para tablet */
+    }
+
+    .item {
+        min-width: 200px; /* Aumenta o tamanho dos itens em tablets */
+    }
+
+    .slider-itens {
+        padding: 15px 0;
+    }
+}
+
+/* Media Queries para Desktop */
+@media (min-width: 1025px) {
+    .slider {
+        max-width: 1200px; /* Ajusta a largura para desktop */
+    }
+
+    .item {
+        min-width: 250px; /* Aumenta o tamanho dos itens em desktops */
+    }
+
+    .slider-itens {
+        padding: 20px 0;
+        overflow-x: auto; /* Mantém a barra de rolagem visível */
+    }
+
+    .slider-itens::-webkit-scrollbar {
+        height: 5px; /* Ajusta o tamanho da barra de rolagem para desktop */
+        border-radius: 10px;
+        background-color: #171717;
+    }
+
+    .slider-itens::-webkit-scrollbar-thumb {
+        background-color: #cc5200; /* Cor mais escura da barra de rolagem */
+        border-radius: 10px;
+    }
+}
