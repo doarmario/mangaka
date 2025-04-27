@@ -57,11 +57,12 @@
 
 .menu-btn>ul>li>a{
     margin: 0;
-    padding: 25px;
+    padding: 15px;
     text-decoration: none;
     color: #f7ebe8;
     box-sizing: border-box;
     transition: .5s;
+    display: block;
 }
 .menu-btn>ul>li>a:hover{
     cursor: pointer;   
@@ -100,35 +101,36 @@
 }
   }
   
-  /* ========== Desktop (>= 1024px) ========== */
-  @media (min-width: 1024px) {
-    .menu{
-        width: 100%;
-        display: flex;
-        align-items: center;
-    }
-    .menu-logo{
-        width: 100%;
-        margin: 0 auto 0 0;
-    }
-    .menu-logo>svg{
-        display: none;
-    }
-    .menu-view{
-        width: 100%;
-        display: flex;
-        margin: 0 auto;
-    }
-    .menu-btn{
-        margin: 0 auto 0 0;
-        display: flex;
-        align-items: center;
-    }
-    .menu-btn>ul{
-        display: flex;
-        align-items: center;
-    }
-    .menu-btn>ul>li>a{
-        padding: 20px;
-    }
-  }
+/* ========== Desktop (>= 1024px) ========== */
+@media (min-width: 1024px) {
+.menu{
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+.menu-logo{
+    width: 100%;
+    margin: 0 auto 0 0;
+}
+.menu-logo>svg{
+    display: none;
+}
+.menu-view{
+    width: 100%;
+    display: flex;
+    margin: 0 auto;
+}
+.menu-btn{
+    margin: 0 20px 0 auto;
+    display: flex;
+    align-items: center;
+}
+.menu-btn>ul{
+    display: flex;
+    align-items: center;
+}
+.menu-btn>ul>li>a{
+    display: block;
+    padding: 20px;
+}
+}
