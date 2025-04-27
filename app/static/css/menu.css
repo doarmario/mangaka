@@ -6,6 +6,13 @@
     box-shadow: 0 0 9px #171717;
 }
 
+.menu-display{
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0;
+}
+
 .menu-logo{
     width: 100%;
     box-sizing: border-box;
@@ -102,12 +109,16 @@
 }
   }
   
-/* ========== Desktop (>= 1024px) ========== */
-@media (min-width: 1024px) {
+/* ========== Desktop (>= 1025px) ========== */
+@media (min-width: 1025px) {
 .menu{
     width: 100%;
     display: flex;
     align-items: center;
+}
+.menu-display{
+    max-width: 1200px;
+    margin: 0 auto;
 }
 .menu-logo{
     width: 100%;

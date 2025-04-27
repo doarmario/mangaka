@@ -98,6 +98,234 @@ body {
     background: rgba(0, 0, 0, 0.7);
 }
 
+.manga-grid {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.grid-title {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 10px;
+}
+
+.grid-title h2 {
+    color: #f7ebe8; /* Cor do texto */
+    margin: 0;
+}
+
+.grid-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Ajusta as colunas com base no tamanho */
+    gap: 15px;
+    padding: 20px;
+}
+
+.grid-item {
+    background-color: #252525; /* Cor principal */
+    text-align: center;
+    box-sizing: border-box;
+    border-radius: 5px; /* Bordas arredondadas para cada item */
+    box-shadow: 0 0 9px #171717; /* Sombra */
+}
+
+.grid-item img {
+    width: 100%;
+    height: auto;
+    border-radius: 5px 5px 0 0;
+    object-fit: cover;
+}
+
+.grid-item h3 {
+    margin-top: 10px;
+    color: #f7ebe8; /* Cor do texto */
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    text-align: center;
+    padding: 0 5px;
+}
+
+/* Personalização da barra de rolagem */
+.grid-items::-webkit-scrollbar {
+    height: 8px;
+    border-radius: 10px;
+}
+
+.grid-items::-webkit-scrollbar-thumb {
+    background-color: #ff6400; /* Cor da barra de rolagem */
+    border-radius: 10px;
+}
+
+.grid-items::-webkit-scrollbar-track {
+    background-color: #292929; /* Cor do fundo da barra de rolagem */
+    border-radius: 10px;
+}
+
+
+.paginator {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+    color:#f7ebe8;
+}
+
+.paginator button {
+    padding: 10px 20px;
+    background-color: #ff6400;
+    border: none;
+    color: #f7ebe8;
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.paginator button:hover {
+    background-color: #cc5200;
+}
+
+
+
+/*------------------------------------*/
+
+.manga-page {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Cabeçalho do manga - Mobile-First */
+.manga-header {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    overflow: hidden;
+    align-items: center; /* Centraliza o conteúdo */
+}
+
+.manga-header img {
+    width: 100%;
+    height: auto;
+    object-fit: cover; /* Mantém a proporção da imagem */
+    border-radius: 5px;
+}
+
+.manga-info {
+    padding: 20px;
+    text-align: center; /* Centraliza o conteúdo */
+}
+
+.manga-info h1 {
+    font-size: 1.5em;
+    color: #333;
+    margin-bottom: 10px;
+    color:#ff6400;
+}
+
+.synopsis {
+    font-size: 1.1em;
+    color: #666;
+    margin: 10px 0;
+    text-align: justify;
+}
+
+.details {
+    list-style: none;
+    padding: 0;
+    color: #444;
+    text-align: left;
+}
+
+.details li {
+    font-size: 1.1em;
+    color:#f7ebe8;
+}
+
+/* Capítulos */
+/* Capítulos - Nova estilização */
+.chapter-list h2 {
+    font-size: 1.6em;
+    color: #f7ebe8;
+    margin-bottom: 15px;
+    font-weight: bold;
+    border-bottom: 2px solid #ff6400;
+    padding-bottom: 5px;
+}
+
+.chapter-list ul {
+    list-style: none;
+    padding: 0;
+}
+
+.chapter-list li {
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #cc5200;
+    padding: 12px;
+    border-radius: 10px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.chapter-list li:hover {
+    background-color: #ff6400;
+    cursor: pointer;
+}
+
+.chapter-list li a {
+    text-decoration: none;
+    color: #f7ebe8;
+    font-size: 1.1em;
+    font-weight: bold;
+}
+
+.chapter-list li a:hover {
+    color: #292929;
+}
+
+/* Ajuste de espaçamento e estilo da lista */
+.chapter-list li span {
+    font-size: 0.9em;
+    color: #f7ebe8;
+    background-color: #444;
+    padding: 3px 8px;
+    border-radius: 5px;
+}
+
+ /* Estilo de capítulos lidos */
+ .chapter-list li.read {
+    background-color: #444; /* Cor mais suave para capítulos lidos */
+    opacity: 0.7; /* Reduz a opacidade para indicar que foi lido */
+}
+
+.chapter-list li.read a {
+    color: #aaa; /* Cor mais suave para links de capítulos lidos */
+    text-decoration: line-through; /* Riscado para indicar lido */
+}
+
+.badge {
+    font-size: 0.9em;
+    color: #fff;
+    background-color: #ff6400;
+    padding: 3px 8px;
+    border-radius: 5px;
+}
+
+
+
+
+
  /* Media Queries para Tablets */
  @media (min-width: 600px) and (max-width: 1024px) {
     .slider {
@@ -111,6 +339,46 @@ body {
     .slider-itens {
         padding: 15px 0;
     }
+    .manga-grid {
+        max-width: 800px; /* Ajusta a largura para tablet */
+    }
+
+    .grid-items {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Ajusta o tamanho dos itens em tablets */
+    }
+
+    .manga-header {
+
+        flex-direction: row; /* Coloca imagem e texto lado a lado */
+        justify-content: flex-start;
+        align-items: center;
+    }
+
+    .manga-header img {
+        width: 220px; /* Ajusta a largura da capa para tablet */
+        height: 330px; /* Ajusta a altura da capa para tablet */
+        margin-right: 20px;
+        margin-bottom: 0;
+        object-fit: cover; /* Garante que a imagem não distorça */
+    }
+
+    .manga-info {
+        text-align: left;
+    }
+
+    .manga-info h1 {
+        font-size: 1.6em;
+    }
+
+    .synopsis {
+        font-size: 1.2em;
+    }
+
+    .details li {
+        font-size: 1.1em;
+    }
+
+
 }
 
 /* Media Queries para Desktop */
@@ -137,5 +405,43 @@ body {
     .slider-itens::-webkit-scrollbar-thumb {
         background-color: #cc5200; /* Cor mais escura da barra de rolagem */
         border-radius: 10px;
+    }
+
+    .manga-grid {
+        max-width: 1200px; /* Ajusta a largura para desktop */
+    }
+
+    .grid-items {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Ajusta o tamanho dos itens em desktops */
+    }
+
+
+    .manga-header {
+        flex-direction: row; /* Mantém a disposição em linha */
+        justify-content: flex-start;
+        align-items: center;
+    }
+
+    .manga-header img {
+        width: 250px; /* Ajusta a largura da capa para desktop */
+        height: 375px; /* Ajusta a altura da capa para desktop */
+        margin-right: 30px;
+        object-fit: cover; /* Garante que a imagem não distorça */
+    }
+
+    .manga-info {
+        text-align: left;
+    }
+
+    .manga-info h1 {
+        font-size: 2em;
+    }
+
+    .synopsis {
+        font-size: 1.3em;
+    }
+
+    .details li {
+        font-size: 1.2em;
     }
 }
