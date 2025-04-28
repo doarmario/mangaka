@@ -98,6 +98,8 @@ body {
     background: rgba(0, 0, 0, 0.7);
 }
 
+/*-------------MANGA GRID------------------------*/
+
 .manga-grid {
     width: 100%;
     max-width: 1200px;
@@ -322,10 +324,75 @@ body {
     border-radius: 5px;
 }
 
+/*-------------------READER------------------------------------*/
+
+.reader{
+    width: 100%;
+    margin-top:20px;
+}
+
+.reader-top{
+    width: 100%;
+}
+
+.reader-top>h2{
+    color: #f7ebe8;
+    padding: 5px 10px;
+    margin: 0;
+}
+
+.reader-top-cap{
+    background-color: #ff6400;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    border-radius: 5px 5px 0 0;
+}
+.reader-top-cap>h3{
+    padding: 0 10px;
+    margin: 0;
+}
+
+.reader-display{
+    width: 100%;
+    margin: 0 auto;
+    text-align: center;
+    justify-content: center;
+}
+.reader-display>img{
+    max-width: 100%;
+    margin: 0 auto;
+    display: block;
+}
+
+.reader-bottom{
+    width: 100%;
+    background-color: #ff6400;
+    display: flex;
+    align-items: center;
+    border-radius: 0 0 5px 5px;
+}
+.reader-bottom>h3{
+    margin: 0 auto 0 10px;
+    color: #f7ebe8;
+}
+.reader-btn{
+    margin-right: 10px;
+}
+.reader-btn>button{
+    background-color: #ff6400;
+    margin-left: 5px;
+    padding: 15px;
+    outline: none;
+}
+.reader-btn>button:hover{
+    background-color: #cc5200;
+    border: 0;
+    border-radius: 5px;
+}
 
 
-
-
+/*-------------------------------DESKTOP------------------------*/
  /* Media Queries para Tablets */
  @media (min-width: 600px) and (max-width: 1024px) {
     .slider {
@@ -443,5 +510,13 @@ body {
 
     .details li {
         font-size: 1.2em;
+    }
+
+    .reader{
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .reader-display>img{
+        max-width: 100%;
     }
 }
