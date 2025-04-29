@@ -18,9 +18,8 @@
         <div class="menu-view">
             <nav class="menu-btn">
                 <ul>
-                    <li><a href="index.html">Home</a></li>
-                    <li><a href="list.html">Mangás</a></li>
-                    <li><a>Categorias</a></li>
+                    <li><a href="{{ url_for('user.home') }}">Home</a></li>
+                    <li><a href="{{ url_for('user.mangaList') }}">Mangás</a></li>
                 </ul>
             </nav>
             <div class="login-btn">

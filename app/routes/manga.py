@@ -7,12 +7,12 @@ site = Blueprint('user', __name__)
 def home():
     return render_template('index.html')
 
-@site.route('/capther')
-def capther_manga():
+@site.route('/cap')
+def mangaCap():
     return render_template('cap.html')
 
-@site.route('/list')
-def list_manga():
+@site.route('/mangas')
+def mangaList():
     return render_template('list.html')
 
 @site.route('/manga/<nome_manga>')
