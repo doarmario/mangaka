@@ -1,0 +1,116 @@
+/* Reset e estilo básico global */
+
+:root{
+    --white:
+}
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: sans-serif;
+}
+
+/* Estilos para o body */
+body {
+    background-color: #f4f4f9; /* Cor de fundo */
+    color: #333; /* Cor do texto */
+    line-height: 1.6; /* Espaçamento entre as linhas */
+}
+
+/* Estilos para cabeçalhos */
+h1, h2, h3, h4, h5, h6 {
+    margin-bottom: 0.5em;
+    color: #333;
+}
+
+/* Estilos para parágrafos */
+p {
+    margin-bottom: 1em;
+    color: #555;
+}
+
+/* Estilos para links */
+a {
+    text-decoration: none;
+    color: #007bff; /* Cor do link */
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Estilos para listas */
+ul, ol {
+    margin-bottom: 1em;
+}
+
+li {
+    margin-bottom: 0.5em;
+}
+
+/* Estilos para tabelas */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1em;
+}
+
+th, td {
+    padding: 8px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+/* Estilos para formulários */
+form {
+    margin-bottom: 1em;
+}
+
+input, textarea, select, button {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    border: 1px solid #ccc;
+    padding: 8px;
+    margin: 8px 0;
+}
+
+input[type="submit"], button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+input[type="submit"]:hover, button:hover {
+    background-color: #0056b3;
+}
+
+/* Estilos para containers */
+.container {
+    width: 80%;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Estilos para cabeçalho */
+header {
+    background-color: #333;
+    color: white;
+    padding: 10px 0;
+    text-align: center;
+}
+
+footer {
+    background-color: #333;
+    color: white;
+    padding: 10px 0;
+    text-align: center;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
