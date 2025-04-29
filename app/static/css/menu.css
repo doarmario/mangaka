@@ -4,6 +4,7 @@
     box-sizing: border-box;
     padding: 0;
     box-shadow: 0 0 9px #171717;
+    transition: .7s;
 }
 
 .menu-display{
@@ -86,7 +87,7 @@
     border: 2px solid #292929;
     border-radius: 10px;
     font-weight: bolder;
-    padding: 10px;
+    padding: 10px 25px;
     text-align: none;
     color:#292929;
     transition: .5s;
