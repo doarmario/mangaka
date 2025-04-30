@@ -52,8 +52,8 @@ def logout():
 def register():
     form = RegisterForm()
     if form.validate_on_submit():
-        hashed_pw = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        user = User(username=form.username.data, email=form.email.data, password=hashed_pw)
+        user = User(username=form.username.data, email=form.email.data)
+        user.set_password(form.password.data)  # Use the set_password method to hash and store the password
         db.session.add(user)
         db.session.commit()
         flash('Conta criada com sucesso! Faça login.', 'success')

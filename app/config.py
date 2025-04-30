@@ -1,15 +1,9 @@
+import sys
 import os
-from pathlib import Path
 from dotenv import load_dotenv
 
-env_path = Path(__file__).parent / '.env'
-
-if env_path.exists():
-    print(f"Arquivo .env encontrado em: {env_path}")
-else:
-    print("Arquivo .env NÃO encontrado!")
-
-load_dotenv(dotenv_path=env_path)
+path = 'config/.env'  #try .path[0] if 1 doesn't work
+load_dotenv(path)
 
 # Verifique se a variável DATABASE_URL está sendo carregada
 print("DATABASE_URL:", os.getenv('DATABASE_URL'))  # Adicione este print para depuração
@@ -19,6 +13,7 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.getenv("SQLALCHEMY_DATABASE_URI")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    HOST = '0.0.0.0'
     DEBUG = os.getenv("DEBUG", "False").lower() in ["true", "1"]
     ENV = os.getenv("FLASK_ENV", "production")
     # Configuração do Flask-Login
