@@ -5,3 +5,9 @@ __pycache__/
 *.pyo
 
 .env
+
+*.db
+*.sqlite
+*.sqlite3
+migrations/
+instance/

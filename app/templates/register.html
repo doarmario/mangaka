@@ -23,15 +23,22 @@
             </div>
         </div>
         <div class="right-container">
-            <form>
-                <label>Login</label>
-                <input type="text" name="username" placeholder="Username">
-                <label>E-mail</label>
-                <Input type="email" name="email" placeholder="user@example.com">
-                <label>Password</label>
-                <input type="password" name="password" placeholder="Password">
-                <input type="password" name="password" placeholder="Repeat password">
-                <input type="submit" value="register">
+            <form method="POST">
+                {{ form.hidden_tag() }} <!-- Garante o CSRF token -->
+                
+                <label>{{ form.username.label }}</label>
+                {{ form.username(class="form-control", placeholder="Username") }}
+                
+                <label>{{ form.email.label }}</label>
+                {{ form.email(class="form-control", placeholder="user@example.com") }}
+                
+                <label>{{ form.password.label }}</label>
+                {{ form.password(class="form-control", placeholder="Password") }}
+                
+                <label>{{ form.password_repeat.label }}</label>
+                {{ form.password_repeat(class="form-control", placeholder="Repeat password") }}
+                
+                <input type="submit" value="Register" class="btn btn-primary">
             </form>
         </div>
     </section>
