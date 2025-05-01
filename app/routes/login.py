@@ -31,7 +31,7 @@ def login():
             )
         ).first()
 
-        if user and bcrypt.check_password_hash(user.password, password):  # Verifica a senha com bcrypt
+        if user and bcrypt.check_password_hash(user.password_hash, password):  # Verifica a senha com bcrypt
             login_user(user, remember=form.remember_me.data)  # Realiza o login
             flash("Login bem-sucedido!", 'success')
             return redirect(url_for('user.home'))  # Redireciona para a home do usuário

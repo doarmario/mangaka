@@ -28,10 +28,6 @@
 .menu-logo>a>svg{
     fill: #292929;
     width: 64px;
-}
-.menu-logo>svg{
-    fill: #292929;
-    width: 48px;
     margin-right: 15px;
 }
 
@@ -96,6 +92,7 @@
     background-color: #292929;
     color: #ff6400;
     text-decoration: none;
+    cursor: pointer;
 }
 
 

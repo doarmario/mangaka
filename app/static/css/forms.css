@@ -145,6 +145,22 @@
 transform: scale(1);
 }
 
+.info-box{
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1;
+
+}
+
+.info-box>ul>li{background-color: #ff640077;
+    border: 2px solid #cc5200;
+    border-radius: 5px;
+    padding: 10px;
+    color: #f7ebe8;
+    list-style: none;
+}
+
 @keyframes stretchEffect {
     0% {
       transform: scaleX(0);   
