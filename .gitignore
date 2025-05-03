@@ -12,3 +12,6 @@ __pycache__/
 migrations/
 instance/
 config/
+nginx/
+docker-compose.yml
+
