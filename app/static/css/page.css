@@ -33,6 +33,7 @@ body {
     -webkit-overflow-scrolling: touch;
     padding: 10px 0;
     overflow-x: auto; /* Mantém a barra de rolagem visível */
+    transition: 1s;
 }
 
 .slider-itens::-webkit-scrollbar {
@@ -51,8 +52,7 @@ body {
 }
 
 .item {
-    min-width: 150px;
-    max-width: 150px;
+    width: 200px;
     background-color: #252525;
     text-align: center;
     box-sizing: border-box;
@@ -68,11 +68,14 @@ body {
 }
 
 .item img {
-    width: 100%;
-    height: auto;
-    border-radius: 5px 5px 0 0;
-    object-fit: cover;
+    height: 300px; /* Altura fixa para todas as imagens */
+    width: auto; /* A largura será ajustada automaticamente para manter a proporção */
+    min-width: 100%;
+    max-width: 100%;
+    border-radius: 5px 5px 0 0; /* Bordas arredondadas na parte superior */
+    object-fit: cover; /* A imagem será contida dentro do espaço, sem distorcer */
 }
+
 
 .item h3 {
     margin-top: 0px;
@@ -118,7 +121,7 @@ body {
 .manga-grid {
     width: 100%;
     max-width: 1200px;
-    margin: 0 auto;
+    margin: 20px auto;
 }
 
 .grid-title {
@@ -137,7 +140,7 @@ body {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Ajusta as colunas com base no tamanho */
     gap: 15px;
-    padding: 20px;
+    margin: 0 10px;
 }
 
 .grid-item {
@@ -149,8 +152,10 @@ body {
 }
 
 .grid-item img {
-    width: 100%;
-    height: auto;
+    height: 300px; /* Altura fixa para todas as imagens */
+    width: auto; /* A largura será ajustada automaticamente para manter a proporção */
+    min-width: 100%;
+    max-width: 100%;
     border-radius: 5px 5px 0 0;
     object-fit: cover;
 }
@@ -193,7 +198,7 @@ body {
     color:#f7ebe8;
 }
 
-.paginator button {
+.paginator a {
     padding: 10px 20px;
     background-color: #ff6400;
     border: none;
@@ -201,6 +206,8 @@ body {
     font-size: 1rem;
     cursor: pointer;
     border-radius: 5px;
+    outline: none;
+    text-decoration: none;
     transition: background-color 0.3s;
 }
 
@@ -237,6 +244,7 @@ body {
 }
 
 .manga-info {
+    width: 100%;
     padding: 20px;
     text-align: center; /* Centraliza o conteúdo */
 }
@@ -249,10 +257,11 @@ body {
 }
 
 .synopsis {
-    font-size: 1.1em;
+    font-size: 1em;
     color: #666;
     margin: 10px 0;
     text-align: justify;
+    word-wrap: break-word;
 }
 
 .details {
@@ -263,32 +272,75 @@ body {
 }
 
 .details li {
-    font-size: 1.1em;
+    font-size: 1em;
     color:#f7ebe8;
+}
+.details li strong{
+    margin-right: 5px;
+}
+
+.genre-box{
+    width: 100%;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.genre{
+    padding:3px 5px;
+    margin: 5px 2px;
+    border:0;
+    border-radius:5px;
+    background-color: #ff6400;
+    color: #f7ebe8;
+    text-decoration: none;
+    transition: .5s;
+}
+.genre:hover{
+    cursor: pointer;
+    background-color: #cc5200;
+    text-decoration: none;
 }
 
 /* Capítulos */
 /* Capítulos - Nova estilização */
-.chapter-list h2 {
-    font-size: 1.6em;
-    color: #f7ebe8;
-    margin-bottom: 15px;
-    font-weight: bold;
+.chapter-menu{
+    width: 100%;
+    display: flex;
+    align-items: center;
     border-bottom: 2px solid #ff6400;
     padding-bottom: 5px;
+    margin-bottom: 15px;
+}
+.chapter-menu>h2 {
+    font-size: 1.6em;
+    color: #f7ebe8;
+    font-weight: bold;
+    margin: 0 auto 0 0;
+}
+.chapter-menu>button{
+    background-color: transparent;
+    outline: none;
+    margin-right: 10px;
+}
+.chapter-menu>button>i{
+    color: #ff6400
 }
 
 .chapter-list ul {
     list-style: none;
     padding: 0;
 }
+.chapter-list ul a {
+    text-decoration: none;
+}
 
 .chapter-list li {
     margin-bottom: 10px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    background-color: #cc5200;
+    background-color: #ff6400;
     padding: 12px;
     border-radius: 10px;
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
@@ -296,28 +348,25 @@ body {
 }
 
 .chapter-list li:hover {
-    background-color: #ff6400;
+    background-color: #cc5200;
     cursor: pointer;
 }
 
-.chapter-list li a {
+.chapter-list li p {
     text-decoration: none;
     color: #f7ebe8;
     font-size: 1.1em;
     font-weight: bold;
-}
-
-.chapter-list li a:hover {
-    color: #292929;
+    margin: 0 auto 0 20px;
 }
 
 /* Ajuste de espaçamento e estilo da lista */
 .chapter-list li span {
     font-size: 0.9em;
     color: #f7ebe8;
-    background-color: #444;
     padding: 3px 8px;
     border-radius: 5px;
+
 }
 
  /* Estilo de capítulos lidos */
@@ -331,13 +380,6 @@ body {
     text-decoration: line-through; /* Riscado para indicar lido */
 }
 
-.badge {
-    font-size: 0.9em;
-    color: #fff;
-    background-color: #ff6400;
-    padding: 3px 8px;
-    border-radius: 5px;
-}
 
 /*-------------------READER------------------------------------*/
 
@@ -364,9 +406,69 @@ body {
     border-radius: 5px 5px 0 0;
 }
 .reader-top-cap>h3{
+    width: auto;
     padding: 0 10px;
     margin: 0;
+    text-overflow: ellipsis;
+    margin: 0 auto 0 0;
 }
+.read-mode{
+    display: flex;
+    align-items: center;
+    margin-right: 5px;
+}
+.read-mode>p{
+    color: #f7ebe8;
+    background-color: transparent;
+    font-weight: bolder;
+    margin: 0px 4px;
+}
+.top-read{
+    width: 50px;
+    height: 25px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #292929;
+    border: 0;
+    border-radius: 50px;
+    outline: none;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.3s;
+    padding: 2px;
+    -webkit-user-select: none; /* Para navegadores baseados em Webkit (Chrome, Safari) */
+    -moz-user-select: none;    /* Para Firefox */
+    -ms-user-select: none;     /* Para Internet Explorer */
+    user-select: none;         /* Padrão */
+    -webkit-tap-highlight-color: transparent; /* Remover o efeito de highlight no Android */
+  touch-action: manipulation; /* Prevenir a seleção de texto ao interagir */
+  }
+
+.top-read:before {
+    content: "";
+    position: absolute;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #cc5200;
+    transition: 0.3s;
+    top: 50%;
+    left: 3px;
+    transform: translateY(-50%);
+}
+.top-read:focus{
+    outline: none;
+}
+
+.top-read.active:before {
+    transform: translateY(-50%) translateX(25px);
+  }
+
+.top-read:checked:before {
+    transform: translateY(-50%) translateX(25px);
+  }
+
+
 
 .reader-display{
     width: 100%;
@@ -378,6 +480,32 @@ body {
     max-width: 100%;
     margin: 0 auto;
     display: block;
+}
+
+.page-content{
+    width: 100%;
+    margin: 0 auto;
+    text-align: center;
+    position: relative;
+}
+.page-content #changeprev, 
+.page-content #changenext {
+    position: absolute;
+    width: 50%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#changeprev {
+    top: 0;
+    left: 0;
+}
+
+#changenext {
+    top: 0;
+    right: 0;
 }
 
 .reader-bottom{
@@ -419,6 +547,7 @@ body {
         min-width: 200px; /* Aumenta o tamanho dos itens em tablets */
     }
 
+
     .slider-itens {
         padding: 15px 0;
     }
@@ -427,7 +556,7 @@ body {
     }
 
     .grid-items {
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Ajusta o tamanho dos itens em tablets */
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Ajusta o tamanho dos itens em tablets */
     }
 
     .manga-header {
@@ -454,11 +583,11 @@ body {
     }
 
     .synopsis {
-        font-size: 1.2em;
+        font-size: 1em;
     }
 
     .details li {
-        font-size: 1.1em;
+        font-size: 1em;
     }
 
 
@@ -508,15 +637,15 @@ body {
     }
 
     .manga-info h1 {
-        font-size: 2em;
+        font-size: 1.5em;
     }
 
     .synopsis {
-        font-size: 1.3em;
+        font-size: 1em;
     }
 
     .details li {
-        font-size: 1.2em;
+        font-size: 1em;
     }
 
     .reader{
