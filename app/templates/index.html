@@ -6,241 +6,31 @@
     {% include 'menu.html' %}
 
 
+
+    {% for j in data.keys() %}
     <section class="slider">
 
         <div class="slider-title">
-            <h2>Recomendados</h2>
+            <h2>{{ j }}</h2>
         </div>
 
         <div class="slider-itens">
 
-            <a>
-            <div class="item">
-                <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="algum mangá ai">
-                <h3>Algum mangá ai</h3>
-            </div>
-            </a>
-
-            <a>
+                {% for i in data[j] %}
+                <a href="/manga/{{ i.id }}">
                 <div class="item">
-                    <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="algum mangá ai">
-                    <h3>Algum mangá ai</h3>
-                </div>
-            </a>
-
-            <a>
-                <div class="item">
-                    <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="algum mangá ai">
-                    <h3>Algum mangá ai</h3>
-                </div>
-            </a>
-
-            <a>
-                <div class="item">
-                    <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="algum mangá ai">
-                    <h3>Algum mangá ai</h3>
+                    <img src="/img/cover/{{ i.id }}" alt="{{ i.title }}" loading="lazy">
+                    <h3> {{ i.title }} </h3>
                 </div>
                 </a>
-    
-                <a>
-                    <div class="item">
-                        <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="algum mangá ai">
-                        <h3>Algum mangá ai</h3>
-                    </div>
-                </a>
-    
-                <a>
-                    <div class="item">
-                        <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="algum mangá ai">
-                        <h3>Algum mangá ai</h3>
-                    </div>
-                </a>
-
-        </div>
-
-    </section>
-
-    <section class="slider">
-
-        <div class="slider-title">
-            <h2>Recomendados</h2>
-        </div>
-
-        <div class="slider-itens">
-
-            <a>
-            <div class="item">
-                <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="algum mangá ai">
-                <h3>Algum mangá ai</h3>
-            </div>
-            </a>
-
-            <a>
-                <div class="item">
-                    <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="algum mangá ai">
-                    <h3>Algum mangá ai</h3>
-                </div>
-            </a>
-
-            <a>
-                <div class="item">
-                    <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="algum mangá ai">
-                    <h3>Algum mangá ai</h3>
-                </div>
-            </a>
-
-            <a>
-                <div class="item">
-                    <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="algum mangá ai">
-                    <h3>Algum mangá ai</h3>
-                </div>
-                </a>
-    
-                <a>
-                    <div class="item">
-                        <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="algum mangá ai">
-                        <h3>Algum mangá ai</h3>
-                    </div>
-                </a>
-    
-                <a>
-                    <div class="item">
-                        <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="algum mangá ai">
-                        <h3>Algum mangá ai</h3>
-                    </div>
-                </a>
-
-
-
-
+                {% endfor %}
+            
 
 
         </div>
 
     </section>
-
-
-    <section class="slider">
-
-        <div class="slider-title">
-            <h2>Recomendados</h2>
-        </div>
-
-        <div class="slider-itens">
-
-            <a>
-            <div class="item">
-                <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="algum mangá ai">
-                <h3>Algum mangá ai</h3>
-            </div>
-            </a>
-
-            <a>
-                <div class="item">
-                    <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="algum mangá ai">
-                    <h3>Algum mangá ai</h3>
-                </div>
-            </a>
-
-            <a>
-                <div class="item">
-                    <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="algum mangá ai">
-                    <h3>Algum mangá ai</h3>
-                </div>
-            </a>
-
-            <a>
-                <div class="item">
-                    <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="algum mangá ai">
-                    <h3>Algum mangá ai</h3>
-                </div>
-                </a>
-    
-                <a>
-                    <div class="item">
-                        <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="algum mangá ai">
-                        <h3>Algum mangá ai</h3>
-                    </div>
-                </a>
-    
-                <a>
-                    <div class="item">
-                        <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="algum mangá ai">
-                        <h3>Algum mangá ai</h3>
-                    </div>
-                </a>
-
-
-
-
-
-
-        </div>
-
-    </section>
-
-
-
-    <section class="slider">
-
-        <div class="slider-title">
-            <h2>Recomendados</h2>
-        </div>
-
-        <div class="slider-itens">
-
-            <a>
-            <div class="item">
-                <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="algum mangá ai">
-                <h3>Algum mangá ai</h3>
-            </div>
-            </a>
-
-            <a>
-                <div class="item">
-                    <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="algum mangá ai">
-                    <h3>Algum mangá ai</h3>
-                </div>
-            </a>
-
-            <a>
-                <div class="item">
-                    <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="algum mangá ai">
-                    <h3>Algum mangá ai</h3>
-                </div>
-            </a>
-
-            <a>
-                <div class="item">
-                    <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="algum mangá ai">
-                    <h3>Algum mangá ai</h3>
-                </div>
-                </a>
-    
-                <a>
-                    <div class="item">
-                        <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="algum mangá ai">
-                        <h3>Algum mangá ai</h3>
-                    </div>
-                </a>
-    
-                <a>
-                    <div class="item">
-                        <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="algum mangá ai">
-                        <h3>Algum mangá ai</h3>
-                    </div>
-                </a>
-
-
-
-
-
-
-        </div>
-
-    </section>
-
-
+    {% endfor %}
 
 </body>
 </html>

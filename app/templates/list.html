@@ -7,52 +7,29 @@
 
 
     <section class="manga-grid">
-        <div class="grid-title">
+        <!--<div class="grid-title">
             <h2>Recomendados</h2>
-        </div>
-    
+        </div>-->
         <div class="grid-items">
-            <div class="grid-item">
-                <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="Algum mangá ai">
-                <h3>Algum mangá ai</h3>
-            </div>
-    
-            <div class="grid-item">
-                <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="Algum mangá ai">
-                <h3>Algum mangá ai muito longo para o título aqui</h3>
-            </div>
-    
-            <div class="grid-item">
-                <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="Algum mangá ai">
-                <h3>Algum mangá ai</h3>
-            </div>
-    
-            <div class="grid-item">
-                <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="Algum mangá ai maior">
-                <h3>Algum mangá ai maior</h3>
-            </div>
-    
-            <div class="grid-item">
-                <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="Algum mangá ai">
-                <h3>Algum mangá ai</h3>
-            </div>
-    
-            <div class="grid-item">
-                <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="Algum mangá ai">
-                <h3>Algum mangá ai</h3>
-            </div>
-    
-            <div class="grid-item">
-                <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="Algum mangá ai">
-                <h3>Algum mangá ai</h3>
-            </div>
+            {% for i in data %}
+            <a href="/manga/{{ i.id }}">
+                <div class="grid-item">
+                    <img src="/img/cover/{{i.id}}" alt="Algum mangá ai">
+                    <h3>{{ i.title }}</h3>
+                </div>
+            </a>
+        {% endfor %}
         </div>
+    
+
 
 
         <div class="paginator">
-            <button class="prev" id="prevBtn">Anterior</button>
-            <span id="pageNumber">Página 1</span>
-            <button class="next" id="nextBtn">Próximo</button>
+            {% if page>0 %}
+            <a class="prev" id="prevBtn" href="/mangas/{{ page-1 }}">Anterior</a>
+            {% endif %}
+            <span id="pageNumber">Página {{ page+1 }}</span>
+            <a class="next" id="nextBtn" href="/mangas/{{ page+2 }}">Próximo</a>
         </div>
     
     </section>

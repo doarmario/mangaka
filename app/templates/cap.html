@@ -9,24 +9,32 @@
     <section class="reader">
 
         <div class="reader-top">
-            <h2>Mangá Name</h2>
+            <h2>{{ data.manga }}</h2>
             <div class="reader-top-cap">
-                <h3>Capitulo</h3>
+                <h3>Capitulo {{ data.cap }}</h3>
+                <div class="read-mode">
+                    <p>Page</p>
+                    <input type="checkbox" class="top-read" id="scrollToggle">
+                    <p>Scroll</p>
+                </div>
             </div>
         </div>
-        <div class="reader-display">
-            <img src="../../../5358c6e6-4c55-46d0-a83b-ac965a45bb2c.jpeg">
-            <img src="../../../5358c6e6-4c55-46d0-a83b-ac965a45bb2c.jpeg">
-            <img src="../../../5358c6e6-4c55-46d0-a83b-ac965a45bb2c.jpeg">
+        <div class="page-content">
+            <a id="changeprev"></a>
+            <div id="leitor" class="reader-display">
+            </div>
+            <a id="changenext"></a>
         </div>
         <div class="reader-bottom">
-            <h3><span>10</span>/<span>10</span></h3>
+            <h3>Fonte original: MangaDex</h3>
             <div class="reader-btn">
                 <button><i class="fas fa-chevron-left"></i></button>
                 <button><i class="fas fa-chevron-right"></i></button>
             </div>
         </div>
-
+        <script>
+            var pages = JSON.parse('{{ data.pages | tojson }}');
+        </script>
     </section>
 
 </body>

@@ -8,28 +8,49 @@
 
     <section class="manga-page">
         <div class="manga-header">
-            <img src="https://mangadex.org/covers/a6ccbfd7-4f32-4566-9e56-187189984a61/0a3eebc0-54ff-49d5-b3f4-0dbbcdfea0dc.jpg.512.jpg" alt="Capa do Mangá">
+            <img src="/img/cover/{{ data.id }}" alt="Capa do Mangá">
             <div class="manga-info">
-                <h1>Título do Mangá</h1>
-                <p class="synopsis">Lorem ipsum dolor sit amet consectetur adipisicing elit. Reprehenderit, a? Error ipsa totam ullam a delectus dignissimos illo quis voluptatum. Odit a ipsam incidunt voluptatum earum recusandae enim, dolor nobis.</p>
+                <h1>{{ data.title }}</h1>
+                <div class="genre-box">
+                    {% for i in data.tags %}
+                    <a class="genre">{{ i }}</a>
+                    {% endfor %}
+                </div>
+                <p class="synopsis">{{ data.sinopse }}</p>
                 <ul class="details">
-                    <li><strong>Autor:</strong> Nome do Autor</li>
-                    <li><strong>Gêneros:</strong> Ação, Aventura</li>
-                    <li><strong>Status:</strong> Em andamento</li>
-                    <li><strong>Capítulos:</strong> 120</li>
-                    <li><strong>Idioma Original:</strong> Japonês</li>
+                    <li><strong>Autor:</strong>{{ data.autor }}</li>
+
+                    <li><strong>Status:</strong>{{ data.status }}</li>
+                    <li><strong>Capítulos:</strong>{{ data.caps }}</li>
+                    <li><strong>Ano:</strong>{{ data.ano }}</li>
                 </ul>
             </div>
         </div>
         <div class="chapter-list">
-            <h2>Capítulos</h2>
+            <div class="chapter-menu">
+                <h2>Capítulos</h2>
+                <button class="save-btn">
+                    <i class="fa-solid fa-bookmark"></i>
+                </button>
+                <button class="filter-btn" id="ascending-filter">
+                    <i class="fa-solid fa-arrow-up-wide-short"></i>
+                </button>
+                <button class="filter-btn" id="descending-filter">
+                    <i class="fa-solid fa-arrow-down-wide-short"></i>
+                </button>"
+                
+            </div>
             <ul>
-                <li class="read"><a href="#">Capítulo 1: Início da Jornada</a> <span class="badge">Lido</span></li>
-                <li><a href="#">Capítulo 2: O Encontro</a></li>
-                <li><a href="#">Capítulo 3: A Batalha</a></li>
-                <li class="read"><a href="#">Capítulo 4: O Mistério Revelado</a> <span class="badge">Lido</span></li>
-                <!-- Mais capítulos -->
+                {% for i in data.chapters %}
+                <a href="/cap/{{ i.cap_id }}">
+                    <li>
+                        <p>Capítulo {{ i.cap }}</p> 
+                        <!--<span class="user-state">Lido</span>-->
+                    </li>
+                </a>
+                {% endfor %}
             </ul>
+
         </div>
     </section>
 
