@@ -1,192 +1,233 @@
-import mangadex as md
+import mangadex as dex
 import datetime as dt
 import random as rd
+import markdown as md
+
+from app import cache
+
 
 class Mangas:
+    def __init__(self,lang='pt-br',langs=['es','en','pt-br','pt'],limit=20,prefix="mangadex_"):
 
-    def __init__(self, lang='pt-br'):
         self.lang = lang
-        self.auth = md.auth.Auth()
-        self.limit = 20
+        self.langs = langs
+        self.limit = limit
+        
+        self.prefix = prefix
 
-    # Função para listar todos os mangas com limite
-    def listAll(self, offset,*args):
-        manga = md.series.Manga(auth=self.auth)
-        # Retorna uma lista de mangas como objetos
-        manga_list = manga.get_manga_list(
-            translatedLanguage=self.lang,
-            limit=self.limit,
-            offset=offset
-        )
-        return manga_list  # Retorna como objetos Manga
+        self.auth = dex.auth.Auth()
+        self.tags = dex.series.Tag()
+        self.covers = dex.series.Cover()
+        self.mangas = dex.series.Manga(auth=self.auth)
+        self.author = dex.people.Author(auth=self.auth)
+        self.chapters = dex.series.Chapter(auth=self.auth)
 
-    # Função para listar mangas recentes
-    def listRecent(self, *args):
-        manga = md.series.Manga(auth=self.auth)
-        date = (dt.datetime.now() - dt.timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S')
-        # Retorna uma lista de mangas como objetos
-        manga_list = manga.get_manga_list(
-            translatedLanguage=self.lang,
-            limit=self.limit,
-            updatedAtSince=date
-        )
-        return manga_list  # Retorna como objetos Manga
 
-    # Função para listar tags
-    def listTags(self):
-        tag = md.series.Tag()
-        # Retorna as tags como objetos
-        tag_list = tag.tag_list()
-        return tag_list  # Retorna como lista de objetos Tag
+    #cached functions
 
-    def cover2id(self,uid):
-        manga = md.series.Manga(auth=self.auth)
-        content = manga.get_manga_by_id(manga_id=uid)
-        cover = md.series.Cover()
-        return cover.get_cover(cover_id=content.cover_id).fetch_cover_image()
+    def listAll(self,offset):
 
-    # Função para pesquisar mangas por título
-    def searchMangaByTitle(self, title):
-        manga = md.series.Manga(auth=self.auth)
-        # Retorna uma lista de mangas como objetos
-        mangas = manga.get_manga_list(
-            translatedLanguage=self.lang,
-            limit=self.limit,
-            title=title
-        )
-        return mangas  # Retorna como objetos Manga
+        key = f"{self.prefix}listall_{offset}"
 
-    # Função para abrir um manga específico pelo manga_id
-    def getMangaDetails(self, manga_id):
-        manga = md.series.Manga(auth=self.auth)
-        # Retorna o manga como objeto
-        manga_details = manga.get_manga(manga_id)
-        return manga_details  # Retorna como objeto Manga
+        data = cache.get(key)
 
-    # Função para listar os capítulos de um manga específico
-    def listChapters(self, manga_id):
-        manga = md.series.Manga(auth=self.auth)
-        # Retorna os capítulos como objetos
-        chapters = manga.get_chapters(manga_id)
-        return chapters  # Retorna como lista de objetos Chapter
+        if data is None:
+            data = self.mangas.get_manga_list(
+                translatedLanguage=self.lang,
+                limit=self.limit,
+                offset=offset
+            )
+        
+            cache.set(key,data,timeout=3600)
 
-    # Função para abrir as URLs das páginas de um capítulo específico
-    def listChapterPages(self, chapter_id):
-        chapter = md.series.Chapter(auth=self.auth)
-        chapter_details = chapter.get_chapter(chapter_id)
-        # Retorna as páginas do capítulo como lista
-        return chapter_details['data']['attributes']['pages']  # Retorna as páginas como lista de URLs
+        return data
 
-    ###################################
+    def listRecents(self):
 
-    # Função para pegar os mangas recentes com suas capas
+        key = f"{self.prefix}recents"
+
+        data = cache.get(key)
+
+
+        if data is None:
+            data = self.mangas.get_manga_list(
+                translatedLanguage=self.lang,
+                limit=self.limit,
+                updatedAtSince=(dt.datetime.now() - dt.timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S')
+            )
+            cache.set(key,data,timeout=900)
+
+        return data
+
+    def getManga(self,uuid):
+        key = f"{self.prefix}manga_{uuid}"
+
+        data = cache.get(key)
+
+        if data is None:
+            data = self.mangas.get_manga_by_id(manga_id=uuid)
+            cache.set(key,data,timeout=3600)
+
+        return data
+
+    def id2Cover(self,uuid):
+
+        key = f"{self.prefix}cover_{uuid}"
+
+        data = cache.get(key)
+
+        if data is None:
+        
+            content = self.getManga(uuid)
+            data = self.covers.get_cover(
+                cover_id=content.cover_id
+            ).fetch_cover_image()
+
+            cache.set(key,data,timeout=3600)
+
+        return data
+
+    def listMangaByTag(self,tag_id):
+        
+        key = f"{self.prefix}tag_{tag_id}"
+
+        data = cache.get(key)
+
+        if data is None:
+            data = self.mangas.get_manga_list(
+                translatedLanguage=self.lang,
+                limit=self.limit,
+                includedTags=[tag_id]
+            )
+            cache.set(key,data,timeout=360)
+
+        return data
+
     def recentes(self):
-        a = self.listRecent()
-        data = []
-        for i in a:
-            #print(dir(i))
-            data.append({
-                "title": i.title.get('en') or next((alt[lang] for alt in i.alt_titles for lang in ['en', 'es', 'pt'] if lang in alt), None),
-                "id": i.manga_id
-            })
-        return {'tag':"Recentes","itens":data}
+        
+        a = self.listRecents()
+        return  {"tag":"Recentes","itens":[{
+            "title": i.title.get('en') or next(
+                (alt[lang] for alt in i.alt_titles for lang in self.langs if lang in alt),
+                None
+            ),
+            "id":i.manga_id
+            } for i in a]}
 
-    # Função para listar mangas por tag
-    def listMangasByTag(self, tag_id):
-        manga = md.series.Manga(auth=self.auth)
-        # Filtra mangas pela tag especificada
-        manga_list = manga.get_manga_list(
-            translatedLanguage=self.lang,
-            limit=self.limit,
-            includedTags=[tag_id]
-        )
-        return manga_list  # Retorna uma lista de mangas como objetos
+    def listTags(self):
 
-    def randomTag(self):
-        t = self.listTags()
-        return rd.choice(t)
+        key = f"{self.prefix}tags"
+
+        data = cache.get(key)
+
+        if data is None:
+            data =self.tags.tag_list()
+
+            cache.set(key,data,timeout=3600)
+
+        return data
 
     def choiceTags(self):
-        data = []
-        t = self.randomTag()
-        d = self.listMangasByTag(t.tag_id)
-        for i in d:
-            #print(dir(i))
-            data.append({
-                "title": i.title.get('en') or next((alt[lang] for alt in i.alt_titles for lang in ['en', 'es', 'pt-br'] if lang in alt), None),
-                "id": i.manga_id
-            })
-        return {'tag':t.name['en'],'itens':data}
+
+        t = rd.choice(self.listTags())
+        
+        key = f"{self.prefix}rtags_{t.name['en']}"
+
+        data = cache.get(key)
+
+        if data is None:
+            d = self.listMangaByTag(t.tag_id)
+
+            data = {
+                "tag":t.name['en'],
+                "itens":[{
+                    "title": i.title.get('en') or next(
+                        (alt[lang] for alt in i.alt_titles for lang in self.langs if lang in alt), None
+                        ),
+                    "id":i.manga_id
+                } for i in d]
+            }
+
+            cache.set(key,data,timeout=3600)
+
+        return data
 
     def listaGeral(self,offset):
         l = self.listAll(offset)
-        data = []
-        for i in l:
-            #print(dir(i))
-            data.append({
-                "title": i.title.get('en') or next((alt[lang] for alt in i.alt_titles for lang in ['en', 'es', 'pt-br'] if lang in alt), None),
+        data = [{
+                "title": i.title.get('en') or next(
+                    (alt[lang] for alt in i.alt_titles for lang in self.langs if lang in alt),
+                     None),
                 "id":i.manga_id
-            })
+
+            } for i in l]
         return data
 
-    def showManga(self,manga_id):
+    def getMangaChapterList(self,manga_id):
 
-        m = md.series.Manga(auth=self.auth)
-        d = m.get_manga_by_id(manga_id=manga_id)
+        key = f"{self.prefix}manga_{manga_id}_chapters"
 
-        a = md.people.Author(auth=self.auth)
+        data = cache.get(key)
 
-        t = md.series.Tag()
+        if data is None:
+            cp = self.mangas.get_manga_volumes_and_chapters(
+                manga_id=manga_id,
+                translatedLanguage=self.lang
+            )
+            data = [
+                {
+                    "cap":cp[i]['chapters'][j]["chapter"],
+                    "cap_id":cp[i]['chapters'][j]['id']
+                } for i in cp for j in cp[i]["chapters"].keys()
+            ]
+            data.sort(key=lambda i:float(i["cap"]),reverse=True)
+            cache.set(key,data,timeout=900)
 
-        c = md.series.Chapter()
-
-        cp = c.get_manga_volumes_and_chapters(manga_id=d.manga_id,translatedLanguage=self.lang)
-        
-        caps = []
-        for i in cp:
-            for j in cp[i]['chapters'].keys():
-                cap = cp[i]['chapters'][j]
-                caps.append({"cap":cap['chapter'],"cap_id":cap['id']})
-
-        caps.sort(key=self.chaptersSort)
-
-        data ={
-            "id":d.manga_id,
-            "title": d.title.get('en') or next((alt[lang] for alt in d.alt_titles for lang in ['en', 'es', 'pt-br'] if lang in alt), None),
-            "sinopse": d.description['en'] ,
-            "tags":  [i.name['en'] for i in d.tags],
-            "caps":len(caps),
-            "autor": ",".join([a.get_author_by_id(i).name for i in d.author_id]),
-            "ano":d.year,
-            "chapters": caps,
-            "status": d.status,
-        }
         return data
-
-
-    def chaptersSort(self,item):
-        cap = float(item["cap"])
-        return cap
 
     def getChapter(self,cap_id):
-        c = md.series.Chapter(auth=self.auth)
-        cap = c.get_chapter_by_id(chapter_id=cap_id)
-        manga = md.series.Manga(auth=self.auth).get_manga_by_id(cap.manga_id)
-        data={
-            "cap": cap.chapter,
-            "pages": [f"/img/page/proxy?url={i}" for i in cap.fetch_chapter_images()],
-            "manga": manga.title.get('en') or next((alt[lang] for alt in manga.alt_titles for lang in ['en', 'es', 'pt-br'] if lang in alt), None),
+
+        key = f"{self.prefix}chapter_{cap_id}"
+
+        data = cache.get(key)
+
+        if data is None:
+            cap = self.chapters.get_chapter_by_id(chapter_id=cap_id)
+            manga = self.getManga(cap.manga_id)
+
+            data = {
+                "cap":cap.chapter,
+                "pages": [f"/img/page/proxy?url={i}" for i in cap.fetch_chapter_images()],
+                "manga": manga.title.get('en') or next(
+                    (alt[lang] for alt in manga.alt_title for lang in self.langs if lang in alt),
+                    None
+                )
+            }
+
+            cache.set(key,data,timeout=900)
+        return data
+
+    def showManga(self, manga_id):
+        manga = self.getManga(manga_id)
+        caps = self.getMangaChapterList(manga.manga_id)
+        data = {
+            "id":manga.manga_id,
+            "title": manga.title.get('en') or next(
+                    (alt[lang] for alt in manga.alt_title for lang in self.langs if lang in alt),
+                    None
+                ),
+            "sinopse": manga.description['en'],
+            "tags": [i.name['en'] for i in manga.tags],
+            "caps":len(caps),
+            "autor": ", ".join(
+                [self.author.get_author_by_id(i).name for i in manga.author_id]
+            ),
+            "ano":manga.year,
+            "chapters":caps,
+            "status":manga.status
         }
         return data
 
 
-if __name__ == "__main__":
-    m = Mangas()
-
-    # Exemplo de listagem dos mangas recentes com suas capas
-    #a = m.listaGeral(0)]
-    manga = m.showManga('eb50c3d2-f08d-4b71-b507-e0272bbb3577')
-    cid = manga['chapters'][0]["cap_id"]
-    print(m.getChapter(cid))
-
+        
 

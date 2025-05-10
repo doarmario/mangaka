@@ -1,0 +1,16 @@
+{
+    "name": "Mangaka",
+    "short_name": "App",
+    "description": "Leitor de Manga.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ff6400",
+    "theme_color": "#ff6400",
+    "icons": [
+        {
+            "src": "static/img/logo.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

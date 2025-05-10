@@ -8,7 +8,7 @@
 
     <section class="manga-page">
         <div class="manga-header">
-            <img src="/img/cover/{{ data.id }}" alt="Capa do Mangá">
+            <img src="/img/cover/{{ data.id }}" alt="Capa do Mangá" loading="lazy">
             <div class="manga-info">
                 <h1>{{ data.title }}</h1>
                 <div class="genre-box">
@@ -32,12 +32,9 @@
                 <button class="save-btn">
                     <i class="fa-solid fa-bookmark"></i>
                 </button>
-                <button class="filter-btn" id="ascending-filter">
+                <button class="filter-btn" id="chapter-filter">
                     <i class="fa-solid fa-arrow-up-wide-short"></i>
                 </button>
-                <button class="filter-btn" id="descending-filter">
-                    <i class="fa-solid fa-arrow-down-wide-short"></i>
-                </button>"
                 
             </div>
             <ul>
@@ -56,6 +53,6 @@
 
 
 
-
+    {% include 'footer.html' %}
 </body>
 </html>

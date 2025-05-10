@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", function() {
     let currentMode = localStorage.getItem("mode") || "páginas"; // Recupera o modo armazenado no localStorage ou define como "páginas"
     let loadedPages = {}; // Armazena as páginas já carregadas
     let imageCache = {}; // Armazena as imagens pré-carregadas
-    document.getElementById('total-page').innerHTML = totalImages;
+
 
     // Define o modo inicial no toggle
     modeSelect.checked = (currentMode === "scroll");
@@ -32,7 +32,6 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
     function changePage(direction) {
-        document.getElementById('current').innerHTML = currentPageIndex+1;
         currentPageIndex += direction;
         if (currentPageIndex < 0) {
             currentPageIndex = 0;

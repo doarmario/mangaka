@@ -14,7 +14,7 @@
             {% for i in data %}
             <a href="/manga/{{ i.id }}">
                 <div class="grid-item">
-                    <img src="/img/cover/{{i.id}}" alt="Algum mangá ai">
+                    <img src="/img/cover/{{i.id}}" alt="Algum mangá ai" loading="lazy">
                     <h3>{{ i.title }}</h3>
                 </div>
             </a>
@@ -35,6 +35,6 @@
     </section>
 
 
-
+    {% include 'footer.html' %}
 </body>
 </html>

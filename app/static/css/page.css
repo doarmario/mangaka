@@ -258,10 +258,13 @@ body {
 
 .synopsis {
     font-size: 1em;
-    color: #666;
+    color: #f7ebe8;
     margin: 10px 0;
     text-align: justify;
     word-wrap: break-word;
+    max-height: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .details {
@@ -285,6 +288,7 @@ body {
     align-items: center;
     flex-wrap: wrap;
     gap: 10px;
+    justify-content: space-evenly;
 }
 
 .genre{
@@ -323,7 +327,16 @@ body {
     background-color: transparent;
     outline: none;
     margin-right: 10px;
+    -webkit-appearance: none;
+    appearance: none;
+    -webkit-user-select: none; /* Para navegadores baseados em Webkit (Chrome, Safari) */
+    -moz-user-select: none;    /* Para Firefox */
+    -ms-user-select: none;     /* Para Internet Explorer */
+    user-select: none;         /* Padrão */
+    -webkit-tap-highlight-color: transparent; /* Remover o efeito de highlight no Android */
+    touch-action: manipulation;
 }
+
 .chapter-menu>button>i{
     color: #ff6400
 }
@@ -441,7 +454,7 @@ body {
     -ms-user-select: none;     /* Para Internet Explorer */
     user-select: none;         /* Padrão */
     -webkit-tap-highlight-color: transparent; /* Remover o efeito de highlight no Android */
-  touch-action: manipulation; /* Prevenir a seleção de texto ao interagir */
+    touch-action: manipulation; /* Prevenir a seleção de texto ao interagir */
   }
 
 .top-read:before {
@@ -626,8 +639,8 @@ body {
     }
 
     .manga-header img {
-        width: 250px; /* Ajusta a largura da capa para desktop */
-        height: 375px; /* Ajusta a altura da capa para desktop */
+        width: 350px; /* Ajusta a largura da capa para desktop */
+        height: 400px; /* Ajusta a altura da capa para desktop */
         margin-right: 30px;
         object-fit: cover; /* Garante que a imagem não distorça */
     }
