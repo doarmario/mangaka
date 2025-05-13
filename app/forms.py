@@ -14,3 +14,7 @@ class RegisterForm(FlaskForm):
     email = EmailField('E-mail', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
     password_repeat = PasswordField('Repeat password', validators=[DataRequired(), EqualTo('password', message='As senhas devem ser iguais.')])
+
+class SearchForm(FlaskForm):
+    query = StringField('Pesquisa:', validators=[DataRequired()])
+    submit = SubmitField('Buscar')

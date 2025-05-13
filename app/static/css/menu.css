@@ -29,6 +29,17 @@
     background-color: transparent;
     outline: none;
     padding: 5px;
+    -webkit-appearance: none;
+    appearance: none;
+    -webkit-user-select: none; /* Para navegadores baseados em Webkit (Chrome, Safari) */
+    -moz-user-select: none;    /* Para Firefox */
+    -ms-user-select: none;     /* Para Internet Explorer */
+    user-select: none;         /* Padrão */
+    -webkit-tap-highlight-color: transparent; /* Remover o efeito de highlight no Android */
+    touch-action: manipulation;
+}
+.menu-logo>button:hover{
+    cursor: pointer;
 }
 .menu-logo>button>svg{
     fill: #292929;
@@ -42,12 +53,21 @@
 }
 
 .menu-view{
-    display: block;
+    display: none;
     padding: 0;
     margin: 0;
     box-sizing: border-box;
+    transition: .5s;
 }
 
+#menu-view.active{
+    width: 100%;
+    background-color: #ff6400;
+    display: block;
+    position: absolute;
+    box-sizing: border-box;
+    z-index: 1;
+}
 .menu-btn{
     font-weight: bolder;
     border: 0;
@@ -78,9 +98,18 @@
     box-sizing: border-box;
     transition: .5s;
     display: block;
+    -webkit-appearance: none;
+    appearance: none;
+    -webkit-user-select: none; /* Para navegadores baseados em Webkit (Chrome, Safari) */
+    -moz-user-select: none;    /* Para Firefox */
+    -ms-user-select: none;     /* Para Internet Explorer */
+    user-select: none;         /* Padrão */
+    -webkit-tap-highlight-color: transparent; /* Remover o efeito de highlight no Android */
+    touch-action: manipulation;
 }
 .menu-btn>ul>li>a:hover{
-    cursor: pointer;   
+    cursor: pointer;
+    background-color: #cc5200;
 }
 
 .login-btn{
@@ -134,7 +163,7 @@
     width: auto;
     margin: 0 auto 0 0;
 }
-.menu-logo>svg{
+.menu-logo>button>svg{
     display: none;
 }
 .menu-view{

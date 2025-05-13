@@ -6,6 +6,9 @@
     {% include 'menu.html' %}
 
 
+    {% include 'search.html' %}
+
+
     <section class="manga-grid">
         <!--<div class="grid-title">
             <h2>Recomendados</h2>
@@ -14,7 +17,7 @@
             {% for i in data %}
             <a href="/manga/{{ i.id }}">
                 <div class="grid-item">
-                    <img src="/img/cover/{{i.id}}" alt="Algum mangá ai">
+                    <img src="/img/cover/{{i.id}}?size=256" alt="Algum mangá ai" loading="lazy" fetchpriority="low">
                     <h3>{{ i.title }}</h3>
                 </div>
             </a>
@@ -23,18 +26,18 @@
     
 
 
-
-        <div class="paginator">
-            {% if page>0 %}
-            <a class="prev" id="prevBtn" href="/mangas/{{ page-1 }}">Anterior</a>
-            {% endif %}
-            <span id="pageNumber">Página {{ page+1 }}</span>
-            <a class="next" id="nextBtn" href="/mangas/{{ page+2 }}">Próximo</a>
-        </div>
-    
+        {% if paginator %}
+            <div class="paginator">
+                {% if page>0 %}
+                <a class="prev" id="prevBtn" href="/mangas/{{ page-1 }}">Anterior</a>
+                {% endif %}
+                <span id="pageNumber">Página {{ page+1 }}</span>
+                <a class="next" id="nextBtn" href="/mangas/{{ page+2 }}">Próximo</a>
+            </div>
+        {% endif %}
     </section>
 
 
-
+    {% include 'footer.html' %}
 </body>
 </html>

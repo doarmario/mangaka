@@ -9,7 +9,14 @@ load_dotenv(path)
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "default-secret-key")
 
-    SQLALCHEMY_DATABASE_URI = os.getenv("SQLALCHEMY_DATABASE_URI")
+    # Agora você pode acessar as variáveis de ambiente usando os comandos os.getenv()
+    DB_HOST = os.getenv('DB_HOST')
+    DB_USER = os.getenv('DB_USER')
+    DB_PASSWORD = os.getenv('DB_PASSWORD')
+    DB_NAME = os.getenv('DB_NAME')
+
+    # Conexão com o banco de dados, por exemplo, com SQLAlchemy
+    SQLALCHEMY_DATABASE_URI = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:3306/{DB_NAME}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     DEBUG = os.getenv("DEBUG", "False").lower() in ["true", "1"]

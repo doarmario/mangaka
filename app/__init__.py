@@ -1,10 +1,5 @@
 #libs
 from flask import Flask
-
-#interno
-from app.config import Config
-from app.libs.md import Mangas
-
 #extensões
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
@@ -19,14 +14,17 @@ bcrypt = Bcrypt()
 csrf = CSRFProtect()
 migrate = Migrate()
 login_manager = LoginManager()
-manga = Mangas()
 cache = Cache()
 session = Session()
 
 #app
 def create_app():
 
-    
+    from app.config import Config
+    from app.libs.md import Mangas
+
+    manga = Mangas()
+
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(Config)
 
@@ -43,6 +41,7 @@ def create_app():
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
+
 
     from app.routes.manga import site
     from app.routes.login import auth
