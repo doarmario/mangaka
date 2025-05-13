@@ -37,3 +37,6 @@ class Config:
     SESSION_USE_SIGNER = True
     SESSION_KEY_PREFIX = "mangaka_"
     SESSION_REDIS = os.getenv('REDIS_HOST_SESSION')
+
+    #
+    COMPRESS_MIMETYPE = ['*/*']

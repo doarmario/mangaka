@@ -8,6 +8,7 @@ from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
 from flask_caching import Cache
 from flask_session import Session
+from flask_compress import Compress
 
 db = SQLAlchemy()
 bcrypt = Bcrypt()
@@ -16,6 +17,7 @@ migrate = Migrate()
 login_manager = LoginManager()
 cache = Cache()
 session = Session()
+compress = Compress()
 
 #app
 def create_app():
@@ -34,7 +36,8 @@ def create_app():
     login_manager.init_app(app)
     migrate.init_app(app,db)
     cache.init_app(app)
-    #session.init_app(app)
+    session.init_app(app)
+    compress.init_app(app)
 
     from app.models import User
 

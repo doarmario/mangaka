@@ -14,7 +14,7 @@ import time
 
 
 class Mangas:
-    def __init__(self,lang='pt-br',langs=['es','en','pt-br','pt'],limit=20,prefix="mangadex_"):
+    def __init__(self,lang='en',langs=['es','en','pt-br','pt'],limit=20,prefix="mangadex_"):
 
         self.lang = lang
         self.langs = langs
@@ -227,6 +227,7 @@ class Mangas:
                 manga_id=manga_id,
                 translatedLanguage=self.lang
             )
+            print(cp)
             data = [
                 {
                     "cap": cp[i]['chapters'][j]["chapter"] if cp[i]['chapters'][j]['chapter'] != 'none' else str(n+1),
@@ -296,6 +297,7 @@ class Mangas:
             }
 
             cache.set(key,data,timeout=900)
+        print(data)
         return data
 
     def showManga(self, manga_id):
@@ -330,7 +332,7 @@ class Mangas:
                 Manga.uuid == manga_id  # Verificando pelo UUID do capítulo
             ).first() is not None  # Se existir, o capítulo foi lido
             data["is_favorite"] = is_fav
-
+        print(data)
         return data
 
     def searchMangaByTitle(self, title):
