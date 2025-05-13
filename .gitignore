@@ -17,3 +17,5 @@ docker-compose.yml
 
 *.log
 
+*.service
+
