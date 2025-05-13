@@ -16,8 +16,6 @@ RUN pip install mysqlclient
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install git+https://github.com/doarmario/mangadex.git
 
-
-
 EXPOSE 5000
 CMD ["gunicorn", "app:create_app()", \
      "--bind", "0.0.0.0:5000", \
