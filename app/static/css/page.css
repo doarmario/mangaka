@@ -120,6 +120,7 @@ body {
 
 .manga-grid {
     width: 100%;
+    min-height: 80vh;
     max-width: 1200px;
     margin: 20px auto;
 }
@@ -404,8 +405,14 @@ body {
 .reader-top{
     width: 100%;
 }
+.reader-top>a{
+    text-decoration: none;
+}
+.reader-top>a:hover{
+    text-decoration: none;
+}
 
-.reader-top>h2{
+.reader-top>a>h2{
     color: #f7ebe8;
     padding: 5px 10px;
     margin: 0;
@@ -528,23 +535,79 @@ body {
     align-items: center;
     border-radius: 0 0 5px 5px;
 }
-.reader-bottom>h3{
+.reader-bottom>h5{
     margin: 0 auto 0 10px;
     color: #f7ebe8;
 }
-.reader-btn{
-    margin-right: 10px;
-}
-.reader-btn>button{
+
+.reader-bottom>a{
     background-color: #ff6400;
     margin-left: 5px;
+    margin-right: 10px;
     padding: 15px;
     outline: none;
+    text-decoration: none;
+    color:#f7ebe8;
 }
-.reader-btn>button:hover{
+.reader-bottom>a:hover{
     background-color: #cc5200;
     border: 0;
     border-radius: 5px;
+    text-decoration: none;
+}
+
+.footer-box{
+    width: 100%;
+    margin-top: 50px;
+    padding: 50px 20px;
+    background-color: #ff6400;
+    display: flex;
+    align-items: center;
+}
+.footer-box>p{
+    color:#f7ebe8;
+    margin: 0;
+}
+
+.search-bar{
+    width: 100%;
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    padding: 25px;
+    transition: 1s;
+}
+
+.search-bar>form{
+    width: 100%;
+    display: flex;
+    align-items: center;
+    background-color: #252525;
+    border: 0;
+    border-radius: 5px;
+    margin: 0 auto;
+    padding:2px;
+    box-sizing: border-box;
+}
+.search-bar>form>input{
+    width: 100%;
+    border: 0;
+    background-color: #252525;
+    outline: none;
+    color: #f7ebe8;
+    box-sizing: border-box;
+    padding: 10px;
+}
+.search-bar>form>button{
+    background-color: #252525;
+    color: #f7ebe8;
+    transition: .5s;
+    padding: 10px 20px;
+    border:0;
+    border-left: 1px solid #f7ebe8;
+}
+.search-bar>form>button:hover{
+    transform: translateY(-2px);
 }
 
 
@@ -603,7 +666,13 @@ body {
         font-size: 1em;
     }
 
-
+    .genre-box{
+        justify-content: left;
+    }
+    .search-bar{
+        max-width: 600px;
+        margin: 0 auto;
+    }
 }
 
 /* Media Queries para Desktop */
@@ -667,5 +736,12 @@ body {
     }
     .reader-display>img{
         max-width: 100%;
+    }
+    .genre-box{
+        justify-content: left;
+    }
+    .search-bar{
+        max-width: 800px;
+        margin: 0 auto;
     }
 }

@@ -9,7 +9,7 @@
     <section class="reader">
 
         <div class="reader-top">
-            <h2>{{ data.manga }}</h2>
+            <a href="/manga/{{ data.manga_id }}"><h2>{{ data.manga }}</h2></a>
             <div class="reader-top-cap">
                 <h3>Capitulo {{ data.cap }}</h3>
                 <div class="read-mode">
@@ -26,15 +26,21 @@
             <a id="changenext"></a>
         </div>
         <div class="reader-bottom">
-            <h3>Fonte original: MangaDex</h3>
-            <div class="reader-btn">
-                <button><i class="fas fa-chevron-left"></i></button>
-                <button><i class="fas fa-chevron-right"></i></button>
-            </div>
+            <h5>Fonte original: MangaDex</h5>
+            {% if data.caps > data.index %}
+            <a href="/cap/{{ data.prev }}"><i class="fas fa-chevron-left"></i></a>
+            {% endif %}
+
+            {% if data.index > 0 %}
+            <a href="/cap/{{ data.next }}"><i class="fas fa-chevron-right"></i></a>
+            {% endif %}
+
         </div>
         <script>
+            var cap = '{{data.id}}';
             var pages = JSON.parse('{{ data.pages | tojson }}');
         </script>
+        <script src="{{ url_for('static', filename='js/reader.js') }}"></script>
     </section>
     {% include 'footer.html' %}
 </body>

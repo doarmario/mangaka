@@ -3,7 +3,14 @@ import datetime as dt
 import random as rd
 import markdown as md
 
-from app import cache
+from app import cache, db
+from app.models import Manga, Favorite, Readed, Chapter
+
+from flask_login import current_user
+from sqlalchemy.orm import aliased
+from sqlalchemy.sql import func
+
+import time
 
 
 class Mangas:
@@ -109,7 +116,7 @@ class Mangas:
         return  {"tag":"Recentes","itens":[{
             "title": i.title.get('en') or next(
                 (alt[lang] for alt in i.alt_titles for lang in self.langs if lang in alt),
-                None
+                "No title"
             ),
             "id":i.manga_id
             } for i in a]}
@@ -142,7 +149,7 @@ class Mangas:
                 "tag":t.name['en'],
                 "itens":[{
                     "title": i.title.get('en') or next(
-                        (alt[lang] for alt in i.alt_titles for lang in self.langs if lang in alt), None
+                        (alt[lang] for alt in i.alt_titles for lang in self.langs if lang in alt), "No title"
                         ),
                     "id":i.manga_id
                 } for i in d]
@@ -163,10 +170,56 @@ class Mangas:
             } for i in l]
         return data
 
-    def getMangaChapterList(self,manga_id):
+    def lista_ultimos_favoritos(self,  offset):
+        # Consultando os 20 últimos favoritos do usuário, ordenados por 'created_at' de forma decrescente
+        favoritos = Favorite.query.filter_by(user_id=current_user.id).order_by(Favorite.id.desc()).offset(offset).limit(20).all()
+        
+        # Montando a lista de favoritos no formato desejado
+        data = [{
+                "title": f"{fav.manga.title}",  # Ajuste conforme o campo correto para o título do manga
+                "id": fav.manga.uuid  # Usando o UUID do manga, altere conforme necessário
+            } for fav in favoritos]
+        return data
 
+    def continuar_lendo(self, offset):
+        # Subquery para obter o max updated_at por manga
+        subquery = (
+            db.session.query(
+                Chapter.manga_id.label("manga_id"),
+                func.max(Readed.updated_at).label("latest_read")
+            )
+            .join(Readed, Readed.chapter_id == Chapter.id)
+            .filter(Readed.user_id == current_user.id)
+            .group_by(Chapter.manga_id)
+            .subquery()
+        )
+
+        # Aliased para fazer o join correto
+        r2 = aliased(Readed)
+        c2 = aliased(Chapter)
+
+        chapters_read = (
+            db.session.query(r2)
+            .join(c2, r2.chapter_id == c2.id)
+            .join(subquery, (c2.manga_id == subquery.c.manga_id) & (r2.updated_at == subquery.c.latest_read))
+            .order_by(r2.updated_at.desc())
+            .offset(offset)
+            .limit(20)
+            .all()
+        )
+
+        data = [{
+            "title": read.chapter.manga.title,
+            "id": read.chapter.manga.uuid,
+            "chapter": read.chapter.uuid  # Aqui pega o UUID do capítulo lido
+        } for read in chapters_read]
+        
+        return data
+
+
+    
+    def getMangaChapterList(self, manga_id, is_read=True):
         key = f"{self.prefix}manga_{manga_id}_chapters"
-
         data = cache.get(key)
 
         if data is None:
@@ -176,12 +229,32 @@ class Mangas:
             )
             data = [
                 {
-                    "cap":cp[i]['chapters'][j]["chapter"],
-                    "cap_id":cp[i]['chapters'][j]['id']
-                } for i in cp for j in cp[i]["chapters"].keys()
+                    "cap": cp[i]['chapters'][j]["chapter"] if cp[i]['chapters'][j]['chapter'] != 'none' else str(n+1),
+                    "cap_id": cp[i]['chapters'][j]['id'],
+                    "is_readed": False
+                }
+                for i in cp for n,j in enumerate(cp[i]['chapters'].keys())
             ]
-            data.sort(key=lambda i:float(i["cap"]),reverse=True)
-            cache.set(key,data,timeout=900)
+            data.sort(key=lambda i: float(i["cap"]), reverse=True)
+            cache.set(key, data, timeout=900)
+
+        if current_user.is_authenticated and is_read:
+            # Etapa 1: coletar todos os UUIDs dos capítulos
+            all_cap_ids = [chapter["cap_id"] for chapter in data]
+
+            # Etapa 2: obter todos os capítulos lidos de uma vez
+            read_uuids = db.session.query(Chapter.uuid).join(Readed).filter(
+                Readed.user_id == current_user.id,
+                Chapter.uuid.in_(all_cap_ids)
+            ).all()
+
+            # Etapa 3: converter o resultado em um conjunto para busca rápida
+            read_uuids_set = set(uuid for (uuid,) in read_uuids)
+
+            # Etapa 4: atualizar os capítulos com base no conjunto
+            for chapter in data:
+                chapter["is_readed"] = chapter["cap_id"] in read_uuids_set
+
 
         return data
 
@@ -194,14 +267,32 @@ class Mangas:
         if data is None:
             cap = self.chapters.get_chapter_by_id(chapter_id=cap_id)
             manga = self.getManga(cap.manga_id)
+            caps = self.getMangaChapterList(cap.manga_id,is_read=False)
 
+            index = next((index for index, i in enumerate(caps) if i["cap_id"] == cap_id), None)
+            if  len(caps)-1 <= index:
+                prev = None
+            else:
+                prev = caps[index+1]["cap_id"]
+
+            if index < 0:
+                nxt = None
+            else:
+                nxt = caps[index-1]["cap_id"]
+                    
             data = {
+                "id":cap.chapter_id,
                 "cap":cap.chapter,
                 "pages": [f"/img/page/proxy?url={i}" for i in cap.fetch_chapter_images()],
                 "manga": manga.title.get('en') or next(
                     (alt[lang] for alt in manga.alt_title for lang in self.langs if lang in alt),
-                    None
-                )
+                    "No title"
+                ),
+                "manga_id":manga.manga_id,
+                "index":index,
+                "caps":len(caps)-1,
+                "prev": prev,
+                "next": nxt
             }
 
             cache.set(key,data,timeout=900)
@@ -214,20 +305,57 @@ class Mangas:
             "id":manga.manga_id,
             "title": manga.title.get('en') or next(
                     (alt[lang] for alt in manga.alt_title for lang in self.langs if lang in alt),
-                    None
+                    'No title'
                 ),
-            "sinopse": manga.description['en'],
-            "tags": [i.name['en'] for i in manga.tags],
+            "sinopse": manga.description.get('en') or next(
+                (alt[lang] for alt in manga.description for lang in self.langs if lang in alt),
+                "No description!"
+            ),
+            "tags": [i.name.get('en') for i in manga.tags],
             "caps":len(caps),
             "autor": ", ".join(
                 [self.author.get_author_by_id(i).name for i in manga.author_id]
             ),
             "ano":manga.year,
             "chapters":caps,
-            "status":manga.status
+            "status":manga.status,
+            "is_favorite": False
         }
+        # Atualizando o status de leitura dos capítulos após salvar no cache
+        if current_user.is_authenticated:
+            manga_id = data["id"]
+            # Verificando se o capítulo foi lido
+            is_fav = db.session.query(Favorite).join(Manga).filter(
+                Favorite.user_id == current_user.id,
+                Manga.uuid == manga_id  # Verificando pelo UUID do capítulo
+            ).first() is not None  # Se existir, o capítulo foi lido
+            data["is_favorite"] = is_fav
+
         return data
 
+    def searchMangaByTitle(self, title):
+
+        key = f"{self.prefix}search_{title}"
+
+        data = cache.get(key)
+
+        if data is None:
+
+            mangas = self.mangas.get_manga_list(
+                translatedLanguage=self.lang,
+                limit=self.limit,
+                title=title
+            )
+            data = [{
+                "title": m.title.get('en') or next(
+                    (alt[lang] for alt in m.alt_titles for lang in self.langs if lang in alt),
+                    None),
+                "id": m.manga_id  # Ou m.manga_id, dependendo de como o objeto Manga é estruturado
+            } for m in mangas]
+
+            cache.set(key,data,timeout=3600)
+        
+        return data
 
         
 

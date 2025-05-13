@@ -44,14 +44,28 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Verifica se a página atual é a última página
         if (currentPageIndex === totalImages - 1) {
-            fazerRequisicaoParaURLEspecifica();
+            setRead();
         }
     }
 
-    function fazerRequisicaoParaURLEspecifica() {
+    function setRead() {
         // Esta função pode fazer algo quando o usuário chegar na última página
-        console.log("Última página carregada, enviando requisição...");
-        // Aqui você pode adicionar código para fazer uma requisição para o servidor, como o exemplo anterior.
+        // Constrói a URL para a requisição
+        const urlEspecifica = "/cap/"+cap+"/readed";
+
+        // Faz a requisição AJAX para a URL específica
+        fetch(urlEspecifica, {
+            method: 'GET'
+            // Adicione quaisquer dados ou corpo da requisição, se necessário
+        })
+        .then(response => {
+            // Manipula a resposta da requisição
+            //if (response.ok) {
+            //    console.log("lido");
+            //} else {
+            //    console.error("Erro ao definir como lido", response.status);
+            //}
+        });
     }
 
     function updateMode() {
@@ -81,19 +95,22 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     function scrollHandler() {
-        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 600) {
-            console.log("Usuário está próximo do final da página");
+        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight-600) {
+            //console.log("Usuário está próximo do final da página");
     
             // Se estiver próximo do final da página, carrega duas páginas adicionais
             loadNextPages(2);
+            setTimeout(() => {}, 1000);
             
             // Verifica se o usuário está no final do capítulo
             if ((window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 100)) {
-                fazerRequisicaoParaURLEspecifica();
+                setRead();
+                setTimeout(() => {}, 1000);
             }
         } else {
             // Pré-carrega as próximas imagens enquanto o usuário rola para baixo
             preloadImages();
+            setTimeout(() => {}, 1000);
         }
     }
 

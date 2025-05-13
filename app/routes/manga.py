@@ -1,17 +1,24 @@
-from flask import Blueprint, render_template, redirect, url_for,flash,send_file, Response, request, stream_with_context
-from flask_login import login_user,current_user,logout_user
+from flask import Blueprint, render_template, redirect, url_for,flash,send_file, Response, request, stream_with_context, jsonify, g
+from flask_login import login_user,current_user,logout_user, login_required
 
-from app.models import User
+from app.models import User, Manga, Favorite, Readed, Chapter
+
 from app.libs.md import Mangas
+
+from app.forms import SearchForm
 
 from app import db, login_manager
 from app import cache
 
+
+from datetime import datetime
 from io import BytesIO
+
 
 import requests
 import hashlib
 import time
+import uuid
 
 site = Blueprint('user', __name__)
 
@@ -21,6 +28,11 @@ header = {
 }
 
 manga = Mangas()
+
+
+@site.before_request
+def before_request():
+    g.form = SearchForm()
 
 
 # Função para gerar chave de cache única por usuário
@@ -47,35 +59,29 @@ def Etag(content):
     return hashlib.sha1(content.encode()).hexdigest()
 
 
-
 def proxy(url):
     try:
-        r = session.get(url,headers=header)
+        r = session.get(url, headers=header)
 
         if r.status_code == 200:
-            response = send_file(BytesIO(r.content), mimetype='image/jpeg')
+            content = r.content
+            etag_value = Etag(url)  # Geração de um ETag único
 
-            # Cabeçalhos de cache
-            response.cache_control.max_age = 800  # Tempo máximo de cache (em segundos)
-            response.cache_control.public = True   # O conteúdo pode ser armazenado em cache publicamente
+            response = send_file(BytesIO(content), mimetype='image/jpeg')
+            response.cache_control.max_age = 3600*24
+            response.cache_control.public = True
+            response.set_etag(etag_value)
 
-            # Adiciona cabeçalhos 'ETag' e 'Last-Modified' para controle de cache
-            last_modified = time.gmtime()  # Você pode calcular isso com base na data de modificação real
-            response.last_modified = last_modified
-            response.set_etag(Etag(url))  # Geração de um ETag único (pode ser um hash do conteúdo)
-            
+            # Torna a resposta condicional
+            response.make_conditional(request)
+
             return response
         else:
-            print("error 200")
-            # Em caso de erro na requisição, envia a imagem estática
-            response = send_file('static/img/page.png', mimetype='image/jpeg')
-            return response
+            return send_file('static/img/page.png', mimetype='image/jpeg')
 
-    except Exception as e:
-        print("Erro:",e)
-        # Em caso de erro na requisição, envia a imagem estática
-        response = send_file('static/img/page.png', mimetype='image/jpeg')
-        return response
+    except Exception:
+        return send_file('static/img/page.png', mimetype='image/jpeg')
+
 
 
 @site.route('/img/page/proxy')
@@ -88,9 +94,14 @@ def pageproxy():
 
 @site.route('/img/cover/<uuid>')
 def coverproxy(uuid):
+    size = request.args.get("size")
     url = manga.id2Cover(uuid)
+    if size is not None:
+        url += f".{size}.jpg"
     return proxy(url)
 
+
+#routes
 
 @site.route('/')
 @site.route('/index')
@@ -114,26 +125,90 @@ def home():
             dall[c['tag']] = c['itens']
         
         # Armazena `dall` no cache por 5 minutos
-        cache.set(cache_key, dall, timeout=900)  # timeout=300 para 5 minutos
+        cache.set(cache_key, dall, timeout=1800)  # timeout=300 para 5 minutos
 
+    if current_user.is_authenticated:
+        d = {
+            "Lidos Recentemente":manga.continuar_lendo(0),
+            "Favoritos":manga.lista_ultimos_favoritos(0)   
+        }
+    else:
+        d = {}
 
-    return render_template('index.html',data=dall)
+    return render_template('index.html',data=dall,user_data=d)
+
 
 @site.route('/cap/<cap_id>')
 def mangaCap(cap_id):
     """
     ler capitulos especifico
     """
-    cache_key = f'cap_page_{cap_id}'
 
-    # Tenta pegar o conteúdo de `dall` do cache
-    dall = cache.get(cache_key)
-    
-    if dall is None:
-        dall = manga.getChapter(cap_id)
-        cache.set(cache_key,dall,timeout=900)
+    dall = manga.getChapter(cap_id)
 
     return render_template('cap.html',data=dall)
+
+
+@site.route('/cap/<cap_id>/readed')
+@login_required
+def mangaCapReaded(cap_id):
+    """
+        lista de lidos
+    """
+    if current_user.is_authenticated:
+        data = manga.getChapter(cap_id)
+
+        m = Manga.query.filter_by(uuid=data['manga_id']).first()
+
+        if not m:
+            m = Manga(
+                uuid=uuid.UUID(data['manga_id']),
+                title=data['manga']
+            )
+            db.session.add(m)
+            db.session.commit()
+
+        c = Chapter.query.filter_by(uuid=cap_id).first()
+
+        if not c:
+            c = Chapter(
+                uuid=cap_id,
+                manga_id=m.id
+            )
+            db.session.add(c)
+            db.session.commit()
+
+        read = Readed.query.filter_by(
+            user_id=current_user.id,
+            chapter_id=c.id
+        ).first()
+
+        if read:
+            read.updated_at = datetime.utcnow()
+            db.session.commit()
+
+        else:
+            read = Readed(
+                user_id=current_user.id,
+                chapter_id=c.id
+            )
+            db.session.add(read)
+            db.session.commit()
+
+        response = {
+            "status": "success",
+            "message": "Request was successful"
+        }
+        
+        # Retornando o JSON com o status 200 (default)
+        return jsonify(response)
+    
+    response = {
+        "status": "error",
+        "message": "Unauthorized access"
+    }
+    return jsonify(response), 401
+        
 
 @site.route('/mangas',defaults={'page':1})
 @site.route('/mangas/<int:page>')
@@ -144,29 +219,77 @@ def mangaList(page):
     page = 0 if page <= 0 else page-1
     offset = manga.limit * (page)
 
-    cache_key = f"manga_page_{page}"
-
-     # Tenta pegar o conteúdo de `dall` do cache
-    dall = cache.get(cache_key)
-
-    if dall is None:
-        dall = manga.listaGeral(offset)
+    dall = manga.listaGeral(offset)
         
-        # Armazena `dall` no cache por 5 minutos
-        cache.set(cache_key, dall, timeout=3600)  # timeout=300 para 5 minutos
-
-    return render_template('list.html',data=dall,page=page)
+    return render_template('list.html',data=dall,page=page,paginator=True)
 
 @site.route('/manga/<manga_id>')
 def manga_sinopse(manga_id):
     """
     abre um titulo especifico
     """
-    cache_key = f"manga_info_{manga_id}"
-
-    dall = cache.get(cache_key)
-    if dall is None:
-        dall = manga.showManga(manga_id)
-        cache.set(cache_key,dall,timeout=900)
+    dall = manga.showManga(manga_id)
 
     return render_template('manga.html', data=dall)
+
+
+@site.route('/manga/<manga_id>/favorite')
+@login_required
+def mangaFav(manga_id):
+    if current_user.is_authenticated:
+        data = manga.showManga(manga_id=manga_id)
+
+        m = Manga.query.filter_by(uuid=data['id']).first()
+
+        if not m:
+            m = Manga(
+                uuid=data['id'],
+                title=data['title']
+            )
+            db.session.add(m)
+            db.session.commit()
+
+        favorite = Favorite.query.filter_by(user_id=current_user.id,manga_id=m.id).first()
+        if not favorite:
+            status = "added"
+            favorite = Favorite(
+                user_id=current_user.id,
+                manga_id=m.id
+            )
+            db.session.add(favorite)
+            db.session.commit()
+        else:
+            status = "deleted"
+            db.session.delete(favorite)
+            db.session.commit()
+        
+        response = {
+            "status": "success",
+            "message": status
+        }
+        
+        # Retornando o JSON com o status 200 (default)
+        return jsonify(response)
+    
+    response = {
+        "status": "error",
+        "message": "Unauthorized access"
+    }
+    return jsonify(response), 401
+
+
+@site.route('/search',defaults={'page':1},methods=["GET","POST"])
+@site.route('/search/<int:page>')
+def searchTitles(page):
+    if g.form.validate_on_submit():
+        page = 0 if page <= 0 else page-1
+        offset = manga.limit * (page)
+
+        search_query = g.form.query.data
+
+        dall = manga.searchMangaByTitle(search_query)
+            
+        return render_template('list.html',data=dall,page=page,paginator=False)
+    else:
+        return redirect(url_for('user.mangaList'))
+

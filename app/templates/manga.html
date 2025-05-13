@@ -6,6 +6,8 @@
     {% include 'menu.html' %}
 
 
+    {% include 'search.html' %}
+    
     <section class="manga-page">
         <div class="manga-header">
             <img src="/img/cover/{{ data.id }}" alt="Capa do Mangá" loading="lazy">
@@ -29,9 +31,15 @@
         <div class="chapter-list">
             <div class="chapter-menu">
                 <h2>Capítulos</h2>
-                <button class="save-btn">
-                    <i class="fa-solid fa-bookmark"></i>
+                {% if current_user.is_authenticated %}
+                <button class="save-btn" id="favorite-btn">
+                    {% if data.is_favorite %}
+                        <i class="fa-regular fa-star"></i>
+                    {% else %}
+                        <i class="fa-solid fa-star"></i>
+                    {% endif %}
                 </button>
+                {% endif %}
                 <button class="filter-btn" id="chapter-filter">
                     <i class="fa-solid fa-arrow-up-wide-short"></i>
                 </button>
@@ -40,15 +48,20 @@
             <ul>
                 {% for i in data.chapters %}
                 <a href="/cap/{{ i.cap_id }}">
-                    <li>
-                        <p>Capítulo {{ i.cap }}</p> 
-                        <!--<span class="user-state">Lido</span>-->
+                    <li id="{{ i.cap_id }}" class="{% if i.is_readed %}read{% endif %}">
+                        <p>Capítulo {{ i.cap }}</p>
+                        {% if i.is_readed %}
+                            <span class="user-state">Lido</span>
+                        {% endif %}
                     </li>
                 </a>
                 {% endfor %}
             </ul>
 
         </div>
+        <script>
+            var manga_id = '{{ data.id }}';
+        </script>
     </section>
 
 

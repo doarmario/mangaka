@@ -5,6 +5,37 @@
 
     {% include 'menu.html' %}
 
+    {% include 'search.html' %}
+
+
+    {% if current_user.is_authenticated %}
+        {% for j in user_data.keys() %}
+            {% if user_data[j]|length > 0 %}
+            <section class="slider">
+
+                <div class="slider-title">
+                    <h2>{{ j }}</h2>
+                </div>
+
+                <div class="slider-itens">
+
+                        {% for i in user_data[j] %}
+                        <a href="/manga/{{ i.id }}#{{ i.chapter }}">
+                        <div class="item">
+                            <img src="/img/cover/{{ i.id }}?size=256" alt="{{ i.title }}" fetchpriority="high">
+                            <h3> {{ i.title }} </h3>
+                        </div>
+                        </a>
+                        {% endfor %}
+                    
+
+
+                </div>
+
+            </section>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
 
 
     {% for j in data.keys() %}
@@ -19,7 +50,7 @@
                 {% for i in data[j] %}
                 <a href="/manga/{{ i.id }}">
                 <div class="item">
-                    <img src="/img/cover/{{ i.id }}" alt="{{ i.title }}" loading="lazy">
+                    <img src="/img/cover/{{ i.id }}?size=256" alt="{{ i.title }}" fetchpriority="high">
                     <h3> {{ i.title }} </h3>
                 </div>
                 </a>

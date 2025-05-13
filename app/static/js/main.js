@@ -1,4 +1,35 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const favoriteBtn = document.getElementById('favorite-btn');
+    
+    if (favoriteBtn) {
+        // Adiciona o evento de clique ao botão
+        favoriteBtn.addEventListener('click', () => {
+            // URL para a requisição
+            const url = '/manga/'+manga_id+'/favorite'; // Exemplo de URL, altere conforme necessário
+            //Realiza a requisição usando Fetch API
+            fetch(url, {
+                method: 'GET',
+            })
+            .then(response => {
+                if (response.ok){
+                    return response.json();
+                }
+                else{
+                    return {"status":"Failed","message":"something fail."}
+                }
+                }).then(data =>{
+                if (data.status == "success" ){
+                    if (data.message == "added"){
+                        favoriteBtn.innerHTML = '<i class="fa-regular fa-star"></i>'
+                    }
+                    else{
+                        favoriteBtn.innerHTML = '<i class="fa-solid fa-star"></i>'
+                    }
+                }
+            })
+
+        });
+    }
     const dropBtn = document.getElementById("drop-btn");
     const menuView = document.getElementById("menu-view");
 
@@ -32,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function sortList(descending) {
-        const listItems = Array.from(chapterList.querySelectorAll('li')); // Pega todos os itens <li> da lista
+        const listItems = Array.from(chapterList.querySelectorAll('a')); // Pega todos os itens <li> da lista
         listItems.sort((a, b) => {
             // Extraímos o número do capítulo, garantindo que seja tratado como um número
             const capA = parseFloat(a.querySelector('p').textContent.replace('Capítulo ', '').trim());
