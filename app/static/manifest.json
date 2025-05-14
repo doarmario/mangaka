@@ -1,6 +1,6 @@
 {
     "name": "Mangaka",
-    "short_name": "App",
+    "short_name": "Mangaka",
     "description": "Leitor de Manga.",
     "start_url": "/",
     "display": "standalone",
