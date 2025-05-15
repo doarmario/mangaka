@@ -4,7 +4,7 @@
     "description": "Leitor de Manga.",
     "start_url": "/",
     "display": "standalone",
-    "background_color": "#ff6400",
+    "background_color": "#292929",
     "theme_color": "#ff6400",
     "icons": [
         {

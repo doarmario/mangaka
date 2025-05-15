@@ -33,6 +33,7 @@ manga = Mangas()
 @site.before_request
 def before_request():
     g.form = SearchForm()
+    print("starting")
 
 
 # Função para gerar chave de cache única por usuário
@@ -68,8 +69,9 @@ def proxy(url):
             etag_value = Etag(url)  # Geração de um ETag único
 
             response = send_file(BytesIO(content), mimetype='image/jpeg')
-            response.cache_control.max_age = 3600*24
+            response.cache_control.max_age = 3600 * 24  # 1 dia
             response.cache_control.public = True
+            response.cache_control.immutable = True     # adiciona o immutable
             response.set_etag(etag_value)
 
             # Torna a resposta condicional
@@ -77,10 +79,10 @@ def proxy(url):
 
             return response
         else:
-            return send_file('static/img/page.png', mimetype='image/jpeg')
+            return send_file('static/img/page.png', mimetype='image/jpeg'),503
 
     except Exception:
-        return send_file('static/img/page.png', mimetype='image/jpeg')
+        return send_file('static/img/page.png', mimetype='image/jpeg'),503
 
 
 

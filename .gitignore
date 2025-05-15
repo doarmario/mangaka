@@ -16,6 +16,6 @@ nginx/
 docker-compose.yml
 
 *.log
-
+*.sh
 *.service
 

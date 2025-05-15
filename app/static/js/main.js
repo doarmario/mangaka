@@ -1,4 +1,42 @@
 document.addEventListener("DOMContentLoaded", () => {
+
+    function loadImage(img) {
+        return new Promise((resolve, reject) => {
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(img);
+        img.src = img.dataset.src;
+        });
+    }
+
+    async function loadAllImages() {
+        const images = [...document.querySelectorAll('img[data-src]')];
+        const promises = images.map(img => 
+        loadImage(img)
+            .then(() => img.removeAttribute('data-src'))
+            .catch(() => console.error('Erro ao carregar imagem:', img.dataset.src))
+        );
+        await Promise.all(promises);
+    }
+
+    loadAllImages();
+
+    function sortList(descending) {
+        const listItems = Array.from(chapterList.querySelectorAll('a')); // Pega todos os itens <li> da lista
+        listItems.sort((a, b) => {
+            // Extraímos o número do capítulo, garantindo que seja tratado como um número
+            const capA = parseFloat(a.querySelector('p').textContent.replace('Capítulo ', '').trim());
+            const capB = parseFloat(b.querySelector('p').textContent.replace('Capítulo ', '').trim());
+
+            // Agora a comparação é feita corretamente com números decimais
+            return descending ? capB - capA : capA - capB;
+        });
+
+        // Reordena os itens no DOM
+        listItems.forEach(item => chapterList.appendChild(item));
+    }
+
+
+
     const favoriteBtn = document.getElementById('favorite-btn');
     
     if (favoriteBtn) {
@@ -40,9 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
         console.error("Elemento não encontrado:", { dropBtn, menuView });
     }
-});
 
-document.addEventListener('DOMContentLoaded', function() {
     const filterButton = document.getElementById('chapter-filter');
     const icon = filterButton.querySelector('i');
     const chapterList = document.querySelector('.chapter-list ul'); // Pega a lista de capítulos (ul)
@@ -62,18 +98,5 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    function sortList(descending) {
-        const listItems = Array.from(chapterList.querySelectorAll('a')); // Pega todos os itens <li> da lista
-        listItems.sort((a, b) => {
-            // Extraímos o número do capítulo, garantindo que seja tratado como um número
-            const capA = parseFloat(a.querySelector('p').textContent.replace('Capítulo ', '').trim());
-            const capB = parseFloat(b.querySelector('p').textContent.replace('Capítulo ', '').trim());
 
-            // Agora a comparação é feita corretamente com números decimais
-            return descending ? capB - capA : capA - capB;
-        });
-
-        // Reordena os itens no DOM
-        listItems.forEach(item => chapterList.appendChild(item));
-    }
 });

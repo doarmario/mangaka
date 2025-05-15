@@ -17,7 +17,7 @@
             {% for i in data %}
             <a href="/manga/{{ i.id }}">
                 <div class="grid-item">
-                    <img src="/img/cover/{{i.id}}?size=256" alt="Algum mangá ai" loading="lazy" fetchpriority="low">
+                    <img  src="{{ url_for('static', filename='img/page.png') }}" data-src="/img/cover/{{ i.id }}?size=256" alt="{{ i.title }}">
                     <h3>{{ i.title }}</h3>
                 </div>
             </a>

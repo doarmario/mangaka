@@ -594,13 +594,13 @@ body {
     border: 0;
     background-color: #252525;
     outline: none;
-    color: #f7ebe8;
+    color: #ff6400;
     box-sizing: border-box;
     padding: 10px;
 }
 .search-bar>form>button{
     background-color: #252525;
-    color: #f7ebe8;
+    color: #ff6400;
     transition: .5s;
     padding: 10px 20px;
     border:0;

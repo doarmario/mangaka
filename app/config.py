@@ -30,6 +30,9 @@ class Config:
     CACHE_TYPE = "redis"
     CACHE_REDIS_URL = os.getenv('REDIS_HOST_CACHE')
     CACHE_DEFAULT_TIMEOUT = 3600
+    CACHE_REDIS_TIMEOUT = 5
+    CACHE_REDIS_SOCKET_TIMEOUT = 10
+
 
     #session
     SESSION_TYPE = "redis"
@@ -37,6 +40,7 @@ class Config:
     SESSION_USE_SIGNER = True
     SESSION_KEY_PREFIX = "mangaka_"
     SESSION_REDIS = os.getenv('REDIS_HOST_SESSION')
+    
 
     #
     COMPRESS_MIMETYPE = ['*/*']

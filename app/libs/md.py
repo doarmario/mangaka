@@ -34,19 +34,13 @@ class Mangas:
 
     def listAll(self,offset):
 
-        key = f"{self.prefix}listall_{offset}"
 
-        data = cache.get(key)
-
-        if data is None:
-            data = self.mangas.get_manga_list(
-                translatedLanguage=self.lang,
-                limit=self.limit,
-                offset=offset
-            )
+        data = self.mangas.get_manga_list(
+            translatedLanguage=self.lang,
+            limit=self.limit,
+            offset=offset
+        )
         
-            cache.set(key,data,timeout=3600)
-
         return data
 
     def listRecents(self):
@@ -160,14 +154,20 @@ class Mangas:
         return data
 
     def listaGeral(self,offset):
-        l = self.listAll(offset)
-        data = [{
-                "title": i.title.get('en') or next(
-                    (alt[lang] for alt in i.alt_titles for lang in self.langs if lang in alt),
-                     None),
-                "id":i.manga_id
 
-            } for i in l]
+        key = f"{self.prefix}listall_{offset}"
+
+        data = cache.get(key)
+        if data is None:
+            l = self.listAll(offset)
+            data = [{
+                    "title": i.title.get('en') or next(
+                        (alt[lang] for alt in i.alt_titles for lang in self.langs if lang in alt),
+                        None),
+                    "id":i.manga_id
+
+                } for i in l]
+            cache.set(key,data,timeout=3600)
         return data
 
     def lista_ultimos_favoritos(self,  offset):
