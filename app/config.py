@@ -39,7 +39,7 @@ class Config:
     SESSION_PREMANENT = False
     SESSION_USE_SIGNER = True
     SESSION_KEY_PREFIX = "mangaka_"
-    SESSION_REDIS = os.getenv('REDIS_HOST_SESSION')
+    SESSION_REDIS = redis.from_url(os.getenv('REDIS_HOST_SESSION'))
     
 
     #

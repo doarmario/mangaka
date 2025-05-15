@@ -36,7 +36,7 @@ def create_app():
     login_manager.init_app(app)
     migrate.init_app(app,db)
     cache.init_app(app)
-    #session.init_app(app)
+    session.init_app(app)
     compress.init_app(app)
 
     from app.models import User
