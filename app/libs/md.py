@@ -158,6 +158,7 @@ class Mangas:
         key = f"{self.prefix}listall_{offset}"
 
         data = cache.get(key)
+        
         if data is None:
             l = self.listAll(offset)
             data = [{
@@ -167,6 +168,7 @@ class Mangas:
                     "id":i.manga_id
 
                 } for i in l]
+
             cache.set(key,data,timeout=3600)
         return data
 
