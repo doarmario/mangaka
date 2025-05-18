@@ -241,7 +241,7 @@ class Mangas:
 
         if current_user.is_authenticated and is_read:
             # Etapa 1: coletar todos os UUIDs dos capítulos
-            all_cap_ids = [chapter["cap_id"] for chapter in data]
+            all_cap_ids = [str(chapter["cap_id"]) for chapter in data]
 
             # Etapa 2: obter todos os capítulos lidos de uma vez
             read_uuids = db.session.query(Chapter.uuid).join(Readed).filter(
@@ -249,15 +249,16 @@ class Mangas:
                 Chapter.uuid.in_(all_cap_ids)
             ).all()
 
-            # Etapa 3: converter o resultado em um conjunto para busca rápida
-            read_uuids_set = set(uuid for (uuid,) in read_uuids)
+            # Etapa 3: converter para conjunto de strings
+            read_uuids_set = set(str(uuid) for (uuid,) in read_uuids)
 
-            # Etapa 4: atualizar os capítulos com base no conjunto
+            # Etapa 4: marca os capítulos lidos (em ordem da lista original)
             for chapter in data:
                 chapter["is_readed"] = chapter["cap_id"] in read_uuids_set
 
 
         return data
+
 
     def getChapter(self,cap_id):
 
@@ -329,7 +330,8 @@ class Mangas:
             is_fav = db.session.query(Favorite).join(Manga).filter(
                 Favorite.user_id == current_user.id,
                 Manga.uuid == manga_id  # Verificando pelo UUID do capítulo
-            ).first() is not None  # Se existir, o capítulo foi lido
+            ).first()  # Se existir, o capítulo foi lido
+            print(is_fav)
             data["is_favorite"] = is_fav
         return data
 
