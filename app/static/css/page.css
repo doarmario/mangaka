@@ -1,8 +1,17 @@
 body {
-    background-color: #292929;
+    background-color: var(--subc1);
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
+    min-height: 100vh;
+}
+
+.display{
+    width: 100%;
+    min-height: 100vh;
+    margin:0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 .slider {
@@ -22,7 +31,7 @@ body {
 }
 
 .slider-title h2 {
-    color: #f7ebe8; /* Cor do texto */
+    color: var(--extr1); /* Cor do texto */
     margin: 0;
 }
 
@@ -39,11 +48,11 @@ body {
 .slider-itens::-webkit-scrollbar {
     height: 5px; /* Ajusta o tamanho da barra de rolagem para desktop */
     border-radius: 10px;
-    background-color: #171717;
+    background-color: var(--subc3);
 }
 
 .slider-itens::-webkit-scrollbar-thumb {
-    background-color: #cc5200; /* Cor mais escura da barra de rolagem */
+    background-color: var(--main2); /* Cor mais escura da barra de rolagem */
     border-radius: 10px;
 }
 
@@ -53,11 +62,11 @@ body {
 
 .item {
     width: 200px;
-    background-color: #252525;
+    background-color: var(--subc2);
     text-align: center;
     box-sizing: border-box;
     border-radius: 5px; /* Bordas arredondadas */
-    box-shadow: 0 0 9px #171717; /* Sombra */
+    box-shadow: 0 0 9px var(--subc3); /* Sombra */
     scroll-snap-align: start;
     margin-right: 15px;
     transition: .2s;
@@ -79,7 +88,7 @@ body {
 
 .item h3 {
     margin-top: 0px;
-    color: #f7ebe8; /* Cor do texto */
+    color: var(--extr1); /* Cor do texto */
     font-size: 1rem;
     white-space: nowrap;
     overflow: hidden;
@@ -95,7 +104,7 @@ body {
     top: 50%;
     transform: translateY(-50%);
     background: rgba(0, 0, 0, 0.5);
-    color: #fff;
+    color: var(--extr1);
     font-size: 2rem;
     border: none;
     padding: 10px;
@@ -133,7 +142,7 @@ body {
 }
 
 .grid-title h2 {
-    color: #f7ebe8; /* Cor do texto */
+    color: var(--extr1); /* Cor do texto */
     margin: 0;
 }
 
@@ -145,11 +154,11 @@ body {
 }
 
 .grid-item {
-    background-color: #252525; /* Cor principal */
+    background-color: var(--subc2); /* Cor principal */
     text-align: center;
     box-sizing: border-box;
     border-radius: 5px; /* Bordas arredondadas para cada item */
-    box-shadow: 0 0 9px #171717; /* Sombra */
+    box-shadow: 0 0 9px var(--subc3); /* Sombra */
 }
 
 .grid-item img {
@@ -163,7 +172,7 @@ body {
 
 .grid-item h3 {
     margin-top: 10px;
-    color: #f7ebe8; /* Cor do texto */
+    color: var(--extr1); /* Cor do texto */
     font-size: 1rem;
     white-space: nowrap;
     overflow: hidden;
@@ -180,12 +189,12 @@ body {
 }
 
 .grid-items::-webkit-scrollbar-thumb {
-    background-color: #ff6400; /* Cor da barra de rolagem */
+    background-color: var(--main1); /* Cor da barra de rolagem */
     border-radius: 10px;
 }
 
 .grid-items::-webkit-scrollbar-track {
-    background-color: #292929; /* Cor do fundo da barra de rolagem */
+    background-color: var(--subc1); /* Cor do fundo da barra de rolagem */
     border-radius: 10px;
 }
 
@@ -196,14 +205,14 @@ body {
     align-items: center;
     gap: 20px;
     padding: 20px;
-    color:#f7ebe8;
+    color:var(--extr1);
 }
 
 .paginator a {
     padding: 10px 20px;
-    background-color: #ff6400;
+    background-color: var(--main1);
     border: none;
-    color: #f7ebe8;
+    color: var(--extr1);
     font-size: 1rem;
     cursor: pointer;
     border-radius: 5px;
@@ -213,7 +222,7 @@ body {
 }
 
 .paginator button:hover {
-    background-color: #cc5200;
+    background-color: var(--main2);
 }
 
 
@@ -252,14 +261,14 @@ body {
 
 .manga-info h1 {
     font-size: 1.5em;
-    color: #333;
+    color: var(--subc1);
     margin-bottom: 10px;
-    color:#ff6400;
+    color:var(--main1);
 }
 
 .synopsis {
     font-size: 1em;
-    color: #f7ebe8;
+    color: var(--extr1);
     margin: 10px 0;
     text-align: justify;
     word-wrap: break-word;
@@ -271,13 +280,13 @@ body {
 .details {
     list-style: none;
     padding: 0;
-    color: #444;
+    color: var(--extr2);
     text-align: left;
 }
 
 .details li {
     font-size: 1em;
-    color:#f7ebe8;
+    color:var(--extr1);
 }
 .details li strong{
     margin-right: 5px;
@@ -297,14 +306,15 @@ body {
     margin: 5px 2px;
     border:0;
     border-radius:5px;
-    background-color: #ff6400;
-    color: #f7ebe8;
+    background-color: var(--main1);
+    color: var(--subc1);
     text-decoration: none;
     transition: .5s;
+    font-weight: bolder;
 }
 .genre:hover{
     cursor: pointer;
-    background-color: #cc5200;
+    background-color: var(--main2);
     text-decoration: none;
 }
 
@@ -314,13 +324,13 @@ body {
     width: 100%;
     display: flex;
     align-items: center;
-    border-bottom: 2px solid #ff6400;
+    border-bottom: 2px solid var(--main1);
     padding-bottom: 5px;
     margin-bottom: 15px;
 }
 .chapter-menu>h2 {
     font-size: 1.6em;
-    color: #f7ebe8;
+    color: var(--extr1);
     font-weight: bold;
     margin: 0 auto 0 0;
 }
@@ -338,8 +348,9 @@ body {
     touch-action: manipulation;
 }
 
-.chapter-menu>button>i{
-    color: #ff6400
+.chapter-menu>button>span{
+    color: var(--main1);
+    transition: .5s;
 }
 
 .chapter-list ul {
@@ -354,7 +365,7 @@ body {
     margin-bottom: 10px;
     display: flex;
     align-items: center;
-    background-color: #ff6400;
+    background-color: var(--main1);
     padding: 12px;
     border-radius: 10px;
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
@@ -362,13 +373,13 @@ body {
 }
 
 .chapter-list li:hover {
-    background-color: #cc5200;
+    background-color: var(--main2);
     cursor: pointer;
 }
 
 .chapter-list li p {
     text-decoration: none;
-    color: #f7ebe8;
+    color: var(--subc1);
     font-size: 1.1em;
     font-weight: bold;
     margin: 0 auto 0 20px;
@@ -377,7 +388,7 @@ body {
 /* Ajuste de espaçamento e estilo da lista */
 .chapter-list li span {
     font-size: 0.9em;
-    color: #f7ebe8;
+    color: var(--extr1);
     padding: 3px 8px;
     border-radius: 5px;
 
@@ -385,12 +396,12 @@ body {
 
  /* Estilo de capítulos lidos */
  .chapter-list li.read {
-    background-color: #444; /* Cor mais suave para capítulos lidos */
+    background-color: var(--extr2); /* Cor mais suave para capítulos lidos */
     opacity: 0.7; /* Reduz a opacidade para indicar que foi lido */
 }
 
 .chapter-list li.read a {
-    color: #aaa; /* Cor mais suave para links de capítulos lidos */
+    color: var(--extr3); /* Cor mais suave para links de capítulos lidos */
     text-decoration: line-through; /* Riscado para indicar lido */
 }
 
@@ -413,13 +424,13 @@ body {
 }
 
 .reader-top>a>h2{
-    color: #f7ebe8;
+    color: var(--extr1);
     padding: 5px 10px;
     margin: 0;
 }
 
 .reader-top-cap{
-    background-color: #ff6400;
+    background-color: var(--main1);
     padding: 5px;
     display: flex;
     align-items: center;
@@ -438,7 +449,7 @@ body {
     margin-right: 5px;
 }
 .read-mode>p{
-    color: #f7ebe8;
+    color: var(--extr1);
     background-color: transparent;
     font-weight: bolder;
     margin: 0px 4px;
@@ -448,7 +459,7 @@ body {
     height: 25px;
     -webkit-appearance: none;
     appearance: none;
-    background: #292929;
+    background: var(--subc1);
     border: 0;
     border-radius: 50px;
     outline: none;
@@ -470,7 +481,7 @@ body {
     height: 20px;
     width: 20px;
     border-radius: 50%;
-    background: #cc5200;
+    background: var(--main2);
     transition: 0.3s;
     top: 50%;
     left: 3px;
@@ -530,27 +541,27 @@ body {
 
 .reader-bottom{
     width: 100%;
-    background-color: #ff6400;
+    background-color: var(--main1);
     display: flex;
     align-items: center;
     border-radius: 0 0 5px 5px;
 }
 .reader-bottom>h5{
     margin: 0 auto 0 10px;
-    color: #f7ebe8;
+    color: var(--subc1);
 }
 
 .reader-bottom>a{
-    background-color: #ff6400;
+    background-color: var(--main1);
     margin-left: 5px;
     margin-right: 10px;
     padding: 15px;
     outline: none;
     text-decoration: none;
-    color:#f7ebe8;
+    color:var(--subc1);
 }
 .reader-bottom>a:hover{
-    background-color: #cc5200;
+    background-color: var(--main2);
     border: 0;
     border-radius: 5px;
     text-decoration: none;
@@ -560,54 +571,43 @@ body {
     width: 100%;
     margin-top: 50px;
     padding: 50px 20px;
-    background-color: #ff6400;
+    background-color: var(--main1);
     display: flex;
     align-items: center;
+    position: static;
 }
 .footer-box>p{
-    color:#f7ebe8;
+    color:var(--subc1);
     margin: 0;
 }
 
-.search-bar{
-    width: 100%;
-    background-color: transparent;
-    display: flex;
+
+#btnTop {
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    z-index: 99;
+    background-color: var(--main1);
+    color: var(--subc1);
+    border: none;
+    outline: none;
+    padding: 15px;
+    margin:0;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    transition: background-color 0.3s, transform 0.2s ease;
+    display: none;
     align-items: center;
-    padding: 25px;
-    transition: 1s;
+}
+#btmTop>span{
+    margin:0;
 }
 
-.search-bar>form{
-    width: 100%;
-    display: flex;
-    align-items: center;
-    background-color: #252525;
-    border: 0;
-    border-radius: 5px;
-    margin: 0 auto;
-    padding:2px;
-    box-sizing: border-box;
-}
-.search-bar>form>input{
-    width: 100%;
-    border: 0;
-    background-color: #252525;
-    outline: none;
-    color: #ff6400;
-    box-sizing: border-box;
-    padding: 10px;
-}
-.search-bar>form>button{
-    background-color: #252525;
-    color: #ff6400;
-    transition: .5s;
-    padding: 10px 20px;
-    border:0;
-    border-left: 1px solid #f7ebe8;
-}
-.search-bar>form>button:hover{
-    transform: translateY(-2px);
+#btnTop:hover {
+    background-color: var(--main2);
+    transform: scale(1.1);
 }
 
 
@@ -668,10 +668,6 @@ body {
 
     .genre-box{
         justify-content: left;
-    }
-    .search-bar{
-        max-width: 600px;
-        margin: 0 auto;
     }
 }
 
@@ -739,9 +735,5 @@ body {
     }
     .genre-box{
         justify-content: left;
-    }
-    .search-bar{
-        max-width: 800px;
-        margin: 0 auto;
     }
 }

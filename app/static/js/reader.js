@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", function() {
     let currentMode = localStorage.getItem("mode") || "páginas"; // Recupera o modo armazenado no localStorage ou define como "páginas"
     let loadedPages = {}; // Armazena as páginas já carregadas
     let imageCache = {}; // Armazena as imagens pré-carregadas
+    let is_readed = false;
 
 
     // Define o modo inicial no toggle
@@ -44,6 +45,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Verifica se a página atual é a última página
         if (currentPageIndex === totalImages - 1) {
+            console.log(is_readed);
             setRead();
         }
     }
@@ -54,18 +56,21 @@ document.addEventListener("DOMContentLoaded", function() {
         const urlEspecifica = "/cap/"+cap+"/readed";
 
         // Faz a requisição AJAX para a URL específica
-        fetch(urlEspecifica, {
-            method: 'GET'
-            // Adicione quaisquer dados ou corpo da requisição, se necessário
-        })
-        .then(response => {
-            // Manipula a resposta da requisição
-            //if (response.ok) {
-            //    console.log("lido");
-            //} else {
-            //    console.error("Erro ao definir como lido", response.status);
-            //}
-        });
+        if (is_readed == false){
+            fetch(urlEspecifica, {
+                method: 'GET'
+                // Adicione quaisquer dados ou corpo da requisição, se necessário
+            })
+            .then(response => {
+                // Manipula a resposta da requisição
+                if (response.ok) {
+                    is_readed = true;
+                }
+                //} else {
+                //    console.error("Erro ao definir como lido", response.status);
+                //}
+            });
+    }
     }
 
     function updateMode() {
@@ -95,7 +100,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     function scrollHandler() {
-        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight-600) {
+        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight/4) {
             //console.log("Usuário está próximo do final da página");
     
             // Se estiver próximo do final da página, carrega duas páginas adicionais
@@ -104,6 +109,7 @@ document.addEventListener("DOMContentLoaded", function() {
             
             // Verifica se o usuário está no final do capítulo
             if ((window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 100)) {
+                console.log(is_readed);
                 setRead();
                 setTimeout(() => {}, 1000);
             }

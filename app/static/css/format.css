@@ -1,7 +1,37 @@
 /* Reset e estilo básico global */
 
 :root{
-    --white:
+    /* start pack color
+    --extr1: #f7ebe8;
+    --extr2: #444444;
+    --extr3: #aaaaaa;
+    --main1: #ff6400;
+    --main2: #cc5200;
+    --subc1: #292929;
+    --subc2: #252525;
+    --subc3: #171717;
+    */
+
+    /* possivel theme
+    --extr1: #171717;
+    --extr2: #444444;
+    --extr3: #aaaaaa;
+    --main1: #ff6400;
+    --main2: #cc5200;
+    --subc1: #f7ebe8;
+    --subc2: #d1d1d1;
+    --subc3: #c4bab8;
+    */
+
+    /**/
+    --extr1: #f7ebe8;
+    --extr2: #444444;
+    --extr3: #aaaaaa;
+    --main1: #ff6400;
+    --main2: #cc5200;
+    --subc1: #292929;
+    --subc2: #252525;
+    --subc3: #171717;
 }
 * {
     margin: 0;
@@ -15,6 +45,7 @@ body {
     background-color: #f4f4f9; /* Cor de fundo */
     color: #333; /* Cor do texto */
     line-height: 1.6; /* Espaçamento entre as linhas */
+    overflow-x: hidden;
 }
 
 /* Estilos para cabeçalhos */

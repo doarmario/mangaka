@@ -58,10 +58,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 }).then(data =>{
                 if (data.status == "success" ){
                     if (data.message == "added"){
-                        favoriteBtn.innerHTML = '<i class="fa-regular fa-star"></i>'
+                        favoriteBtn.innerHTML = '<span class="material-icons-round">favorite</span>'
                     }
                     else{
-                        favoriteBtn.innerHTML = '<i class="fa-solid fa-star"></i>'
+                        favoriteBtn.innerHTML = '<span class="material-icons-round">favorite_border</span>'
                     }
                 }
             })
@@ -79,24 +79,50 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error("Elemento não encontrado:", { dropBtn, menuView });
     }
 
-    const filterButton = document.getElementById('chapter-filter');
-    const icon = filterButton.querySelector('i');
-    const chapterList = document.querySelector('.chapter-list ul'); // Pega a lista de capítulos (ul)
 
-    filterButton.addEventListener('click', function() {
-        // Alterna o ícone
-        if (icon.classList.contains('fa-arrow-up-wide-short')) {
-            icon.classList.remove('fa-arrow-up-wide-short');
-            icon.classList.add('fa-arrow-down-wide-short');
-            // Ordena a lista de capítulos de forma crescente
-            sortList(false);
+    const searchBtn = document.getElementById("search-btn");
+    const searchView = document.getElementById("search-view");
+
+    if (searchBtn && searchView) {
+        searchBtn.addEventListener("click", () => {
+            searchView.classList.toggle("active");
+        });
+    } else {
+        console.error("Elemento não encontrado:", { searchBtn, searchView });
+    }
+
+    const filterButton = document.getElementById('chapter-filter');
+    const icon = filterButton.querySelector('span');
+    const chapterList = document.querySelector('.chapter-list ul');
+
+    let isDescending = true;
+
+    filterButton.addEventListener('click', function () {
+        isDescending = !isDescending;
+
+        // Aplica rotação (180° para indicar inversão de ordem)
+        if (isDescending) {
+            icon.style.transform = 'rotate(0deg)';
+            sortList(true); // ordem decrescente
         } else {
-            icon.classList.remove('fa-arrow-down-wide-short');
-            icon.classList.add('fa-arrow-up-wide-short');
-            // Ordena a lista de capítulos de forma decrescente
-            sortList(true);
+            icon.style.transform = 'rotate(180deg)';
+            sortList(false); // ordem crescente
         }
     });
 
+
+        // Mostrar botão ao rolar a página
+    window.onscroll = function() {
+        const btn = document.getElementById("btnTop");
+        btn.style.display = (window.scrollY > 300) ? "flex": "none";
+    };
+
+    // Scroll suave ao topo
+    document.getElementById("btnTop").addEventListener("click", () => {
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+    });
 
 });

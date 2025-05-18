@@ -40,7 +40,6 @@ class Mangas:
             limit=self.limit,
             offset=offset
         )
-        
         return data
 
     def listRecents(self):
@@ -298,7 +297,6 @@ class Mangas:
             }
 
             cache.set(key,data,timeout=900)
-        print(data)
         return data
 
     def showManga(self, manga_id):
@@ -333,7 +331,6 @@ class Mangas:
                 Manga.uuid == manga_id  # Verificando pelo UUID do capítulo
             ).first() is not None  # Se existir, o capítulo foi lido
             data["is_favorite"] = is_fav
-        print(data)
         return data
 
     def searchMangaByTitle(self, title):
@@ -359,6 +356,3 @@ class Mangas:
             cache.set(key,data,timeout=3600)
         
         return data
-
-        
-

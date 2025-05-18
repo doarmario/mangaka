@@ -5,8 +5,9 @@
     
     {% include 'menu.html' %}
 
+    <div class="display">
 
-    <section class="reader">
+        <section class="reader">
 
         <div class="reader-top">
             <a href="/manga/{{ data.manga_id }}"><h2>{{ data.manga }}</h2></a>
@@ -28,11 +29,19 @@
         <div class="reader-bottom">
             <h5>Fonte original: MangaDex</h5>
             {% if data.caps > data.index %}
-            <a href="/cap/{{ data.prev }}"><i class="fas fa-chevron-left"></i></a>
+            <a href="/cap/{{ data.prev }}">
+                <span class="material-icons-round">
+                    chevron_left
+                </span>
+            </a>
             {% endif %}
 
             {% if data.index > 0 %}
-            <a href="/cap/{{ data.next }}"><i class="fas fa-chevron-right"></i></a>
+            <a href="/cap/{{ data.next }}">
+                <span class="material-icons-round">
+                    chevron_right
+                </span>
+            </a>
             {% endif %}
 
         </div>
@@ -42,6 +51,9 @@
         </script>
         <script src="{{ url_for('static', filename='js/reader.js') }}"></script>
     </section>
+
+    </div>
+
     {% include 'footer.html' %}
 </body>
 </html>

@@ -1,9 +1,11 @@
-<div class="search-bar">
+<div class="search-bar" id="search-view">
 <form action="/search" method="POST">
         {{ g.form.hidden_tag() }}
         {{ g.form.query(size=20) }}
         <button type="submit" class="btn btn-primary">
-            <i class="fa-solid fa-magnifying-glass"></i>
+            <span class="material-icons-round">
+                    search
+                </span>
         </button>
     </form>
 </div>

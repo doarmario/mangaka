@@ -5,8 +5,7 @@
 
     {% include 'menu.html' %}
 
-    {% include 'search.html' %}
-
+    <div class="display">
 
     {% if current_user.is_authenticated %}
         {% for j in user_data.keys() %}
@@ -63,6 +62,7 @@
     </section>
     {% endfor %}
 
+    </div>
 
     {% include 'footer.html' %}
 </body>

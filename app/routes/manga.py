@@ -33,7 +33,6 @@ manga = Mangas()
 @site.before_request
 def before_request():
     g.form = SearchForm()
-    print("starting")
 
 
 # Função para gerar chave de cache única por usuário

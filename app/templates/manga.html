@@ -5,10 +5,8 @@
 
     {% include 'menu.html' %}
 
-
-    {% include 'search.html' %}
-    
-    <section class="manga-page">
+    <div class="display">
+        <section class="manga-page">
         <div class="manga-header">
             <img src="{{ url_for('static',filename='img/page.png') }}" data-src="/img/cover/{{ data.id }}" alt="Capa do Mangá" loading="lazy">
             <div class="manga-info">
@@ -34,18 +32,29 @@
                 {% if current_user.is_authenticated %}
                 <button class="save-btn" id="favorite-btn">
                     {% if data.is_favorite %}
-                        <i class="fa-regular fa-star"></i>
+                        <span class="material-icons-round">
+                        favorite
+                        </span>
                     {% else %}
-                        <i class="fa-solid fa-star"></i>
+                        <span class="material-icons-round">
+                        favorite_border
+                        </span>
                     {% endif %}
                 </button>
                 {% endif %}
                 <button class="filter-btn" id="chapter-filter">
-                    <i class="fa-solid fa-arrow-up-wide-short"></i>
+                    <span class="material-icons-round">
+                    filter_list
+                    </span>
                 </button>
                 
             </div>
             <ul>
+                {% if data.chaps2 == 0 %}
+                <a>
+                    <li><p>Por que não vejo capítulos?</p></li>
+                </a>
+                {% else %}
                 {% for i in data.chapters %}
                 <a href="/cap/{{ i.cap_id }}">
                     <li id="{{ i.cap_id }}" class="{% if i.is_readed %}read{% endif %}">
@@ -56,6 +65,7 @@
                     </li>
                 </a>
                 {% endfor %}
+                {% endif %}
             </ul>
 
         </div>
@@ -63,6 +73,9 @@
             var manga_id = '{{ data.id }}';
         </script>
     </section>
+    </div>
+
+    
 
 
 
