@@ -218,6 +218,7 @@ def mangaList(page):
     grid com todos os mangás
     """
 
+    #essas operações  impedem a API de quebrar pois tem limite do offset
     max_pages = ceil((manga.getTotalPages())/manga.limit)-1
     max_pages = max_pages if (max_pages * manga.limit) < 10000 else int((10000/manga.limit))
     rpage = 1 if page <= 1 else page
