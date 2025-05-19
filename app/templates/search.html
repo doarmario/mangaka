@@ -1,5 +1,5 @@
 <div class="search-bar" id="search-view">
-<form action="/search" method="POST">
+<form action="/search" method="GET">
         {{ g.form.hidden_tag() }}
         {{ g.form.query(size=20) }}
         <button type="submit" class="btn btn-primary">

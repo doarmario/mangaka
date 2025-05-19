@@ -30,19 +30,34 @@ class Mangas:
         self.chapters = dex.series.Chapter(auth=self.auth)
 
 
+    def getTotalPages(self):
+        key = f"{self.prefix}totalpage"
+
+        data = cache.get(key)
+
+        if data is None:
+            data = self.listAll(0)['total']
+
+            cache.set(key,data,timeout=3600)
+        
+        return data
+
+
     #cached functions
 
     def listAll(self,offset):
 
+        data_dict = {
+            "availableTranslatedLanguage[]":self.lang,
+            "limit":self.limit,
+            "offset":offset,
+            "order[title]":"asc"
+        }
 
-        data = self.mangas.get_manga_list(
-            translatedLanguage=self.lang,
-            limit=self.limit,
-            offset=offset
-        )
+        data = self.mangas.get_manga_list(**data_dict)
         return data
 
-    def listRecents(self):
+    def listRecents(self,offset):
 
         key = f"{self.prefix}recents"
 
@@ -53,7 +68,8 @@ class Mangas:
             data = self.mangas.get_manga_list(
                 translatedLanguage=self.lang,
                 limit=self.limit,
-                updatedAtSince=(dt.datetime.now() - dt.timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S')
+                updatedAtSince=(dt.datetime.now() - dt.timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S'),
+                offset=offset
             )
             cache.set(key,data,timeout=900)
 
@@ -87,7 +103,7 @@ class Mangas:
 
         return data
 
-    def listMangaByTag(self,tag_id):
+    def listMangaByTag(self,tag_id,offset):
         
         key = f"{self.prefix}tag_{tag_id}"
 
@@ -97,22 +113,24 @@ class Mangas:
             data = self.mangas.get_manga_list(
                 translatedLanguage=self.lang,
                 limit=self.limit,
-                includedTags=[tag_id]
+                includedTags=[tag_id],
+                offset=offset
             )
             cache.set(key,data,timeout=360)
 
         return data
 
-    def recentes(self):
+    def recentes(self,offset=0):
         
-        a = self.listRecents()
+        a = self.listRecents(offset)
         return  {"tag":"Recentes","itens":[{
             "title": i.title.get('en') or next(
                 (alt[lang] for alt in i.alt_titles for lang in self.langs if lang in alt),
                 "No title"
             ),
             "id":i.manga_id
-            } for i in a]}
+            } for i in a["mangas"]],
+            "total":a["total"]}
 
     def listTags(self):
 
@@ -127,7 +145,7 @@ class Mangas:
 
         return data
 
-    def choiceTags(self):
+    def choiceTags(self,offset=0):
 
         t = rd.choice(self.listTags())
         
@@ -136,7 +154,7 @@ class Mangas:
         data = cache.get(key)
 
         if data is None:
-            d = self.listMangaByTag(t.tag_id)
+            d = self.listMangaByTag(t.tag_id,offset)
 
             data = {
                 "tag":t.name['en'],
@@ -145,14 +163,15 @@ class Mangas:
                         (alt[lang] for alt in i.alt_titles for lang in self.langs if lang in alt), "No title"
                         ),
                     "id":i.manga_id
-                } for i in d]
+                } for i in d["mangas"]],
+                "total":d["total"]
             }
 
             cache.set(key,data,timeout=3600)
 
         return data
 
-    def listaGeral(self,offset):
+    def listaGeral(self,offset=0):
 
         key = f"{self.prefix}listall_{offset}"
 
@@ -160,13 +179,16 @@ class Mangas:
         
         if data is None:
             l = self.listAll(offset)
-            data = [{
+            data =  {
+                "itens":[{
                     "title": i.title.get('en') or next(
                         (alt[lang] for alt in i.alt_titles for lang in self.langs if lang in alt),
                         None),
                     "id":i.manga_id
 
-                } for i in l]
+                } for i in l["mangas"]],
+                "total":l["total"]
+                }
 
             cache.set(key,data,timeout=3600)
         return data
@@ -335,7 +357,7 @@ class Mangas:
             data["is_favorite"] = is_fav
         return data
 
-    def searchMangaByTitle(self, title):
+    def searchMangaByTitle(self, title,offset=0):
 
         key = f"{self.prefix}search_{title}"
 
@@ -346,14 +368,16 @@ class Mangas:
             mangas = self.mangas.get_manga_list(
                 translatedLanguage=self.lang,
                 limit=self.limit,
-                title=title
+                title=title,
+                offset=offset
             )
-            data = [{
+            data = {"itens":[{
                 "title": m.title.get('en') or next(
                     (alt[lang] for alt in m.alt_titles for lang in self.langs if lang in alt),
                     None),
                 "id": m.manga_id  # Ou m.manga_id, dependendo de como o objeto Manga é estruturado
-            } for m in mangas]
+            } for m in mangas["mangas"]],
+            "total":mangas["total"]}
 
             cache.set(key,data,timeout=3600)
         

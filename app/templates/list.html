@@ -24,13 +24,23 @@
     
 
 
-        {% if paginator %}
+        {% if paginator.active %}
             <div class="paginator">
-                {% if page>0 %}
-                <a class="prev" id="prevBtn" href="/mangas/{{ page-1 }}">Anterior</a>
+                {% if paginator.page>1 %}
+                <a class="prev" id="prevBtn" href="/mangas/{{ paginator.page-1 }}">
+                    <span class="material-icons-round">
+                    chevron_left
+                    </span>
+                </a>
                 {% endif %}
-                <span id="pageNumber">Página {{ page+1 }}</span>
-                <a class="next" id="nextBtn" href="/mangas/{{ page+2 }}">Próximo</a>
+                <span id="pageNumber">{{ paginator.page }} de {{ paginator.total_pages }}</span>
+                {% if paginator.page < paginator.total_pages %}
+                <a class="next" id="nextBtn" href="/mangas/{{ paginator.page+1 }}">
+                    <span class="material-icons-round">
+                    chevron_right
+                    </span>
+                </a>
+                {% endif %}
             </div>
         {% endif %}
     </section>

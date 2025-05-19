@@ -12,8 +12,8 @@ from app import cache
 
 
 from datetime import datetime
+from math import ceil
 from io import BytesIO
-
 
 import requests
 import hashlib
@@ -217,12 +217,30 @@ def mangaList(page):
     """
     grid com todos os mangás
     """
-    page = 0 if page <= 0 else page-1
-    offset = manga.limit * (page)
+
+    max_pages = ceil((manga.getTotalPages())/manga.limit)-1
+    max_pages = max_pages if (max_pages * manga.limit) < 10000 else int((10000/manga.limit))
+    rpage = 1 if page <= 1 else page
+    rpage = page if rpage <= max_pages else max_pages
+    offset = manga.limit * (rpage)
+    offset = offset if offset <= manga.getTotalPages() else manga.getTotalPages()
+    offset = offset if offset < (10000-manga.limit) else (1000-manga.limit)
+
+    print(f"rpage:{rpage}\noffset:{offset}")
+
 
     dall = manga.listaGeral(offset)
+
+
+    paginator = {
+            "page": rpage,
+            "offset": offset,
+            "total": dall["total"],
+            "total_pages": min(ceil(dall["total"] / manga.limit)-1,int(10000/manga.limit)),
+            "active": len(dall['itens']) >= manga.limit
+        }
         
-    return render_template('list.html',data=dall,page=page,paginator=True)
+    return render_template('list.html',data=dall["itens"],paginator=paginator)
 
 @site.route('/manga/<manga_id>')
 def manga_sinopse(manga_id):
@@ -279,18 +297,35 @@ def mangaFav(manga_id):
     return jsonify(response), 401
 
 
-@site.route('/search',defaults={'page':1},methods=["GET","POST"])
-@site.route('/search/<int:page>')
+@site.route('/search', defaults={'page': 1}, methods=["GET"])
+@site.route('/search/<int:page>', methods=["GET"])
 def searchTitles(page):
-    if g.form.validate_on_submit():
-        page = 0 if page <= 0 else page-1
-        offset = manga.limit * (page)
+    form = SearchForm(request.args)
+    if form.validate():
+        query = form.query.data.strip()
+        if not query:
+            return redirect(url_for('user.mangaList'))
 
-        search_query = g.form.query.data
+        page = max(page, 1)
+        offset = manga.limit * (page - 1)
+        dall = manga.searchMangaByTitle(query, offset)
 
-        dall = manga.searchMangaByTitle(search_query)
-            
-        return render_template('list.html',data=dall,page=page,paginator=False)
+        paginator = {
+            "page": page,
+            "offset": offset,
+            "total": dall["total"],
+            "total_pages": min(ceil(dall["total"] / manga.limit)-1,int(10000/manga.limit)),
+            "active": len(dall['itens']) >= manga.limit
+        }
+
+        return render_template(
+            'list.html',
+            form=form,
+            data=dall['itens'],
+            paginator=paginator,
+            query=query
+        )
     else:
         return redirect(url_for('user.mangaList'))
+
 

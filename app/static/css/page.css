@@ -212,13 +212,15 @@ body {
     padding: 10px 20px;
     background-color: var(--main1);
     border: none;
-    color: var(--extr1);
+    color: var(--subc1);
     font-size: 1rem;
     cursor: pointer;
     border-radius: 5px;
     outline: none;
     text-decoration: none;
     transition: background-color 0.3s;
+    display: flex;
+    align-items: center;
 }
 
 .paginator button:hover {
