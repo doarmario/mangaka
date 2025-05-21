@@ -142,6 +142,7 @@
 
 .search-bar{
     max-width: 100%;
+    min-width: 500px;
     background-color: transparent;
     display: None;
     align-items: center;
@@ -206,13 +207,25 @@
 
 
 /* ========== Tablet (>= 768px) ========== */
-@media (min-width: 768px) {
+@media (min-width: 600px) and (max-width: 1024px) {
 .menu-btn>ul>li>a{
     display: block;
     padding: 15px;
 }
 .search-bar{
     min-width: 500px;
+    margin: 0 auto;
+}
+#menu-view.active{
+    width: 100%;
+    background-color: var(--main1);
+    display: block;
+    box-sizing: border-box;
+}
+#search-view.active{
+    width: 100%;
+    display: block;
+    box-sizing: border-box;
 }
   }
   
@@ -260,9 +273,13 @@
         display: block;
     }
     #seach-view.active{
-    position: static;
-}
-#menu-view.active{
-    position: static;
-}
+        position: static;
+        margin: 0 auto;
+    }
+    #menu-view.active{
+        max-width: 100%;
+        position: static;
+        display: flex;
+        align-items: center;
+    }
 }
