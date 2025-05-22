@@ -11,9 +11,14 @@ __pycache__/
 *.sqlite3
 migrations/
 instance/
+#nao são configs do projeto
 config/
 nginx/
+
+# ===proposital===
 docker-compose.yml
+# ================
 
 *.log
+*.service
 
