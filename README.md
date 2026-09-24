@@ -244,9 +244,11 @@ só aparece quando essa configuração estiver presente, independentemente da
 API do Asura. `/status` mostra a saúde do processo do wrapper separadamente;
 isso não garante disponibilidade do site externo.
 
-A paginação segue o site e não presume blocos de 20 obras nem um total exato.
-Busca com gênero pode apresentar páginas pequenas ou vazias com próxima
-página, pois o filtro é confirmado nos metadados de cada resultado.
+Qi Scans mostra o total de obras e o total de páginas para o catálogo, buscas
+e filtros por gênero. O wrapper conta a listagem completa, exclui novels e
+duplicatas e serve páginas de 20 obras. A primeira consulta pode demorar mais;
+as demais reutilizam a mesma listagem em cache por 15 minutos. Buscas com
+gênero são filtradas antes da contagem, evitando páginas intermediárias vazias.
 O Redis reutiliza dados por 15 minutos e páginas do leitor por 10 minutos.
 O wrapper também possui cache local e pausa consultas após HTTP 429/falhas.
 Mudanças na estrutura do site ou nos hosts de imagens podem exigir atualização.

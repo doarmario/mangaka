@@ -2,6 +2,6 @@
 
 Repositório: `mangaka-qiscans`
 
-Commit: `beea1e65e78acb74d36e4015326d3abcc5cffe7e`
+Commit: `77c5bfde9305db12f85bc7d818765d08d65f7ea9`
 
 Cópia gerada por `scripts/export.py`; atualize a partir do wrapper e faça commit no Mangaka.

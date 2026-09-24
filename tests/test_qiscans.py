@@ -27,7 +27,8 @@ def qiscans_api(app, monkeypatch):
             assert params['source'] == 'qiscans'
             data = {'results': [{'id': 'story', 'title': 'Qi Story',
                                  'coverUrl': 'https://i0.wp.com/cover.jpg'}],
-                    'total': None, 'has_next': params['page'] == 1}
+                    'total': 41, 'total_pages': 2, 'page_size': 30,
+                    'page': min(params['page'], 2), 'has_next': params['page'] == 1}
         elif path.endswith('/pages'):
             data = {'pages': ['https://i0.wp.com/i.imgur.com/page.jpg']}
         elif path.endswith('/chapters'):
@@ -58,17 +59,22 @@ def test_qiscans_configuration_is_independent(app, qiscans_api):
 
 
 @pytest.mark.parametrize('route', ['/mangas', '/search?query=story'])
-def test_qiscans_honors_next_page_even_with_less_than_20_results(app, qiscans_api, route):
+def test_qiscans_honors_explicit_totals_and_page_count(app, qiscans_api, route):
     client = app.test_client()
     separator = '&' if '?' in route else '?'
     result = client.get(route + separator + 'source=qiscans')
     assert result.status_code == 200
     assert 'Qi Story' in result.text and '/2?' in result.text
+    assert '41' in result.text and 'Página 1 de 2' in result.text
     path, _, query = route.partition('?')
     second = client.get(path + '/2?source=qiscans&' + query)
     assert second.status_code == 200
+    assert 'Página 2 de 2' in second.text
     assert path + '/3?' not in second.text
     assert qiscans_api[-1][1]['page'] == 2
+    beyond = client.get(path + '/500?source=qiscans&' + query)
+    assert 'Página 2 de 2' in beyond.text
+    assert path + '/3?' not in beyond.text
 
 
 def test_qiscans_genres_work_in_tags_details_and_search(app, qiscans_api):
@@ -127,3 +133,26 @@ def test_qiscans_health_is_visible(app, qiscans_api):
     assert result.status_code == 200
     assert 'Qi Scans' in result.text
     assert any(url.endswith('/api/health') for url, _ in qiscans_api)
+
+
+def test_qiscans_ignores_old_cached_responses_without_totals(app, qiscans_api):
+    import json
+    from hashlib import sha256
+    with app.app_context():
+        service = MangaNovel('qiscans')
+        params = {'source': 'qiscans', 'q': 'story', 'page': 1, 'limit': 20}
+        digest = sha256(json.dumps([service.base, '/api/manga/search', params], sort_keys=True).encode()).hexdigest()
+        cache.set('manga_novel_v2_' + digest, {'source': 'qiscans', 'results': [], 'total': None})
+        result = service.search('story')
+        assert result['total'] == 41 and result['total_pages'] == 2
+        assert len(qiscans_api) == 1
+
+
+@pytest.mark.parametrize('changes', [{'total': None}, {'total': -1}, {'total_pages': 999},
+                                    {'page': 0}, {'page_size': 0}, {'has_next': False}])
+def test_qiscans_rejects_invalid_totals(app, qiscans_api, changes):
+    with app.app_context():
+        response = {'results': [], 'total': 41, 'total_pages': 3, 'page': 1,
+                    'page_size': 20, 'has_next': True, **changes}
+        with pytest.raises(SourceUnavailable):
+            MangaNovel('qiscans')._qiscans_list(response)

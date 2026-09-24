@@ -69,7 +69,7 @@ class MangaNovel:
     def _request(self, path, **params):
         params = {'source': self.source, **params}
         digest = sha256(json.dumps([self.base, path, params], sort_keys=True).encode()).hexdigest()
-        key = 'manga_novel_v2_' + digest
+        key = ('manga_novel_v3_' if self.source == 'qiscans' else 'manga_novel_v2_') + digest
         cached = cache.get(key)
         if cached is not None:
             return deepcopy(cached)
@@ -105,9 +105,7 @@ class MangaNovel:
             raise SourceUnavailable('A fonte retornou uma lista inválida.')
         total = len(records) if self.source == 'asura' else None
         if self.source == 'qiscans':
-            if not isinstance(response.get('has_next'), bool):
-                raise SourceUnavailable('A fonte retornou paginação inválida.')
-            return self._normalize_list(records, None, response['has_next'])
+            return self._qiscans_list(response)
         if self.source == 'asura':
             records = records[(page - 1) * self.limit:page * self.limit]
         return self._normalize_list(records, total, page * self.limit < total if total is not None else len(records) >= self.limit)
@@ -125,11 +123,26 @@ class MangaNovel:
         if query:
             filters['q'] = query
         response = self._request('/api/manga/catalog', page=page, limit=self.limit, **filters)
+        if self.source == 'qiscans':
+            return self._qiscans_list(response)
         records = response.get('results')
         total = response.get('total')
         if not isinstance(records, list) or (total is not None and (not isinstance(total, int) or total < 0)):
             raise SourceUnavailable('A fonte retornou um catálogo inválido.')
         return self._normalize_list(records, total, bool(response.get('has_next')))
+
+    def _qiscans_list(self, response):
+        records = response.get('results')
+        total, pages = response.get('total'), response.get('total_pages')
+        page, size = response.get('page'), response.get('page_size')
+        if (not isinstance(records, list) or any(type(n) is not int for n in (total, pages, page, size))
+                or total < 0 or size < 1 or not 1 <= page <= pages
+                or pages != max(1, (total + size - 1) // size)
+                or type(response.get('has_next')) is not bool
+                or response['has_next'] != (page < pages)):
+            raise SourceUnavailable('A fonte retornou totais ou paginação inválidos.')
+        result = self._normalize_list(records, total, response['has_next'])
+        return {**result, 'total_pages': pages, 'page': page}
 
     def _normalize_list(self, records, total, has_next):
         records = [record for record in records if self._remote(record) and record.get('title')]

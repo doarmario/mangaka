@@ -394,7 +394,8 @@ def mangaList(page):
         page = max(1, min(page, 500))
         result = MangaNovel(g.selected_source).catalog(page, tag=tag)
         total = result['total']
-        total_pages = max(1, ceil(total / manga.limit)) if total is not None else None
+        page = result.get('page', page)
+        total_pages = result.get('total_pages', max(1, ceil(total / manga.limit)) if total is not None else None)
         return render_template('list.html', data=result['itens'], filters=filters,
                                paginator={'page': page, 'total': total, 'total_pages': total_pages,
                                           'active': page > 1 or result['has_next'], 'has_next': result['has_next']})
@@ -488,7 +489,8 @@ def searchTitles(page):
         if g.selected_source != 'mangadex':
             dall = MangaNovel(g.selected_source).search(query, page, tag=tag)
             total = dall['total']
-            total_pages = max(1, ceil(total / manga.limit)) if total is not None else None
+            page = dall.get('page', page)
+            total_pages = dall.get('total_pages', max(1, ceil(total / manga.limit)) if total is not None else None)
             return render_template('list.html', data=dall['itens'], query=query, filters=filters,
                                    paginator={'page': page, 'total': total, 'total_pages': total_pages,
                                               'active': page > 1 or dall['has_next'], 'has_next': dall['has_next']})
