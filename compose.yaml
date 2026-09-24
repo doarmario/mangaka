@@ -69,7 +69,7 @@ services:
   web:
     <<: *app
     ports:
-      - '${MANGAKA_BIND_ADDRESS:-0.0.0.0}:${MANGAKA_PORT:-5000}:5000'
+      - '${MANGAKA_BIND_ADDRESS:-127.0.0.1}:${MANGAKA_PORT:-5000}:5000'
     depends_on:
       init-db:
         condition: service_completed_successfully
