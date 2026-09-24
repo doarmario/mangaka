@@ -1,3 +1,4 @@
+from flask import abort
 from flask import make_response
 from mangadex.errors import ApiError
 from flask import Blueprint, render_template, redirect, url_for,flash,send_file, Response, request, stream_with_context, jsonify, g
@@ -5,7 +6,8 @@ from flask_login import login_user,current_user,logout_user, login_required
 
 from app.models import User, Manga, Favorite, Readed, Chapter
 
-from app.libs.md import Mangas
+from app.libs.library import Library as Mangas
+from app.libs.manga_novel import MangaNovel, SourceUnavailable
 
 from app.forms import SearchForm
 
@@ -35,6 +37,8 @@ manga = Mangas()
 @site.before_request
 def before_request():
     g.form = SearchForm()
+    g.sources = manga.sources()
+    g.selected_source = manga.selected_source()
 
 
 # Função para gerar chave de cache única por usuário
@@ -98,11 +102,11 @@ def pageproxy():
 @site.route('/img/cover/<uuid>')
 def coverproxy(uuid):
     size = request.args.get("size")
-    url = manga.id2Cover(uuid)
+    if size not in (None, "256", "512"):
+        return "Tamanho de capa inválido", 400
+    url = manga.id2Cover(uuid, size=size)
     if url.startswith("/static/"):
         return redirect(url)
-    if size is not None:
-        url += f".{size}.jpg"
     return proxy(url)
 
 
@@ -215,6 +219,23 @@ def mangaCapReaded(cap_id):
     return jsonify(response), 401
         
 
+def catalog_tag():
+    tag_id = request.args.get('tag', '').strip()
+    if not tag_id:
+        return None
+    if g.selected_source == 'mangadex':
+        tags = manga.listTags()
+    elif g.selected_source == 'asura':
+        tags = MangaNovel('asura').tags()
+    else:
+        abort(400, 'Esta fonte ainda não oferece filtro por gênero.')
+    tag = next((item for item in tags if item['id'] == tag_id), None)
+    if not tag:
+        abort(404, 'Tag não encontrada nesta fonte.')
+    g.selected_tag = tag
+    return tag_id
+
+
 @site.route('/mangas',defaults={'page':1})
 @site.route('/mangas/<int:page>')
 def mangaList(page):
@@ -222,11 +243,21 @@ def mangaList(page):
     grid com todos os mangás
     """
 
-    total = manga.getTotalPages()
+    tag = catalog_tag()
+    if g.selected_source != 'mangadex':
+        page = max(1, min(page, 500))
+        result = MangaNovel(g.selected_source).catalog(page, tag=tag)
+        total = result['total']
+        total_pages = max(1, ceil(total / manga.limit)) if total is not None else None
+        return render_template('list.html', data=result['itens'],
+                               paginator={'page': page, 'total': total, 'total_pages': total_pages,
+                                          'active': page > 1 or result['has_next'], 'has_next': result['has_next']})
+
+    total = manga.listMangaByTag(tag, 0)['total'] if tag else manga.getTotalPages()
     max_pages = max(1, ceil(min(total, 10000) / manga.limit))
     rpage = max(1, min(page, max_pages))
     offset = manga.limit * (rpage - 1)
-    dall = manga.listaGeral(offset)
+    dall = manga.listMangaByTag(tag, offset) if tag else manga.listaGeral(offset)
     paginator = {"page": rpage, "offset": offset, "total": dall["total"],
                  "total_pages": max_pages, "active": max_pages > 1}
 
@@ -290,6 +321,7 @@ def mangaFav(manga_id):
 @site.route('/search', defaults={'page': 1}, methods=["GET"])
 @site.route('/search/<int:page>', methods=["GET"])
 def searchTitles(page):
+    tag = catalog_tag()
     form = SearchForm(request.args)
     if form.validate():
         query = form.query.data.strip()
@@ -298,7 +330,14 @@ def searchTitles(page):
 
         page = max(1, min(page, 10000 // manga.limit))
         offset = manga.limit * (page - 1)
-        dall = manga.searchMangaByTitle(query, offset)
+        if g.selected_source != 'mangadex':
+            dall = MangaNovel(g.selected_source).search(query, page, tag=tag)
+            total = dall['total']
+            total_pages = max(1, ceil(total / manga.limit)) if total is not None else None
+            return render_template('list.html', data=dall['itens'], query=query,
+                                   paginator={'page': page, 'total': total, 'total_pages': total_pages,
+                                              'active': page > 1 or dall['has_next'], 'has_next': dall['has_next']})
+        dall = manga.searchMangaByTitle(query, offset, tag=tag) if tag else manga.searchMangaByTitle(query, offset)
 
         paginator = {
             "page": page,
@@ -331,3 +370,8 @@ def mangadex_error(error):
 @site.errorhandler(requests.RequestException)
 def mangadex_network_error(error):
     return "Não foi possível conectar ao MangaDex. Tente novamente mais tarde.", 503
+
+
+@site.errorhandler(SourceUnavailable)
+def source_unavailable(error):
+    return render_template('source_error.html', message=str(error)), 503

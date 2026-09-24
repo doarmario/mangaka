@@ -1336,3 +1336,32 @@ svg {
     .chapter-end .icon { width: 14px; }
     .chapter-list li > a { gap: 8px; font-size: 12px; }
 }
+.source-picker {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 0 0 24px;
+    font-size: 13px;
+}
+.source-picker select {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 12px;
+    font: inherit;
+}
+.genre-box a.genre:hover {
+    background: var(--accent);
+    color: var(--ink);
+}
+.active-tag {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin: -12px 0 28px;
+    color: var(--accent);
+    font-size: 13px;
+}

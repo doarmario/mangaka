@@ -6,7 +6,10 @@ COPY --from=upstream tsconfig.json ./
 COPY --from=upstream src ./src
 COPY --from=upstream config ./config
 COPY server.ts ./src/server.ts
-RUN npm run build && npm prune --omit=dev
+COPY asuraScraper.ts ./src/scrapers/asuraScraper.ts
+COPY imageProxy.ts ./src/proxy/imageProxy.ts
+COPY contract.test.cjs ./
+RUN npm run build && node --test contract.test.cjs && npm prune --omit=dev
 ENV NODE_ENV=production PORT=3001
 USER node
 EXPOSE 3001

@@ -25,7 +25,7 @@ class Mangas:
         self.languages = (lang,) if lang else ("pt-br", "pt", "en")
         self.langs = tuple(dict.fromkeys(langs or self.languages))
         self.limit = limit
-        self.prefix = prefix + "v3_"
+        self.prefix = prefix + "v4_"
         self.mangas = dex.series.Manga()
         self.tags = dex.series.Tag()
         self.covers = dex.series.Cover()
@@ -74,6 +74,7 @@ class Mangas:
         return {"id": manga.manga_id, "title": self._title(manga),
                 "sinopse": self._text(manga.description, "Sem descrição"),
                 "tags": [self._text(tag.name) for tag in manga.tags],
+                "tag_links": [{"id": tag.tag_id, "name": self._text(tag.name)} for tag in manga.tags],
                 "authors": list(manga.author_id), "cover_id": manga.cover_id,
                 "ano": manga.year, "status": manga.status}
 
@@ -109,7 +110,7 @@ class Mangas:
         return self._list(offset, **{"order[latestUploadedChapter]": "desc"})
 
     def listMangaByTag(self, tag_id, offset):
-        return self._list(offset, **{"includedTags[]": [tag_id]})
+        return self._list(offset, **{"includedTags[]": [tag_id], "order[title]": "asc"})
 
     def listaGeral(self, offset=0):
         return self.listAll(offset)
@@ -117,8 +118,9 @@ class Mangas:
     def recentes(self, offset=0):
         return {"tag": "Recentes", **self.listRecents(offset)}
 
-    def searchMangaByTitle(self, title, offset=0):
-        return self._list(offset, title=title.strip())
+    def searchMangaByTitle(self, title, offset=0, tag=None):
+        filters = {"includedTags[]": [tag]} if tag else {}
+        return self._list(offset, title=title.strip(), **filters)
 
     def listTags(self):
         return self._cached("tags", (), lambda: [

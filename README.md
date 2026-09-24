@@ -126,3 +126,61 @@ Os capítulos são consultados e armazenados no Redis separadamente por idioma,
 porque o endpoint de agregação do MangaDex não identifica o idioma de cada item.
 Números iguais em traduções diferentes continuam disponíveis, sem misturar
 as marcações de leitura.
+
+## Fontes adicionais: Manga Novel API
+
+O catálogo agora permite escolher **MangaDex**, **AsuraScans**, **ComicK** ou
+**WeebCentral**. Ao aplicar uma fonte, o catálogo carrega seus títulos automaticamente; a escolha
+da fonte acompanha a busca e a paginação. Detalhes e leitor mostram a procedência.
+IDs locais próprios permitem usar favoritos e histórico sem confundir obras ou
+capítulos de provedores diferentes. Não há fusão automática de obras por título.
+
+A integração usa uma cópia local de
+[Raby012/-manga-novel-api](https://github.com/Raby012/-manga-novel-api), commit
+`2e72a110bea5f3327a856a0c7e00233291e5566b`. Para instalar em outra máquina:
+
+```bash
+git clone https://github.com/Raby012/-manga-novel-api.git ../manga-novel-api
+git -C ../manga-novel-api checkout 2e72a110bea5f3327a856a0c7e00233291e5566b
+docker compose up -d --build
+```
+
+O Compose lê o checkout em `../manga-novel-api`, configurável por
+`MANGA_NOVEL_SOURCE_DIR` no `.env`, e inicia a API apenas na rede interna. O servidor
+web usa `MANGA_NOVEL_API_URL=http://manga-novel:3001`. A inicialização do banco cria
+apenas a nova tabela `source_reference`, preservando os dados existentes.
+
+Nesta máquina, o código original está em `~/Work/manga-novel-api` e um backup Git
+completo, verificado, está em `~/Work/manga-novel-api-backup.bundle`. O bundle pode
+ser clonado sem acesso ao GitHub, por exemplo com
+`git clone ~/Work/manga-novel-api-backup.bundle ~/Work/manga-novel-api-restaurada`.
+
+As adaptações ficam em `integrations/manga-novel/`, sem modificar o checkout:
+
+- O ponto de entrada monta as rotas de múltiplos provedores já presentes na API;
+  o servidor original ignorava a escolha da fonte em várias operações.
+- O adaptador Asura usa o domínio atual `asurascans.com` e os dados públicos das
+  páginas; o endereço antigo redirecionava buscas para a página inicial.
+- Capítulos marcados como premium, bloqueados ou ainda em acesso antecipado não
+  são disponibilizados pelo adaptador.
+- Os testes de contrato do adaptador Node rodam durante a construção da imagem.
+
+O Redis guarda resultados por fonte, URL, página e idioma por 15 minutos e URLs
+de páginas por 10 minutos. Falhas abrem uma pausa de 30 segundos para evitar
+repetir consultas a um provedor indisponível. Falhas de uma fonte não impedem a
+busca nas outras. ComicK e WeebCentral podem recusar consultas automatizadas;
+nesse caso o site informa a indisponibilidade e oferece outras fontes.
+
+Consumet **não está integrado**: seus repositórios oficiais estavam indisponíveis
+quando consultados. É necessária uma instância ou documentação acessível para
+validar essa integração. Novels também não fazem parte desta integração de mangás.
+
+## Tags e gêneros
+
+Nas páginas de mangás do MangaDex e do Asura, clique em uma tag (por exemplo,
+**Isekai**, **Action** ou **Fantasy**) para abrir o catálogo dessa fonte filtrado
+pelo gênero. A tag permanece na paginação e nas buscas por título. Use
+**Remover filtro** para voltar ao catálogo da mesma fonte; ao aplicar outra fonte,
+o filtro é reiniciado, pois os identificadores de gênero são específicos de cada
+provedor. ComicK e WeebCentral continuam exibindo seus gêneros como texto, sem
+oferecer um filtro que suas integrações atuais não suportam.
