@@ -1,4 +1,4 @@
-"""Adapter for the locally hosted Raby012 manga-novel API."""
+"""Adapters for locally hosted external manga sources."""
 from copy import deepcopy
 from hashlib import sha256
 import json
@@ -14,8 +14,13 @@ from app import cache, db
 from app.models import SourceReference
 from app.libs.md import LANGUAGE_NAMES, Mangas
 
-SOURCES = {'comick': 'ComicK', 'weebcentral': 'WeebCentral', 'asura': 'AsuraScans'}
-VISIBLE_SOURCES = {'asura': 'AsuraScans'}
+SOURCES = {'comick': 'ComicK', 'weebcentral': 'WeebCentral', 'asura': 'AsuraScans', 'qiscans': 'Qi Scans'}
+VISIBLE_SOURCES = {'asura': 'AsuraScans', 'qiscans': 'Qi Scans'}
+
+
+def source_api_url(source):
+    key = 'QISCANS_API_URL' if source == 'qiscans' else 'MANGA_NOVEL_API_URL'
+    return current_app.config.get(key, '').rstrip('/')
 
 
 class SourceUnavailable(Exception):
@@ -57,7 +62,7 @@ class MangaNovel:
         if source not in SOURCES:
             raise ValueError('Unknown source')
         self.source = source
-        self.base = current_app.config.get('MANGA_NOVEL_API_URL', '').rstrip('/')
+        self.base = source_api_url(source)
         if not self.base:
             raise SourceUnavailable('A API adicional não está configurada.')
 
@@ -99,12 +104,16 @@ class MangaNovel:
         if not isinstance(records, list):
             raise SourceUnavailable('A fonte retornou uma lista inválida.')
         total = len(records) if self.source == 'asura' else None
+        if self.source == 'qiscans':
+            if not isinstance(response.get('has_next'), bool):
+                raise SourceUnavailable('A fonte retornou paginação inválida.')
+            return self._normalize_list(records, None, response['has_next'])
         if self.source == 'asura':
             records = records[(page - 1) * self.limit:page * self.limit]
         return self._normalize_list(records, total, page * self.limit < total if total is not None else len(records) >= self.limit)
 
     def tags(self):
-        if self.source != 'asura':
+        if self.source not in {'asura', 'qiscans'}:
             return []
         response = self._request('/api/manga/tags')
         return response.get('tags', [])

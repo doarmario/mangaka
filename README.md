@@ -157,7 +157,7 @@ as marcações de leitura.
 
 ## Fontes adicionais: Manga Novel API
 
-O catálogo agora permite escolher **MangaDex** ou **AsuraScans**. Ao aplicar uma fonte, o catálogo carrega seus títulos automaticamente; a escolha
+O catálogo permite escolher **MangaDex**, **AsuraScans** ou **Qi Scans**. Ao aplicar uma fonte, o catálogo carrega seus títulos automaticamente; a escolha
 da fonte acompanha a busca e a paginação. Detalhes e leitor mostram a procedência.
 IDs locais próprios permitem usar favoritos e histórico sem confundir obras ou
 capítulos de provedores diferentes. Não há fusão automática de obras por título.
@@ -220,3 +220,37 @@ pelo gênero. A tag permanece na paginação e nas buscas por título. Use
 **Remover filtro** para voltar ao catálogo da mesma fonte; ao aplicar outra fonte,
 o filtro é reiniciado, pois os identificadores de gênero são específicos de cada
 provedor.
+
+
+## Fonte Qi Scans
+
+O serviço `qiscans` usa o wrapper de `qiscansmanga.org`, incluído em
+`integrations/qiscans/` com o commit de origem em `UPSTREAM.md`. A instalação
+padrão e o atualizador constroem e iniciam essa API automaticamente; não é
+necessário clonar outro repositório. Para atualizar uma instalação existente:
+
+```bash
+docker compose up -d --build qiscans web updates-worker
+```
+
+Selecione **Qi Scans** no catálogo. Busca, gêneros, detalhes, capítulos,
+favoritos, histórico e novidades usam IDs separados das outras fontes.
+A fonte oferece capítulos em inglês; não há tradução automática. Novels
+identificadas e capítulos protegidos não são disponibilizados pelo wrapper.
+
+A API fica na rede interna, em `http://qiscans:3002`. Fora do Compose,
+configure `QISCANS_API_URL` no ambiente do servidor web e do worker. A fonte
+só aparece quando essa configuração estiver presente, independentemente da
+API do Asura. `/status` mostra a saúde do processo do wrapper separadamente;
+isso não garante disponibilidade do site externo.
+
+A paginação segue o site e não presume blocos de 20 obras nem um total exato.
+Busca com gênero pode apresentar páginas pequenas ou vazias com próxima
+página, pois o filtro é confirmado nos metadados de cada resultado.
+O Redis reutiliza dados por 15 minutos e páginas do leitor por 10 minutos.
+O wrapper também possui cache local e pausa consultas após HTTP 429/falhas.
+Mudanças na estrutura do site ou nos hosts de imagens podem exigir atualização.
+
+Os testes de contrato Python rodam durante a construção da imagem do wrapper.
+Os testes do Mangaka cobrem configuração independente, paginação, gêneros,
+leitor, favoritos, histórico e indisponibilidade da fonte.

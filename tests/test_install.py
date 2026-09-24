@@ -68,6 +68,8 @@ class InstallTests(unittest.TestCase):
         self.assertEqual((self.repo / ".env").stat().st_mode & 0o777, 0o600)
         self.assertTrue((self.api / "package.json").is_file())
         calls = [json.loads(line) for line in self.calls.read_text().splitlines()]
+        self.assertTrue(any(c['args'][-4:] == ['build', 'web', 'manga-novel', 'qiscans'] for c in calls))
+        self.assertTrue(any(c['args'][-4:] == ['web', 'updates-worker', 'manga-novel', 'qiscans'] for c in calls))
         updater = next(c for c in calls if c['args'][-1] == 'auto-updater')
         self.assertEqual(updater['host'], '/host/workspace')
         self.assertEqual(updater['api'], '/host/upstream')

@@ -1,24 +1,25 @@
 """Route-facing library; IDs determine the provider for details and reading."""
-from flask import abort, current_app, request
+from flask import abort, request
 from flask_login import current_user
 from sqlalchemy.orm import joinedload
 from app import db
 from app.libs.md import Mangas
-from app.libs.manga_novel import MangaNovel, SOURCES, VISIBLE_SOURCES
+from app.libs.manga_novel import MangaNovel, SOURCES, VISIBLE_SOURCES, source_api_url
 from app.models import SourceReference, Manga, Chapter, Favorite, Readed
 
 
 class Library(Mangas):
     @staticmethod
     def sources():
-        return {'mangadex': 'MangaDex', **(VISIBLE_SOURCES if current_app.config.get('MANGA_NOVEL_API_URL') else {})}
+        return {'mangadex': 'MangaDex', **{key: name for key, name in VISIBLE_SOURCES.items()
+                                          if source_api_url(key)}}
 
     @classmethod
     def selected_source(cls):
         source = request.args.get('source', 'mangadex')
         # Keep old provider URLs readable for existing bookmarks, while hiding
         # disabled providers from the catalog selector.
-        configured = current_app.config.get('MANGA_NOVEL_API_URL')
+        configured = source_api_url(source)
         if source not in cls.sources() and not (configured and source in SOURCES):
             abort(400, 'Fonte desconhecida ou não configurada.')
         return source

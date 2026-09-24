@@ -10,11 +10,16 @@ x-app: &app
     DB_PASSWORD: ${DB_PASSWORD:?Configure DB_PASSWORD no .env}
     DB_NAME: ${DB_NAME:-mangaka}
     MANGA_NOVEL_API_URL: http://manga-novel:3001
+    QISCANS_API_URL: http://qiscans:3002
     REDIS_HOST_CACHE: redis://redis:6379/0
     REDIS_HOST_SESSION: redis://redis:6379/1
     UPDATES_INTERVAL_SECONDS: ${UPDATES_INTERVAL_SECONDS:-1800}
 
 services:
+  qiscans:
+    build: ./integrations/qiscans
+    restart: unless-stopped
+
   manga-novel:
     build:
       context: ./integrations/manga-novel
