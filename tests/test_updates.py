@@ -1,7 +1,5 @@
-from datetime import datetime
-
 from app import db
-from app.models import Favorite, Manga, User, UpdateNotification
+from app.models import Favorite, Manga, User, UpdateNotification, utc_now
 from app.update_worker import refresh_once
 
 
@@ -42,7 +40,22 @@ def test_refresh_once_ignores_read_chapters(app, monkeypatch):
         db.session.add(chapter)
         db.session.flush()
         db.session.add(Readed(user_id=user.id, chapter_id=chapter.id,
-                              created_at=datetime.utcnow(), updated_at=datetime.utcnow()))
+                              created_at=utc_now(), updated_at=utc_now()))
         db.session.commit()
         assert refresh_once() == 0
         assert UpdateNotification.query.count() == 0
+
+
+def test_notification_constraint_is_unique_per_user_and_chapter(app):
+    with app.app_context():
+        user = User(username='unique-updates', email='unique-updates@example.com', password_hash='unused')
+        db.session.add(user)
+        db.session.commit()
+        db.session.add_all([
+            UpdateNotification(user_id=user.id, manga_uuid='m1', manga_title='Story', chapter_uuid='c1', chapter_label='1', source_name='MangaDex'),
+            UpdateNotification(user_id=user.id, manga_uuid='m1', manga_title='Story', chapter_uuid='c1', chapter_label='1', source_name='MangaDex'),
+        ])
+        import pytest
+        with pytest.raises(Exception):
+            db.session.commit()
+        db.session.rollback()

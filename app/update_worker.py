@@ -1,13 +1,14 @@
 """Background updater for unread chapters in user favorites."""
 import os
 import time
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from flask import current_app
 
 from app import create_app, db
 from app.libs.library import Library
-from app.models import Favorite, Readed, Chapter, UpdateNotification, WorkerStatus
+from app.models import Favorite, Readed, Chapter, UpdateNotification, WorkerStatus, utc_now
+from sqlalchemy.exc import IntegrityError
 
 
 def refresh_once(user_id=None):
@@ -20,7 +21,7 @@ def refresh_once(user_id=None):
     if user_id is None:
         UpdateNotification.query.filter(
             UpdateNotification.read_at.isnot(None),
-            UpdateNotification.created_at < datetime.utcnow() - timedelta(days=90),
+            UpdateNotification.created_at < utc_now() - timedelta(days=90),
         ).delete(synchronize_session=False)
     for favorite in favorites:
         try:
@@ -54,7 +55,12 @@ def refresh_once(user_id=None):
             ))
             # Commit each notification independently so one broken provider
             # cannot roll back updates already collected for other favorites.
-            db.session.commit()
+            try:
+                db.session.commit()
+            except IntegrityError:
+                db.session.rollback()
+                # Another worker won the race to create this notification.
+                continue
             created += 1
         except Exception:
             db.session.rollback()
@@ -72,10 +78,10 @@ def main():
                 status = WorkerStatus(id=1)
                 db.session.add(status)
                 db.session.commit()
-            status.last_run_at = datetime.utcnow()
+            status.last_run_at = utc_now()
             try:
                 created = refresh_once()
-                status.last_success_at = datetime.utcnow()
+                status.last_success_at = utc_now()
                 status.last_created = created
                 status.last_error = None
                 db.session.commit()

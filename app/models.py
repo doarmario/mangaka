@@ -1,9 +1,14 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_login import UserMixin
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 from . import db, bcrypt
+
+
+def utc_now():
+    """Return a naive UTC timestamp for legacy database DateTime columns."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -60,8 +65,8 @@ class Readed(db.Model):
     user = db.relationship('User', back_populates='read_chapters')
     chapter = db.relationship('Chapter', back_populates='read_chapters')
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+    updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now, nullable=False)
 
 class SourceReference(db.Model):
     """Stable local IDs keep provider slugs out of existing UUID columns."""
@@ -74,6 +79,7 @@ class SourceReference(db.Model):
 
 
 class UpdateNotification(db.Model):
+    __table_args__ = (db.UniqueConstraint('user_id', 'chapter_uuid', name='uq_notification_user_chapter'),)
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
     manga_uuid = db.Column(db.String(36), nullable=False)
@@ -81,7 +87,7 @@ class UpdateNotification(db.Model):
     chapter_uuid = db.Column(db.String(255), nullable=False)
     chapter_label = db.Column(db.String(80), nullable=False)
     source_name = db.Column(db.String(80), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
     read_at = db.Column(db.DateTime, nullable=True)
 
     user = db.relationship('User', backref=db.backref('update_notifications', lazy='dynamic'))

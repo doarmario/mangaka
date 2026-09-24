@@ -4,7 +4,7 @@ from mangadex.errors import ApiError
 from flask import Blueprint, render_template, redirect, url_for,flash,send_file, Response, request, stream_with_context, jsonify, g
 from flask_login import login_user,current_user,logout_user, login_required
 
-from app.models import User, Manga, Favorite, Readed, Chapter, UpdateNotification, WorkerStatus
+from app.models import User, Manga, Favorite, Readed, Chapter, UpdateNotification, WorkerStatus, utc_now
 
 from app.libs.library import Library as Mangas
 from app.libs.manga_novel import MangaNovel, SourceUnavailable
@@ -15,7 +15,6 @@ from app import db, login_manager
 from app import cache
 
 
-from datetime import datetime
 from math import ceil
 from io import BytesIO
 
@@ -234,7 +233,7 @@ def notifications_refresh():
 @login_required
 def notifications_mark_all():
     UpdateNotification.query.filter_by(user_id=current_user.id, read_at=None).update(
-        {'read_at': datetime.utcnow()}, synchronize_session=False)
+        {'read_at': utc_now()}, synchronize_session=False)
     db.session.commit()
     return redirect(url_for('user.notifications'))
 
@@ -250,7 +249,7 @@ def notifications_count():
 @login_required
 def notification_read(notification_id):
     entry = UpdateNotification.query.filter_by(id=notification_id, user_id=current_user.id).first_or_404()
-    entry.read_at = datetime.utcnow()
+    entry.read_at = utc_now()
     db.session.commit()
     return jsonify({'status': 'success'})
 
@@ -266,7 +265,7 @@ def mangaCap(cap_id):
     if current_user.is_authenticated and notification_id:
         entry = UpdateNotification.query.filter_by(id=notification_id, user_id=current_user.id).first()
         if entry and entry.read_at is None:
-            entry.read_at = datetime.utcnow()
+            entry.read_at = utc_now()
             db.session.commit()
 
     return render_template('cap.html',data=dall)
@@ -307,7 +306,7 @@ def mangaCapReaded(cap_id):
         ).first()
 
         if read:
-            read.updated_at = datetime.utcnow()
+            read.updated_at = utc_now()
             db.session.commit()
 
         else:
