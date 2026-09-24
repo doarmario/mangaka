@@ -1,31 +1,62 @@
-# Atualizações automáticas (Linux com systemd)
+# Atualizações automáticas pelo Docker
 
-Em uma instalação já funcionando, execute como o usuário que tem acesso ao Docker:
+Em uma instalação já funcionando, execute na pasta do projeto, pelo terminal
+Linux ou PowerShell do Windows:
 
 ```bash
-bash scripts/enable-auto-update.sh
+docker compose -f compose.yaml -f compose.updater.yaml up -d --build auto-updater
 ```
+
+No Windows, use Docker Desktop no modo de containers Linux. O agendamento roda
+dentro do container `auto-updater`, sem cron, systemd ou Agendador de Tarefas.
+O Docker precisa estar em execução; no Windows, configure o Docker Desktop para
+iniciar com sua sessão se desejar. A instalação precisa ser um clone Git (não ZIP).
 
 O agendamento verifica a branch remota acompanhada pela branch atual a cada cinco
 minutos. A primeira execução também implanta o commit atual. Não há webhook nem
 porta adicional. O computador precisa estar ligado e conectado à internet.
-Para executar mesmo sem uma sessão aberta, habilite uma vez:
+O intervalo é definido por `AUTO_UPDATE_INTERVAL_SECONDS` no `.env` (padrão 300,
+mínimo 60). Após mudar esse valor, execute novamente o comando de ativação.
+
+O atualizador monta o checkout com escrita, o código da API adicional em modo
+somente leitura e o socket Docker. Esse socket concede controle do Docker:
+ative apenas em um checkout e uma branch confiáveis. O site e o worker não
+recebem esse acesso. Não é usado Docker-in-Docker nem `privileged`.
+
+O caminho `MANGA_NOVEL_SOURCE_DIR` do `.env` é interpretado no computador e montado
+como `/upstream` no atualizador. Isso permite usar caminhos do Windows sem enviá-los
+ao Compose executado dentro do container. Use a configuração padrão de volumes
+nomeados dos serviços; bind mounts personalizados nesses serviços precisam estar
+disponíveis no mesmo caminho para o Docker host e para o atualizador.
+Se sua instalação usa um nome de projeto diferente, defina `COMPOSE_PROJECT_NAME`
+no `.env` antes da ativação para reutilizar os mesmos containers e volumes.
+Para Docker rootless ou Docker Desktop no Linux, configure `DOCKER_SOCKET_PATH`
+no `.env` com o caminho do socket da instalação.
+
+Se você ativou anteriormente o agendamento systemd, desative-o antes de migrar:
 
 ```bash
-sudo loginctl enable-linger "$USER"
+systemctl --user disable --now mangaka-update.timer
 ```
 
 Use uma instalação sem modificações locais. Commits locais ainda não enviados,
 históricos divergentes e arquivos não commitados bloqueiam a atualização.
 Configurações pessoais devem ficar no `.env`, que é preservado junto com os
-volumes. Em repositórios privados, o usuário do serviço precisa ter acesso Git
-sem prompts interativos. Mudanças só locais não são publicadas por este sistema.
+volumes. Por padrão, o container acessa repositórios públicos via HTTPS. Credenciais
+Git e agentes SSH do computador não são herdados; repositórios privados exigem
+configuração de autenticação dentro do container. Mudanças só locais não são
+publicadas por este sistema. Use um checkout dedicado: no Linux, arquivos gravados
+pelo atualizador podem ficar pertencendo ao root. Os scripts usam finais de linha
+LF definidos em `.gitattributes` para também funcionarem em clones no Windows.
 
 O processo baixa commits, avança apenas por fast-forward e constrói as imagens
 antes de parar o site e o worker. Em seguida, salva um dump MySQL, aplica as
 migrações e sobe os serviços com verificação de saúde do Compose. Há uma breve
 indisponibilidade durante o backup, migração e reinício. O código externo da API
 Asura não recebe `git pull` automático; permanece na versão instalada.
+O atualizador não recria a si próprio. Alterações em sua imagem ou configuração
+exigem executar novamente o comando de ativação; o script do ciclo é lido do
+checkout a cada execução.
 
 O commit só é marcado como implantado após o sucesso; falhas são tentadas novamente
 no próximo ciclo. Falhas após a parada podem deixar o site parado. Consulte os
@@ -38,10 +69,18 @@ para outro local. Excluir a instalação também exclui esses backups.
 
 ```bash
 # Estado e logs
-systemctl --user list-timers mangaka-update.timer
-journalctl --user -u mangaka-update.service -n 100
-# Executar agora
-systemctl --user start mangaka-update.service
-# Desativar próximas atualizações (não interrompe uma em andamento)
-systemctl --user disable --now mangaka-update.timer
+docker compose -f compose.yaml -f compose.updater.yaml ps auto-updater
+docker compose -f compose.yaml -f compose.updater.yaml logs --tail=100 auto-updater
+# Executar agora (o lock impede dois ciclos simultâneos)
+docker compose -f compose.yaml -f compose.updater.yaml exec auto-updater bash scripts/auto-update.sh
+# Desativar (aguarde o fim de uma atualização em andamento antes de parar)
+docker compose -f compose.yaml -f compose.updater.yaml stop auto-updater
 ```
+
+Evite `--remove-orphans` ao operar apenas `compose.yaml`, pois o atualizador fica
+no arquivo adicional. Inclua ambos os arquivos para administrar a instalação toda.
+O script `scripts/enable-auto-update.sh` continua disponível como alternativa
+opcional para instalações Linux sem o container de atualização.
+
+Referências: [Docker Desktop no Windows](https://docs.docker.com/desktop/setup/install/windows-install/)
+e [imagem oficial do Docker CLI](https://hub.docker.com/_/docker).

@@ -1,0 +1,22 @@
+services:
+  auto-updater:
+    build: ./integrations/updater
+    restart: unless-stopped
+    init: true
+    environment:
+      COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-mangaka}
+      AUTO_UPDATE_INTERVAL_SECONDS: ${AUTO_UPDATE_INTERVAL_SECONDS:-300}
+      MANGA_NOVEL_SOURCE_DIR: /upstream
+      GIT_TERMINAL_PROMPT: '0'
+    volumes:
+      - type: bind
+        source: .
+        target: /workspace
+      - type: bind
+        source: ${MANGA_NOVEL_SOURCE_DIR:-../manga-novel-api}
+        target: /upstream
+        read_only: true
+      - type: bind
+        source: ${DOCKER_SOCKET_PATH:-/var/run/docker.sock}
+        target: /var/run/docker.sock
+    working_dir: /workspace

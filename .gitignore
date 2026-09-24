@@ -19,3 +19,4 @@ docker-compose.yml
 *.service
 !scripts/
 !scripts/*.sh
+!integrations/updater/*.sh

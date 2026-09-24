@@ -4,6 +4,9 @@ set -Eeuo pipefail
 umask 077
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
+# Always use only the application stack. The updater must not rebuild or stop
+# itself, nor resolve host bind mounts from inside its container.
+compose() { docker compose --project-directory "$ROOT_DIR" -f "$ROOT_DIR/compose.yaml" "$@"; }
 STATE_DIR="$(git rev-parse --absolute-git-dir)/mangaka-update"
 mkdir -p "$STATE_DIR"
 exec 9>"$STATE_DIR/lock"
@@ -27,20 +30,20 @@ if [[ -f "$STATE_DIR/deployed" && "$(cat "$STATE_DIR/deployed")" == "$TARGET" ]]
     echo "Instalação já atualizada: $TARGET"
     exit 0
 fi
-docker compose version >/dev/null
+compose version >/dev/null
 docker info >/dev/null
 git merge --ff-only "$TARGET"
-docker compose config --quiet
+compose config --quiet
 # Build first, while the current site is still available.
-docker compose build
-docker compose up -d --wait mysql redis
-docker compose stop web updates-worker
+compose build web manga-novel
+compose up -d --wait mysql redis
+compose stop web updates-worker
 mkdir -p "$STATE_DIR/backups"
 BACKUP="$STATE_DIR/backups/$(date -u +%Y%m%dT%H%M%SZ)-$TARGET.sql"
-docker compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_PASSWORD" mysqldump -u "$MYSQL_USER" --single-transaction --no-tablespaces "$MYSQL_DATABASE"' > "$BACKUP.partial"
+compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_PASSWORD" mysqldump -u "$MYSQL_USER" --single-transaction --no-tablespaces "$MYSQL_DATABASE"' > "$BACKUP.partial"
 test -s "$BACKUP.partial"
 mv "$BACKUP.partial" "$BACKUP"
-docker compose run --rm --no-deps web flask --app app db upgrade
-docker compose up -d --wait --wait-timeout 180
+compose run --rm --no-deps web flask --app app db upgrade
+compose up -d --wait --wait-timeout 180 web updates-worker manga-novel
 printf '%s\n' "$TARGET" > "$STATE_DIR/deployed"
 echo "Atualização concluída: $TARGET. Backup: $BACKUP"
