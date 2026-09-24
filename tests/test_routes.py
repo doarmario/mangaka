@@ -89,6 +89,13 @@ def test_service_worker_is_available(app):
     assert 'mangaka-shell-v1' in response.text
 
 
+def test_security_headers_are_present(app):
+    response = app.test_client().get('/status')
+    assert response.headers['X-Content-Type-Options'] == 'nosniff'
+    assert response.headers['X-Frame-Options'] == 'SAMEORIGIN'
+    assert response.headers['Referrer-Policy'] == 'strict-origin-when-cross-origin'
+
+
 def test_notifications_refresh_requires_authentication(app):
     response = app.test_client().get('/notificacoes/atualizar')
     assert response.status_code == 302
