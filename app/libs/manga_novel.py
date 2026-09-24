@@ -15,6 +15,7 @@ from app.models import SourceReference
 from app.libs.md import LANGUAGE_NAMES, Mangas
 
 SOURCES = {'comick': 'ComicK', 'weebcentral': 'WeebCentral', 'asura': 'AsuraScans'}
+VISIBLE_SOURCES = {'asura': 'AsuraScans'}
 
 
 class SourceUnavailable(Exception):

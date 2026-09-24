@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="catalog status-page">
+    <div class="page-heading"><span class="eyebrow">Diagnóstico do serviço</span><h1>Status</h1><p>Verificação dos componentes locais do Mangaka.</p></div>
+    <div class="status-grid">{% for check in checks %}<article class="status-card status-{{ check.state }}"><span class="status-dot"></span><div><h2>{{ check.name }}</h2><p>{{ check.detail }}</p></div></article>{% endfor %}</div>
+    {% if worker and worker.last_error %}<p class="status-error-message" role="alert">Último erro do worker: {{ worker.last_error }}</p>{% endif %}
+</section>
+{% endblock %}

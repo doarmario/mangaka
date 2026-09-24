@@ -100,26 +100,34 @@ class Mangas:
 
         return self._cached("list", (params,), load)
 
-    def getTotalPages(self):
-        return self.listAll(0)["total"]
+    def getTotalPages(self, language=None, status=None):
+        return self.listAll(0, language=language, status=status)["total"]
 
-    def listAll(self, offset):
-        return self._list(offset, **{"order[title]": "asc"})
+    def listAll(self, offset, language=None, status=None):
+        filters = {"order[title]": "asc"}
+        if language: filters["availableTranslatedLanguage[]"] = [language]
+        if status: filters["status[]"] = [status]
+        return self._list(offset, **filters)
 
     def listRecents(self, offset):
         return self._list(offset, **{"order[latestUploadedChapter]": "desc"})
 
-    def listMangaByTag(self, tag_id, offset):
-        return self._list(offset, **{"includedTags[]": [tag_id], "order[title]": "asc"})
+    def listMangaByTag(self, tag_id, offset, language=None, status=None):
+        filters = {"includedTags[]": [tag_id], "order[title]": "asc"}
+        if language: filters["availableTranslatedLanguage[]"] = [language]
+        if status: filters["status[]"] = [status]
+        return self._list(offset, **filters)
 
-    def listaGeral(self, offset=0):
-        return self.listAll(offset)
+    def listaGeral(self, offset=0, language=None, status=None):
+        return self.listAll(offset, language=language, status=status)
 
     def recentes(self, offset=0):
         return {"tag": "Recentes", **self.listRecents(offset)}
 
-    def searchMangaByTitle(self, title, offset=0, tag=None):
+    def searchMangaByTitle(self, title, offset=0, tag=None, language=None, status=None):
         filters = {"includedTags[]": [tag]} if tag else {}
+        if language: filters["availableTranslatedLanguage[]"] = [language]
+        if status: filters["status[]"] = [status]
         return self._list(offset, title=title.strip(), **filters)
 
     def listTags(self):

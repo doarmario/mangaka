@@ -24,6 +24,15 @@ def test_manga_tags_link_to_filtered_catalog(app, api):
     assert 'Ver mangás de Isekai' in response.text
 
 
+def test_tags_page_lists_and_links_mangadex_tags(app, api):
+    setup_api(api)
+    response = app.test_client().get('/tags')
+    assert response.status_code == 200
+    assert 'Tags' in response.text
+    assert 'Isekai' in response.text
+    assert '/mangas?tag=isekai-id' in response.text
+
+
 def test_tag_filter_keeps_pagination_and_cache(app, api):
     calls = setup_api(api)
     client = app.test_client()

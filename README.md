@@ -129,8 +129,7 @@ as marcações de leitura.
 
 ## Fontes adicionais: Manga Novel API
 
-O catálogo agora permite escolher **MangaDex**, **AsuraScans**, **ComicK** ou
-**WeebCentral**. Ao aplicar uma fonte, o catálogo carrega seus títulos automaticamente; a escolha
+O catálogo agora permite escolher **MangaDex** ou **AsuraScans**. Ao aplicar uma fonte, o catálogo carrega seus títulos automaticamente; a escolha
 da fonte acompanha a busca e a paginação. Detalhes e leitor mostram a procedência.
 IDs locais próprios permitem usar favoritos e histórico sem confundir obras ou
 capítulos de provedores diferentes. Não há fusão automática de obras por título.
@@ -167,9 +166,19 @@ As adaptações ficam em `integrations/manga-novel/`, sem modificar o checkout:
 
 O Redis guarda resultados por fonte, URL, página e idioma por 15 minutos e URLs
 de páginas por 10 minutos. Falhas abrem uma pausa de 30 segundos para evitar
-repetir consultas a um provedor indisponível. Falhas de uma fonte não impedem a
-busca nas outras. ComicK e WeebCentral podem recusar consultas automatizadas;
-nesse caso o site informa a indisponibilidade e oferece outras fontes.
+repetir consultas a um provedor indisponível. ComicK e WeebCentral não fazem
+mais parte das fontes exibidas no catálogo.
+
+O catálogo do MangaDex também permite filtrar a busca e a listagem por idioma
+(português do Brasil, português de Portugal ou inglês) e status da obra. Esses
+filtros permanecem ativos durante a paginação.
+
+Usuários autenticados também têm as páginas **Minha biblioteca** e **Novidades**.
+A área de novidades consulta os capítulos dos favoritos, usa o cache existente e
+mostra apenas capítulos que ainda não foram marcados como lidos.
+O serviço `updates-worker` verifica esses favoritos a cada 30 minutos e cria
+notificações individuais; o intervalo pode ser ajustado com
+`UPDATES_INTERVAL_SECONDS`.
 
 Consumet **não está integrado**: seus repositórios oficiais estavam indisponíveis
 quando consultados. É necessária uma instância ou documentação acessível para
@@ -182,5 +191,4 @@ Nas páginas de mangás do MangaDex e do Asura, clique em uma tag (por exemplo,
 pelo gênero. A tag permanece na paginação e nas buscas por título. Use
 **Remover filtro** para voltar ao catálogo da mesma fonte; ao aplicar outra fonte,
 o filtro é reiniciado, pois os identificadores de gênero são específicos de cada
-provedor. ComicK e WeebCentral continuam exibindo seus gêneros como texto, sem
-oferecer um filtro que suas integrações atuais não suportam.
+provedor.

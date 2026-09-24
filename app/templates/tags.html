@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% from 'ui.html' import icon %}
+{% block content %}
+<section class="catalog tags-page">
+    <div class="page-heading">
+        <span class="eyebrow">Explore por tema</span>
+        <h1>Tags</h1>
+        <p>{{ tags|length }} categorias disponíveis em {{ g.sources[g.selected_source] }}.</p>
+    </div>
+    <form class="source-picker" action="{{ url_for('user.tags') }}" method="GET">
+        <label for="source">Fonte</label>
+        <select name="source" id="source">
+            {% for key, label in g.sources.items() %}<option value="{{ key }}" {% if g.selected_source == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+        <button type="submit" class="button secondary">Aplicar</button>
+    </form>
+    {% if tags %}
+    <div class="tag-grid" aria-label="Tags disponíveis">
+        {% for tag in tags %}<a class="tag-card" href="{{ url_for('user.mangaList', source=g.selected_source if g.selected_source != 'mangadex' else none, tag=tag.id) }}"><span>{{ tag.name }}</span>{{ icon('arrow') }}</a>{% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state"><h2>Nenhuma tag encontrada.</h2><p>Esta fonte ainda não retornou categorias.</p></div>
+    {% endif %}
+</section>
+{% endblock %}

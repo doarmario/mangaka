@@ -12,6 +12,7 @@ x-app: &app
     MANGA_NOVEL_API_URL: http://manga-novel:3001
     REDIS_HOST_CACHE: redis://redis:6379/0
     REDIS_HOST_SESSION: redis://redis:6379/1
+    UPDATES_INTERVAL_SECONDS: ${UPDATES_INTERVAL_SECONDS:-1800}
 
 services:
   manga-novel:
@@ -79,6 +80,18 @@ services:
       interval: 15s
       timeout: 6s
       retries: 5
+    restart: unless-stopped
+
+  updates-worker:
+    <<: *app
+    command: [python, -m, app.update_worker]
+    depends_on:
+      init-db:
+        condition: service_completed_successfully
+      manga-novel:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:

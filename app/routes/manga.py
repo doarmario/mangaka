@@ -1,10 +1,10 @@
 from flask import abort
-from flask import make_response
+from flask import make_response, current_app, send_from_directory
 from mangadex.errors import ApiError
 from flask import Blueprint, render_template, redirect, url_for,flash,send_file, Response, request, stream_with_context, jsonify, g
 from flask_login import login_user,current_user,logout_user, login_required
 
-from app.models import User, Manga, Favorite, Readed, Chapter
+from app.models import User, Manga, Favorite, Readed, Chapter, UpdateNotification, WorkerStatus, utc_now
 
 from app.libs.library import Library as Mangas
 from app.libs.manga_novel import MangaNovel, SourceUnavailable
@@ -15,7 +15,6 @@ from app import db, login_manager
 from app import cache
 
 
-from datetime import datetime
 from math import ceil
 from io import BytesIO
 
@@ -23,6 +22,7 @@ import requests
 import hashlib
 import time
 import uuid
+from sqlalchemy import text
 
 site = Blueprint('user', __name__)
 
@@ -39,6 +39,10 @@ def before_request():
     g.form = SearchForm()
     g.sources = manga.sources()
     g.selected_source = manga.selected_source()
+    g.unread_notifications = 0
+    if current_user.is_authenticated:
+        g.unread_notifications = UpdateNotification.query.filter_by(
+            user_id=current_user.id, read_at=None).count()
 
 
 # Função para gerar chave de cache única por usuário
@@ -139,12 +143,115 @@ def home():
     if current_user.is_authenticated:
         d = {
             "Lidos Recentemente":manga.continuar_lendo(0),
-            "Favoritos":manga.lista_ultimos_favoritos(0)   
+            "Favoritos":manga.lista_ultimos_favoritos(0),
+            "Novidades":manga.favorite_updates(20),
         }
     else:
         d = {}
 
     return render_template('index.html',data=dall,user_data=d)
+
+
+@site.route('/status')
+def status():
+    checks = []
+    try:
+        db.session.execute(text('SELECT 1'))
+        checks.append({'name': 'Banco de dados', 'state': 'ok', 'detail': 'Conectado'})
+    except Exception:
+        checks.append({'name': 'Banco de dados', 'state': 'error', 'detail': 'Indisponível'})
+    try:
+        probe = 'mangaka_status_probe'
+        cache.set(probe, True, timeout=10)
+        checks.append({'name': 'Cache', 'state': 'ok' if cache.get(probe) else 'error', 'detail': 'Redis ativo'})
+    except Exception:
+        checks.append({'name': 'Cache', 'state': 'error', 'detail': 'Indisponível'})
+    api_url = current_app.config.get('MANGA_NOVEL_API_URL', '').rstrip('/')
+    if api_url:
+        try:
+            response = requests.get(f'{api_url}/api/health', timeout=(1, 3))
+            checks.append({'name': 'API de fontes', 'state': 'ok' if response.ok else 'error',
+                           'detail': 'Conectada' if response.ok else f'HTTP {response.status_code}'})
+        except requests.RequestException:
+            checks.append({'name': 'API de fontes', 'state': 'error', 'detail': 'Indisponível'})
+    else:
+        checks.append({'name': 'API de fontes', 'state': 'warning', 'detail': 'Não configurada'})
+    worker = db.session.get(WorkerStatus, 1)
+    checks.append({'name': 'Worker de novidades',
+                   'state': 'warning' if worker is None or worker.last_success_at is None else 'ok',
+                   'detail': 'Aguardando primeira execução' if worker is None or worker.last_success_at is None
+                   else f'Última execução: {worker.last_success_at.strftime("%d/%m/%Y %H:%M")}'})
+    return render_template('status.html', checks=checks, worker=worker)
+
+
+@site.route('/service-worker.js')
+def service_worker():
+    response = send_from_directory(current_app.static_folder, 'sw.js', mimetype='application/javascript')
+    response.headers['Service-Worker-Allowed'] = '/'
+    response.headers['Cache-Control'] = 'no-cache'
+    return response
+
+
+@site.route('/biblioteca')
+@login_required
+def library():
+    return render_template('library.html',
+                           recent=manga.continuar_lendo(0),
+                           favorites=manga.lista_ultimos_favoritos(0),
+                           updates=manga.favorite_updates(20))
+
+
+@site.route('/novidades')
+@login_required
+def updates():
+    return render_template('updates.html', updates=manga.favorite_updates(50))
+
+
+@site.route('/notificacoes')
+@login_required
+def notifications():
+    source = request.args.get('source', '').strip()
+    query = UpdateNotification.query.filter_by(user_id=current_user.id)
+    if source:
+        query = query.filter_by(source_name=source)
+    entries = query.order_by(
+        UpdateNotification.created_at.desc()).limit(100).all()
+    sources = [name for (name,) in db.session.query(UpdateNotification.source_name).filter_by(
+        user_id=current_user.id).distinct().order_by(UpdateNotification.source_name).all()]
+    return render_template('notifications.html', notifications=entries, sources=sources, selected_source=source)
+
+
+@site.route('/notificacoes/atualizar')
+@login_required
+def notifications_refresh():
+    from app.update_worker import refresh_once
+    refresh_once(user_id=current_user.id)
+    return redirect(url_for('user.notifications'))
+
+
+@site.route('/notificacoes/marcar-todas', methods=['POST'])
+@login_required
+def notifications_mark_all():
+    UpdateNotification.query.filter_by(user_id=current_user.id, read_at=None).update(
+        {'read_at': utc_now()}, synchronize_session=False)
+    db.session.commit()
+    return redirect(url_for('user.notifications'))
+
+
+@site.route('/api/notificacoes/count')
+@login_required
+def notifications_count():
+    count = UpdateNotification.query.filter_by(user_id=current_user.id, read_at=None).count()
+    return jsonify({'count': count})
+
+
+@site.route('/notificacoes/<int:notification_id>/read', methods=['POST'])
+@login_required
+def notification_read(notification_id):
+    entry = UpdateNotification.query.filter_by(id=notification_id, user_id=current_user.id).first_or_404()
+    entry.read_at = utc_now()
+    db.session.commit()
+    return jsonify({'status': 'success'})
 
 
 @site.route('/cap/<cap_id>')
@@ -154,6 +261,12 @@ def mangaCap(cap_id):
     """
 
     dall = manga.getChapter(cap_id)
+    notification_id = request.args.get('notification', type=int)
+    if current_user.is_authenticated and notification_id:
+        entry = UpdateNotification.query.filter_by(id=notification_id, user_id=current_user.id).first()
+        if entry and entry.read_at is None:
+            entry.read_at = utc_now()
+            db.session.commit()
 
     return render_template('cap.html',data=dall)
 
@@ -193,7 +306,7 @@ def mangaCapReaded(cap_id):
         ).first()
 
         if read:
-            read.updated_at = datetime.utcnow()
+            read.updated_at = utc_now()
             db.session.commit()
 
         else:
@@ -236,6 +349,30 @@ def catalog_tag():
     return tag_id
 
 
+def catalog_filters():
+    allowed_languages = {'pt-br', 'pt', 'en'}
+    allowed_statuses = {'ongoing', 'completed', 'hiatus', 'cancelled'}
+    language = request.args.get('language', '').strip().lower()
+    status = request.args.get('status', '').strip().lower()
+    return {
+        'language': language if language in allowed_languages else None,
+        'status': status if status in allowed_statuses else None,
+    }
+
+
+@site.route('/tags')
+def tags():
+    """List every tag available for the currently selected provider."""
+    if g.selected_source == 'mangadex':
+        available = manga.listTags()
+    elif g.selected_source == 'asura':
+        available = MangaNovel('asura').tags()
+    else:
+        abort(400, 'Esta fonte não oferece tags.')
+    available = sorted(available, key=lambda item: str(item.get('name', '')).casefold())
+    return render_template('tags.html', tags=available)
+
+
 @site.route('/mangas',defaults={'page':1})
 @site.route('/mangas/<int:page>')
 def mangaList(page):
@@ -244,24 +381,26 @@ def mangaList(page):
     """
 
     tag = catalog_tag()
+    filters = catalog_filters()
+    active_filters = {key: value for key, value in filters.items() if value}
     if g.selected_source != 'mangadex':
         page = max(1, min(page, 500))
         result = MangaNovel(g.selected_source).catalog(page, tag=tag)
         total = result['total']
         total_pages = max(1, ceil(total / manga.limit)) if total is not None else None
-        return render_template('list.html', data=result['itens'],
+        return render_template('list.html', data=result['itens'], filters=filters,
                                paginator={'page': page, 'total': total, 'total_pages': total_pages,
                                           'active': page > 1 or result['has_next'], 'has_next': result['has_next']})
 
-    total = manga.listMangaByTag(tag, 0)['total'] if tag else manga.getTotalPages()
+    total = manga.listMangaByTag(tag, 0, **active_filters)['total'] if tag else manga.getTotalPages(**active_filters)
     max_pages = max(1, ceil(min(total, 10000) / manga.limit))
     rpage = max(1, min(page, max_pages))
     offset = manga.limit * (rpage - 1)
-    dall = manga.listMangaByTag(tag, offset) if tag else manga.listaGeral(offset)
+    dall = manga.listMangaByTag(tag, offset, **active_filters) if tag else manga.listaGeral(offset, **active_filters)
     paginator = {"page": rpage, "offset": offset, "total": dall["total"],
                  "total_pages": max_pages, "active": max_pages > 1}
 
-    return render_template('list.html',data=dall["itens"],paginator=paginator)
+    return render_template('list.html', data=dall["itens"], filters=filters, paginator=paginator)
 
 @site.route('/manga/<manga_id>')
 def manga_sinopse(manga_id):
@@ -322,11 +461,20 @@ def mangaFav(manga_id):
 @site.route('/search/<int:page>', methods=["GET"])
 def searchTitles(page):
     tag = catalog_tag()
+    filters = catalog_filters()
+    active_filters = {key: value for key, value in filters.items() if value}
     form = SearchForm(request.args)
     if form.validate():
-        query = form.query.data.strip()
+        # Collapse repeated whitespace so equivalent searches share cache keys
+        # and produce stable pagination URLs.
+        query = ' '.join(form.query.data.split())[:120]
         if not query:
-            return redirect(url_for('user.mangaList'))
+            params = {}
+            if g.selected_source != 'mangadex':
+                params['source'] = g.selected_source
+            if tag:
+                params['tag'] = tag
+            return redirect(url_for('user.mangaList', **params))
 
         page = max(1, min(page, 10000 // manga.limit))
         offset = manga.limit * (page - 1)
@@ -334,10 +482,10 @@ def searchTitles(page):
             dall = MangaNovel(g.selected_source).search(query, page, tag=tag)
             total = dall['total']
             total_pages = max(1, ceil(total / manga.limit)) if total is not None else None
-            return render_template('list.html', data=dall['itens'], query=query,
+            return render_template('list.html', data=dall['itens'], query=query, filters=filters,
                                    paginator={'page': page, 'total': total, 'total_pages': total_pages,
                                               'active': page > 1 or dall['has_next'], 'has_next': dall['has_next']})
-        dall = manga.searchMangaByTitle(query, offset, tag=tag) if tag else manga.searchMangaByTitle(query, offset)
+        dall = manga.searchMangaByTitle(query, offset, tag=tag, **active_filters)
 
         paginator = {
             "page": page,
@@ -349,13 +497,19 @@ def searchTitles(page):
 
         return render_template(
             'list.html',
-            form=form,
+            form=form, filters=filters,
             data=dall['itens'],
             paginator=paginator,
             query=query
         )
     else:
-        return redirect(url_for('user.mangaList'))
+        # Keep the selected provider when a malformed/blank query is submitted.
+        params = {}
+        if g.selected_source != 'mangadex':
+            params['source'] = g.selected_source
+        if tag:
+            params['tag'] = tag
+        return redirect(url_for('user.mangaList', **params))
 
 
 

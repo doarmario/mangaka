@@ -19,5 +19,5 @@ class SearchForm(FlaskForm):
     class Meta:
         csrf = False  # Read-only GET search; no form token is needed.
 
-    query = StringField('Pesquisa:', validators=[DataRequired()])
+    query = StringField('Pesquisa:', validators=[DataRequired()], render_kw={'maxlength': 120})
     submit = SubmitField('Buscar')

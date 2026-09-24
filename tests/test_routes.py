@@ -31,6 +31,17 @@ def test_search_keeps_query_and_previous_link_on_last_page(app, api):
     assert calls[-1][1]['title'] == ['One Piece']
 
 
+def test_catalog_filters_keep_language_and_status(app, api):
+    responses, calls = api
+    responses['/manga'] = {'data': [manga_record()], 'total': 1}
+    response = app.test_client().get('/mangas?language=en&status=completed')
+    assert response.status_code == 200
+    assert calls[-1][1]['availableTranslatedLanguage[]'] == ['en']
+    assert calls[-1][1]['status[]'] == ['completed']
+    assert 'name="language"' in response.text
+    assert 'name="status"' in response.text
+
+
 def test_unlisted_chapter_renders_without_none_links(app, api):
     reader_responses(api[0], 'unlisted')
     response = app.test_client().get('/cap/unlisted')
@@ -55,6 +66,52 @@ def test_get_search_works_with_csrf_enabled(app, api):
     app.config['WTF_CSRF_ENABLED'] = True
     api[0]['/manga'] = {'data': [], 'total': 0}
     assert app.test_client().get('/search?query=test').status_code == 200
+
+
+def test_library_requires_authentication(app):
+    response = app.test_client().get('/biblioteca')
+    assert response.status_code == 302
+    assert '/auth/login' in response.headers['Location']
+
+
+def test_status_page_reports_local_components(app):
+    response = app.test_client().get('/status')
+    assert response.status_code == 200
+    assert 'Banco de dados' in response.text
+    assert 'Cache' in response.text
+    assert 'Worker de novidades' in response.text
+
+
+def test_service_worker_is_available(app):
+    response = app.test_client().get('/service-worker.js')
+    assert response.status_code == 200
+    assert 'Service-Worker-Allowed' in response.headers
+    assert 'mangaka-shell-v1' in response.text
+
+
+def test_security_headers_are_present(app):
+    response = app.test_client().get('/status')
+    assert response.headers['X-Content-Type-Options'] == 'nosniff'
+    assert response.headers['X-Frame-Options'] == 'SAMEORIGIN'
+    assert response.headers['Referrer-Policy'] == 'strict-origin-when-cross-origin'
+
+
+def test_notifications_refresh_requires_authentication(app):
+    response = app.test_client().get('/notificacoes/atualizar')
+    assert response.status_code == 302
+    assert '/auth/login' in response.headers['Location']
+
+
+def test_notifications_mark_all_requires_authentication(app):
+    response = app.test_client().post('/notificacoes/marcar-todas')
+    assert response.status_code == 302
+    assert '/auth/login' in response.headers['Location']
+
+
+def test_notifications_count_requires_authentication(app):
+    response = app.test_client().get('/api/notificacoes/count')
+    assert response.status_code == 302
+    assert '/auth/login' in response.headers['Location']
 
 
 def test_init_db_command_preserves_existing_data(app):

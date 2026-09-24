@@ -3,7 +3,7 @@
 {% set page_title = data.manga ~ ' · Capítulo ' ~ data.cap %}
 {% block content %}
 <section class="reader">
-    <div class="reader-top"><div><a class="eyebrow" href="{{ url_for('user.manga_sinopse', manga_id=data.manga_id) }}">{{ icon('left') }} {{ data.manga }}</a><h1>Capítulo {{ data.cap if data.cap is not none else 'sem número' }}</h1><span class="language-badge" lang="{{ data.language }}">{{ data.language_name }}</span></div><label class="read-mode" for="scrollToggle">Páginas <input type="checkbox" id="scrollToggle"> Rolagem contínua</label></div>
+    <div class="reader-top"><div><a class="eyebrow" href="{{ url_for('user.manga_sinopse', manga_id=data.manga_id) }}">{{ icon('left') }} {{ data.manga }}</a><h1>Capítulo {{ data.cap if data.cap is not none else 'sem número' }}</h1><span class="language-badge" lang="{{ data.language }}">{{ data.language_name }}</span></div><div class="reader-controls"><label class="read-mode" for="scrollToggle">Páginas <input type="checkbox" id="scrollToggle"> Rolagem contínua</label><button class="button secondary" type="button" id="fullscreenToggle">Tela cheia</button><label class="reader-range" for="readerWidth">Largura <input id="readerWidth" type="range" min="60" max="100" value="100"></label><label class="reader-range" for="readerBrightness">Brilho <input id="readerBrightness" type="range" min="70" max="130" value="100"></label></div></div>
     <div class="page-content"><button class="page-nav" id="changeprev" aria-label="Página anterior">{{ icon('left') }}</button><div id="leitor" class="reader-display"></div><button class="page-nav" id="changenext" aria-label="Próxima página">{{ icon('right') }}</button></div>
     <p class="reader-help" id="reader-progress" role="status">Carregando páginas…</p>
     <div class="reader-bottom"><p>Boa leitura. Fonte: {{ data.source_name | default('MangaDex') }}.</p><nav aria-label="Navegar entre capítulos">{% if data.prev %}<a class="button secondary" href="{{ url_for('user.mangaCap', cap_id=data.prev) }}">{{ icon('left') }} Capítulo anterior</a>{% endif %}<a class="button secondary" href="{{ url_for('user.manga_sinopse', manga_id=data.manga_id) }}">Capítulos</a>{% if data.next %}<a class="button primary" href="{{ url_for('user.mangaCap', cap_id=data.next) }}">Próximo capítulo {{ icon('right') }}</a>{% endif %}</nav></div>
@@ -11,5 +11,5 @@
 {% endblock %}
 {% block scripts %}
 <script>const cap = {{ data.id | tojson }}; const pages = {{ data.pages | tojson }}; const readerAuthenticated = {{ current_user.is_authenticated | tojson }};</script>
-<script src="{{ url_for('static', filename='js/reader.js', v='2') }}" defer></script>
+<script src="{{ url_for('static', filename='js/reader.js', v='3') }}" defer></script>
 {% endblock %}

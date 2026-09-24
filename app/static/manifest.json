@@ -3,6 +3,8 @@
     "short_name": "Mangaka",
     "description": "Leitor de Manga.",
     "start_url": "/",
+    "scope": "/",
+    "id": "/",
     "display": "standalone",
     "background_color": "#292929",
     "theme_color": "#ff6400",
