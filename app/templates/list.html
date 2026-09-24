@@ -1,53 +1,15 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-    {% include 'header.html' %}
-<body>
-    
-    {% include 'menu.html' %}
-
-    <div class="display">
-
-            <section class="manga-grid">
-        <!--<div class="grid-title">
-            <h2>Recomendados</h2>
-        </div>-->
-        <div class="grid-items">
-            {% for i in data %}
-            <a href="/manga/{{ i.id }}">
-                <div class="grid-item">
-                    <img  src="{{ url_for('static', filename='img/page.png') }}" data-src="/img/cover/{{ i.id }}?size=256" alt="{{ i.title }}">
-                    <h3>{{ i.title }}</h3>
-                </div>
-            </a>
-        {% endfor %}
-        </div>
-    
-
-
-        {% if paginator.active %}
-            <div class="paginator">
-                {% if paginator.page>1 %}
-                <a class="prev" id="prevBtn" href="/mangas/{{ paginator.page-1 }}">
-                    <span class="material-icons-round">
-                    chevron_left
-                    </span>
-                </a>
-                {% endif %}
-                <span id="pageNumber">{{ paginator.page }} de {{ paginator.total_pages }}</span>
-                {% if paginator.page < paginator.total_pages %}
-                <a class="next" id="nextBtn" href="/mangas/{{ paginator.page+1 }}">
-                    <span class="material-icons-round">
-                    chevron_right
-                    </span>
-                </a>
-                {% endif %}
-            </div>
-        {% endif %}
-    </section>
-
-    </div>
-
-
-    {% include 'footer.html' %}
-</body>
-</html>
+{% extends 'base.html' %}
+{% from 'ui.html' import icon, card %}
+{% set page_title = 'Busca' if query else 'Catálogo' %}
+{% block content %}
+<section class="catalog">
+    <div class="page-heading"><span class="eyebrow">{{ 'Encontre sua próxima leitura' if not query else 'Resultados da busca' }}</span><h1>{{ 'Explore o catálogo.' if not query else '“' ~ query ~ '”' }}</h1><p>{{ paginator.total }} {{ 'histórias para descobrir' if not query else 'resultados encontrados' }} <span class="muted-divider">/</span> Português e inglês</p></div>
+    <div class="catalog-toolbar"><span>{{ 'Todos os mangás' if not query else 'Mangás encontrados' }}</span><span>Página {{ paginator.page }} de {{ paginator.total_pages }}</span></div>
+    <div class="card-grid">{% for item in data %}{{ card(item) }}{% else %}<div class="empty-state">{{ icon('search') }}<h2>Nenhuma história encontrada.</h2><p>Tente outro título ou uma busca mais curta.</p><a class="button secondary" href="{{ url_for('user.mangaList') }}">Voltar ao catálogo</a></div>{% endfor %}</div>
+    {% if paginator.active %}<nav class="paginator" aria-label="Páginas do catálogo">
+        {% if paginator.page > 1 %}<a class="button secondary" rel="prev" href="{{ url_for('user.searchTitles', page=paginator.page-1, query=query) if query else url_for('user.mangaList', page=paginator.page-1) }}">{{ icon('left') }} Anterior</a>{% endif %}
+        <span>{{ paginator.page }} <span class="muted">/ {{ paginator.total_pages }}</span></span>
+        {% if paginator.page < paginator.total_pages %}<a class="button secondary" rel="next" href="{{ url_for('user.searchTitles', page=paginator.page+1, query=query) if query else url_for('user.mangaList', page=paginator.page+1) }}">Próxima {{ icon('right') }}</a>{% endif %}
+    </nav>{% endif %}
+</section>
+{% endblock %}

@@ -67,12 +67,12 @@ python-socketio==5.13.0
 pyzmq==26.4.0
 Quart==0.20.0
 redis==6.0.0
-requests==2.32.3
+requests==2.32.5
 setuptools==80.1.0
 simple-websocket==1.1.0
 six==1.17.0
 SQLAlchemy==2.0.40
-typing_extensions==4.13.2
+typing_extensions==4.15.0
 urllib3==2.4.0
 uvicorn==0.34.2
 websocket-client==1.8.0
@@ -83,3 +83,4 @@ yarl==1.20.0
 zope.event==5.0
 zope.interface==7.2
 zstandard==0.23.0
+md @ git+https://github.com/doarmario/mangadex.git@9e6a072fc71a8040ad1608253d6803c3f5c77162

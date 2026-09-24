@@ -16,5 +16,8 @@ class RegisterForm(FlaskForm):
     password_repeat = PasswordField('Repeat password', validators=[DataRequired(), EqualTo('password', message='As senhas devem ser iguais.')])
 
 class SearchForm(FlaskForm):
+    class Meta:
+        csrf = False  # Read-only GET search; no form token is needed.
+
     query = StringField('Pesquisa:', validators=[DataRequired()])
     submit = SubmitField('Buscar')

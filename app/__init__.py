@@ -1,5 +1,6 @@
 #libs
 from flask import Flask
+import click
 #extensões
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
@@ -20,15 +21,13 @@ session = Session()
 compress = Compress()
 
 #app
-def create_app():
-
-    from app.config import Config
-    from app.libs.md import Mangas
-
-    manga = Mangas()
+def create_app(config_object=None):
+    if config_object is None:
+        from app.config import Config
+        config_object = Config
 
     app = Flask(__name__, instance_relative_config=True)
-    app.config.from_object(Config)
+    app.config.from_object(config_object)
 
     db.init_app(app)
     bcrypt.init_app(app)
@@ -52,5 +51,10 @@ def create_app():
     app.register_blueprint(site)
     app.register_blueprint(auth,url_prefix='/auth')
 
+    @app.cli.command('init-db')
+    def init_db():
+        """Create missing tables without removing existing data."""
+        db.create_all()
+        click.echo('Tabelas do Mangaka prontas.')
+
     return app
-    

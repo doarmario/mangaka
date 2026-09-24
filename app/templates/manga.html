@@ -1,84 +1,23 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-    {% include 'header.html' %}
-<body>
-
-    {% include 'menu.html' %}
-
-    <div class="display">
-        <section class="manga-page">
-        <div class="manga-header">
-            <img src="{{ url_for('static',filename='img/page.png') }}" data-src="/img/cover/{{ data.id }}" alt="Capa do Mangá" loading="lazy">
-            <div class="manga-info">
-                <h1>{{ data.title }}</h1>
-                <div class="genre-box">
-                    {% for i in data.tags %}
-                    <a class="genre">{{ i }}</a>
-                    {% endfor %}
-                </div>
-                <p class="synopsis">{{ data.sinopse }}</p>
-                <ul class="details">
-                    <li><strong>Autor:</strong>{{ data.autor }}</li>
-
-                    <li><strong>Status:</strong>{{ data.status }}</li>
-                    <li><strong>Capítulos:</strong>{{ data.caps }}</li>
-                    <li><strong>Ano:</strong>{{ data.ano }}</li>
-                </ul>
-            </div>
+{% extends 'base.html' %}
+{% from 'ui.html' import icon %}
+{% set page_title = data.title %}
+{% block content %}
+<a class="breadcrumb" href="{{ url_for('user.mangaList') }}">{{ icon('left') }} Voltar ao catálogo</a>
+<section class="manga-page">
+    <div class="manga-header">
+        <img class="detail-cover" src="{{ url_for('user.coverproxy', uuid=data.id, size=512) }}" alt="Capa de {{ data.title }}" width="256" height="360">
+        <div class="manga-info"><span class="eyebrow">Sua próxima história</span><h1>{{ data.title }}</h1>
+            <div class="genre-box">{% for tag in data.tags %}<span class="genre">{{ tag }}</span>{% endfor %}</div>
+            <p class="synopsis">{{ data.sinopse }}</p>
+            <dl class="details"><div><dt>Autor</dt><dd>{{ data.autor or 'Não informado' }}</dd></div><div><dt>Status</dt><dd>{{ {'ongoing':'Em publicação', 'completed':'Concluído', 'hiatus':'Em pausa', 'cancelled':'Cancelado'}.get(data.status, data.status) }}</dd></div><div><dt>Capítulos</dt><dd>{{ data.caps }}</dd></div><div><dt>Ano</dt><dd>{{ data.ano or '—' }}</dd></div></dl>
+            <div class="detail-actions">{% if data.chapters %}<a id="start-reading" class="button primary" href="{{ url_for('user.mangaCap', cap_id=data.first_chapter) }}">{{ icon('book') }} Começar a ler</a>{% endif %}
+            {% if current_user.is_authenticated %}<button class="button secondary favorite-button" id="favorite-btn" data-manga-id="{{ data.id }}" aria-pressed="{{ 'true' if data.is_favorite else 'false' }}">{{ icon('heart') }}<span>{{ 'Nos favoritos' if data.is_favorite else 'Favoritar' }}</span></button>{% else %}<a class="button secondary" href="{{ url_for('auth.login') }}">{{ icon('heart') }} Entrar para favoritar</a>{% endif %}</div>
+            <p id="action-status" class="action-status" role="status"></p>
         </div>
-        <div class="chapter-list">
-            <div class="chapter-menu">
-                <h2>Capítulos</h2>
-                {% if current_user.is_authenticated %}
-                <button class="save-btn" id="favorite-btn">
-                    {% if data.is_favorite %}
-                        <span class="material-icons-round">
-                        favorite
-                        </span>
-                    {% else %}
-                        <span class="material-icons-round">
-                        favorite_border
-                        </span>
-                    {% endif %}
-                </button>
-                {% endif %}
-                <button class="filter-btn" id="chapter-filter">
-                    <span class="material-icons-round">
-                    filter_list
-                    </span>
-                </button>
-                
-            </div>
-            <ul>
-                {% if data.chaps2 == 0 %}
-                <a>
-                    <li><p>Por que não vejo capítulos?</p></li>
-                </a>
-                {% else %}
-                {% for i in data.chapters %}
-                <a href="/cap/{{ i.cap_id }}">
-                    <li id="{{ i.cap_id }}" class="{% if i.is_readed %}read{% endif %}">
-                        <p>Capítulo {{ i.cap }}</p>
-                        {% if i.is_readed %}
-                            <span class="user-state">Lido</span>
-                        {% endif %}
-                    </li>
-                </a>
-                {% endfor %}
-                {% endif %}
-            </ul>
-
-        </div>
-        <script>
-            var manga_id = '{{ data.id }}';
-        </script>
-    </section>
     </div>
-
-    
-
-
-
-    {% include 'footer.html' %}
-</body>
-</html>
+    <section class="chapter-list"><div class="section-heading"><div><span class="eyebrow">Uma página de cada vez</span><h2>Capítulos <span class="count">{{ data.caps }}</span></h2></div><button class="button secondary" id="chapter-filter" aria-label="Inverter ordem dos capítulos">{{ icon('sort') }}<span>Mais recentes</span></button></div>
+        <div class="chapter-toolbar"><label for="chapter-language">Idioma dos capítulos</label><select id="chapter-language"><option value="all">Português e inglês</option>{% for language in data.languages %}<option value="{{ language.code }}">{{ language.name }}</option>{% endfor %}</select><span id="chapter-language-status" role="status"></span></div>
+        <ul>{% for chapter in data.chapters %}<li id="{{ chapter.cap_id }}" data-number="{{ chapter.cap }}" data-language="{{ chapter.language }}" class="{{ 'read' if chapter.is_readed else '' }}"><a href="{{ url_for('user.mangaCap', cap_id=chapter.cap_id) }}"><span>Capítulo {{ chapter.cap }}</span><span class="chapter-end"><span class="language-badge" lang="{{ chapter.language }}">{{ chapter.language_name }}</span>{% if chapter.is_readed %}<span class="user-state">Lido</span>{% endif %}{{ icon('right') }}</span></a></li>{% else %}<li class="empty-state">Ainda não há capítulos disponíveis em português ou inglês.</li>{% endfor %}</ul>
+    </section>
+</section>
+{% endblock %}

@@ -1,14 +1,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Icons+Round" rel="stylesheet" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/format.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/menu.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/page.css') }}">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#131613">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/site.css', v='2') }}">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo.png') }}">
-    <title>Mangaka</title>
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
-    <meta name="theme-color" content="#ff6400">
-    <meta name="apple-mobile-web-app-status-bar-style" content="#ff6400">
-    <meta name="msapplication-navbutton-color" content="#ff6400">
+    <title>{{ page_title | default('Descubra sua próxima história') }} · Mangaka</title>
 </head>

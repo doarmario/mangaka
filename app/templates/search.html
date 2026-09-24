@@ -1,11 +1,5 @@
-<div class="search-bar" id="search-view">
-<form action="/search" method="GET">
-        {{ g.form.hidden_tag() }}
-        {{ g.form.query(size=20) }}
-        <button type="submit" class="btn btn-primary">
-            <span class="material-icons-round">
-                    search
-                </span>
-        </button>
-    </form>
-</div>
+<form class="nav-search" action="{{ url_for('user.searchTitles') }}" method="GET" role="search">
+    <button type="submit" aria-label="Buscar mangás">{{ icon('search') }}</button>
+    <input type="search" name="query" placeholder="Qual história você procura?" value="{{ request.args.get('query', '') }}" aria-label="Buscar mangás" required>
+    <kbd aria-hidden="true">/</kbd>
+</form>

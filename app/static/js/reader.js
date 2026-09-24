@@ -1,176 +1,86 @@
-document.addEventListener("DOMContentLoaded", function() {
-    const modeSelect = document.getElementById("scrollToggle"); // O toggle de "scroll" ou "page"
-    const leitorContainer = document.getElementById("leitor");
-    const prevButton = document.getElementById("changeprev");
-    const nextButton = document.getElementById("changenext");
-    let currentPageIndex = 0;
-    let totalImages = pages.length; // Usando a variável `data.pages` que foi passada pelo Jinja2
-    let currentMode = localStorage.getItem("mode") || "páginas"; // Recupera o modo armazenado no localStorage ou define como "páginas"
-    let loadedPages = {}; // Armazena as páginas já carregadas
-    let imageCache = {}; // Armazena as imagens pré-carregadas
-    let is_readed = false;
+document.addEventListener('DOMContentLoaded', () => {
+    const mode = document.getElementById('scrollToggle');
+    const container = document.getElementById('leitor');
+    const previous = document.getElementById('changeprev');
+    const next = document.getElementById('changenext');
+    const progress = document.getElementById('reader-progress');
+    let index = 0;
+    let marked = false;
+    let marking = false;
+    let observer;
+    try { mode.checked = localStorage.getItem('mode') === 'scroll'; } catch { /* Storage is optional. */ }
 
-
-    // Define o modo inicial no toggle
-    modeSelect.checked = (currentMode === "scroll");
-
-    // Atualiza o valor no localStorage e o modo de leitura sempre que houver uma mudança no toggle
-    modeSelect.addEventListener("change", function() {
-        currentMode = modeSelect.checked ? "scroll" : "páginas"; // Alterna entre scroll e páginas
-        localStorage.setItem("mode", currentMode);
-        updateMode();
-    });
-
-    // Inicializa o modo de leitura
-    updateMode();
-
-    prevButton.addEventListener("click", function() {
-        changePage(-1);
-    });
-
-    nextButton.addEventListener("click", function() {
-        changePage(1);
-    });
-
-    function changePage(direction) {
-        currentPageIndex += direction;
-        if (currentPageIndex < 0) {
-            currentPageIndex = 0;
-        } else if (currentPageIndex >= totalImages) {
-            currentPageIndex = totalImages - 1;
-        }
-
-        preloadImages();
-        updateMode();
-
-        // Verifica se a página atual é a última página
-        if (currentPageIndex === totalImages - 1) {
-            console.log(is_readed);
-            setRead();
-        }
+    async function markRead() {
+        if (!readerAuthenticated || marked || marking) return;
+        marking = true;
+        try {
+            const response = await fetch(`/cap/${cap}/readed`);
+            if (response.ok) marked = (await response.json()).status === 'success';
+        } catch { /* Reading remains available if saving fails. */ }
+        finally { marking = false; }
     }
-
-    function setRead() {
-        // Esta função pode fazer algo quando o usuário chegar na última página
-        // Constrói a URL para a requisição
-        const urlEspecifica = "/cap/"+cap+"/readed";
-
-        // Faz a requisição AJAX para a URL específica
-        if (is_readed == false){
-            fetch(urlEspecifica, {
-                method: 'GET'
-                // Adicione quaisquer dados ou corpo da requisição, se necessário
-            })
-            .then(response => {
-                // Manipula a resposta da requisição
-                if (response.ok) {
-                    is_readed = true;
-                }
-                //} else {
-                //    console.error("Erro ao definir como lido", response.status);
-                //}
-            });
-    }
-    }
-
-    function updateMode() {
-        if (currentMode === "scroll") {
-            showScrollMode();
-            prevButton.style.display = "none"; // Oculta o botão de página anterior
-            nextButton.style.display = "none"; // Oculta o botão de próxima página
-            window.addEventListener("scroll", scrollHandler); // Adiciona ouvinte de evento de rolagem
-        } else if (currentMode === "páginas") {
-            showPageMode();
-            prevButton.style.display = "block"; // Exibe o botão de página anterior
-            nextButton.style.display = "block"; // Exibe o botão de próxima página
-            window.removeEventListener("scroll", scrollHandler); // Remove ouvinte de evento de rolagem
-        }
-    }
-
-    function showScrollMode() {
-        leitorContainer.innerHTML = ""; // Limpa o conteúdo atual
-
-        // Carrega as três primeiras páginas
-        for (let i = 0; i < Math.min(3, totalImages); i++) {
-            const img = document.createElement("img");
-            img.src = pages[i]; // Usando os links de `data.pages` que foram passados como JSON
-            leitorContainer.appendChild(img);
-            loadedPages[i] = true; // Marca a página como carregada
-        }
-    }
-
-    function scrollHandler() {
-        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight/4) {
-            //console.log("Usuário está próximo do final da página");
-    
-            // Se estiver próximo do final da página, carrega duas páginas adicionais
-            loadNextPages(2);
-            setTimeout(() => {}, 1000);
-            
-            // Verifica se o usuário está no final do capítulo
-            if ((window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 100)) {
-                console.log(is_readed);
-                setRead();
-                setTimeout(() => {}, 1000);
+    function image(number, scroll) {
+        const img = new Image();
+        img.alt = `Página ${number + 1}`;
+        img.loading = scroll && number > 1 ? 'lazy' : 'eager';
+        img.addEventListener('load', () => {
+            if (!scroll && number === index) {
+                progress.textContent = `Página ${number + 1} de ${pages.length} · Use as setas do teclado para navegar`;
+                if (number === pages.length - 1) markRead();
             }
+            if (scroll && number === pages.length - 1 && img.isConnected) {
+                const end = document.getElementById('reader-end');
+                if (end) observer?.observe(end);
+            }
+        });
+        img.addEventListener('error', () => {
+            progress.textContent = `Não foi possível carregar a página ${number + 1}. Recarregue para tentar novamente.`;
+        });
+        img.src = pages[number];
+        return img;
+    }
+    function render() {
+        observer?.disconnect();
+        container.replaceChildren();
+        previous.hidden = mode.checked || index === 0 || !pages.length;
+        next.hidden = mode.checked || index === pages.length - 1 || !pages.length;
+        if (!pages.length) { progress.textContent = 'Este capítulo não tem páginas disponíveis.'; return; }
+        if (mode.checked) {
+            progress.textContent = `${pages.length} páginas · Rolagem contínua`;
+            if ('IntersectionObserver' in window) {
+                observer = new IntersectionObserver(entries => {
+                    if (entries.some(entry => entry.isIntersecting)) markRead();
+                }, { threshold: 0.5 });
+            }
+            pages.forEach((_, number) => container.appendChild(image(number, true)));
+            const end = document.createElement('div');
+            end.id = 'reader-end';
+            end.style.height = '1px';
+            end.setAttribute('aria-hidden', 'true');
+            container.appendChild(end);
         } else {
-            // Pré-carrega as próximas imagens enquanto o usuário rola para baixo
-            preloadImages();
-            setTimeout(() => {}, 1000);
+            progress.textContent = `Carregando página ${index + 1} de ${pages.length}…`;
+            container.appendChild(image(index, false));
+            if (pages[index + 1]) { const preload = new Image(); preload.src = pages[index + 1]; }
         }
     }
-
-    function loadNextPages(numPages) {
-        let nextPageIndex = currentPageIndex + 1;
-
-        // Carrega as próximas duas páginas que ainda não foram carregadas
-        for (let i = 0; i < numPages; i++) {
-            while (loadedPages[nextPageIndex]) {
-                nextPageIndex++;
-            }
-
-            if (nextPageIndex < totalImages) {
-                const img = document.createElement("img");
-                img.src = pages[nextPageIndex]; // Usando os links de `data.pages`
-                leitorContainer.appendChild(img);
-                loadedPages[nextPageIndex] = true; // Marca a página como carregada
-                nextPageIndex++;
-            }
-        }
+    function change(delta) {
+        if (mode.checked || !pages.length) return;
+        const target = Math.max(0, Math.min(pages.length - 1, index + delta));
+        if (target !== index) { index = target; render(); }
     }
-
-    function preloadImages() {
-        const preloadIndex = currentPageIndex + 1;
-        if (preloadIndex < totalImages) {
-            const nextPageUrl = pages[preloadIndex]; // Usando os links de `data.pages`
-            if (!imageCache[nextPageUrl]) {
-                const tempImg = new Image();
-                tempImg.src = nextPageUrl;
-                imageCache[nextPageUrl] = true; // Marca a imagem como pré-carregada
-            }
+    previous.addEventListener('click', () => change(-1));
+    next.addEventListener('click', () => change(1));
+    document.addEventListener('keydown', event => {
+        if (event.target.closest('input, textarea, select, button, [contenteditable]')) return;
+        if (!mode.checked && ['ArrowLeft', 'ArrowRight'].includes(event.key)) {
+            event.preventDefault();
+            change(event.key === 'ArrowLeft' ? -1 : 1);
         }
-    }
-
-    function showPageMode() {
-        leitorContainer.innerHTML = ""; // Limpa o conteúdo atual
-
-        const img = document.createElement("img");
-        const currentPageUrl = pages[currentPageIndex]; // Usando os links de `data.pages`
-        
-        // Verifica se a imagem já foi pré-carregada
-        if (imageCache[currentPageUrl]) {
-            img.src = currentPageUrl;
-            leitorContainer.appendChild(img);
-        } else {
-            const tempImg = new Image();
-            tempImg.src = currentPageUrl;
-            tempImg.onload = function() {
-                img.src = currentPageUrl;
-                leitorContainer.appendChild(img);
-                imageCache[currentPageUrl] = true; // Marca a imagem como pré-carregada
-            };
-        }
-        
-        preloadImages();
-    }
+    });
+    mode.addEventListener('change', () => {
+        try { localStorage.setItem('mode', mode.checked ? 'scroll' : 'páginas'); } catch { /* Optional. */ }
+        render();
+    });
+    render();
 });
