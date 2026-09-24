@@ -1,6 +1,7 @@
 """Route-facing library; IDs determine the provider for details and reading."""
 from flask import abort, current_app, request
 from flask_login import current_user
+from sqlalchemy.orm import joinedload
 from app import db
 from app.libs.md import Mangas
 from app.libs.manga_novel import MangaNovel, SOURCES, VISIBLE_SOURCES
