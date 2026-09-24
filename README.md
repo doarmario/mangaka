@@ -71,6 +71,12 @@ publicado apenas no endereço local. Para mudar a porta, ajuste `MANGAKA_PORT`
 no `.env`. As senhas do MySQL no `.env` são aplicadas na primeira inicialização
 do volume; alterá-las depois exige também atualizar as credenciais no banco.
 
+Para acessar pelo celular ou tablet na mesma rede, descubra o IP do computador
+(`hostname -I` no Linux), ajuste `MANGAKA_BIND_ADDRESS=0.0.0.0` no `.env` e
+reinicie o site. Abra `http://IP_DO_COMPUTADOR:5000` no outro dispositivo.
+Consulte [docs/self-hosting.md](docs/self-hosting.md) para instalação em uma
+máquina nova, atualização, backup e publicação atrás de HTTPS.
+
 ## Testes da integração MangaDex
 
 ```bash
