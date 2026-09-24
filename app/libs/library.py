@@ -38,7 +38,7 @@ class Library(Mangas):
     def showManga(self, manga_id):
         ref = self.reference(manga_id, 'manga')
         if not ref:
-            return {**super().showManga(manga_id), 'source_name': 'MangaDex'}
+            return {**super().showManga(manga_id), 'source_name': 'MangaDex', 'source_id': 'mangadex'}
         adapter = MangaNovel(ref.source)
         data = adapter.info(ref)
         chapters = adapter.chapters(ref)
@@ -55,13 +55,13 @@ class Library(Mangas):
         preferred = [c for c in chapters if languages and c['language'] == languages[0]['code']]
         favorite = current_user.is_authenticated and db.session.query(Favorite).join(Manga).filter(
             Favorite.user_id == current_user.id, Manga.uuid == manga_id).first() is not None
-        return {**data, 'chapters': chapters, 'caps': len(chapters), 'languages': languages,
+        return {**data, 'source_id': ref.source, 'chapters': chapters, 'caps': len(chapters), 'languages': languages,
                 'first_chapter': preferred[-1]['cap_id'] if preferred else None, 'is_favorite': bool(favorite)}
 
     def getChapter(self, cap_id):
         ref = self.reference(cap_id, 'chapter')
         if not ref:
-            return {**super().getChapter(cap_id), 'source_name': 'MangaDex'}
+            return {**super().getChapter(cap_id), 'source_name': 'MangaDex', 'source_id': 'mangadex'}
         parent = self.reference(ref.parent_id, 'manga')
         if not parent:
             abort(404)

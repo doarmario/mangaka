@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% set page_title = 'Fonte indisponível' %}
+{% block content %}
+<section class="page-heading"><span class="eyebrow">Vamos tentar outra história</span><h1>Esta fonte não respondeu.</h1><p role="alert">{{ message }}</p></section>
+<div class="detail-actions">{% for key, label in g.sources.items() %}<a class="button secondary" href="{{ url_for('user.searchTitles', query=request.args.get('query'), source=key) if request.args.get('query') else url_for('user.mangaList', source=key) }}">Buscar em {{ label }}</a>{% endfor %}</div>
+{% endblock %}

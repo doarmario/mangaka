@@ -20,6 +20,6 @@
         {% if chapter and item.chapter %}<span class="card-label">Continuar leitura</span>{% endif %}
     </div>
     <h3>{{ item.title }}</h3>
-    <span class="card-caption">{{ 'Voltar à história' if chapter and item.chapter else 'Conhecer mangá' }}</span>
+    <span class="card-caption">{{ 'Voltar à história' if chapter and item.chapter else item.source_name | default('Conhecer mangá') }}</span>
 </a>
 {%- endmacro %}

@@ -63,7 +63,7 @@ class MangaNovel:
     def _request(self, path, **params):
         params = {'source': self.source, **params}
         digest = sha256(json.dumps([self.base, path, params], sort_keys=True).encode()).hexdigest()
-        key = 'manga_novel_v1_' + digest
+        key = 'manga_novel_v2_' + digest
         cached = cache.get(key)
         if cached is not None:
             return deepcopy(cached)
@@ -89,7 +89,9 @@ class MangaNovel:
     def _remote(record):
         return record.get('id') or record.get('hid') or record.get('slug')
 
-    def search(self, query, page=1):
+    def search(self, query, page=1, tag=None):
+        if tag:
+            return self.catalog(page, tag=tag, query=query)
         # Asura returns a complete search, independent of the page argument.
         response = self._request('/api/manga/search', q=query, page=1 if self.source == 'asura' else page, limit=self.limit)
         records = response.get('results', [])
@@ -98,10 +100,32 @@ class MangaNovel:
         total = len(records) if self.source == 'asura' else None
         if self.source == 'asura':
             records = records[(page - 1) * self.limit:page * self.limit]
+        return self._normalize_list(records, total, page * self.limit < total if total is not None else len(records) >= self.limit)
+
+    def tags(self):
+        if self.source != 'asura':
+            return []
+        response = self._request('/api/manga/tags')
+        return response.get('tags', [])
+
+    def catalog(self, page=1, tag=None, query=None):
+        filters = {}
+        if tag:
+            filters['tag'] = tag
+        if query:
+            filters['q'] = query
+        response = self._request('/api/manga/catalog', page=page, limit=self.limit, **filters)
+        records = response.get('results')
+        total = response.get('total')
+        if not isinstance(records, list) or (total is not None and (not isinstance(total, int) or total < 0)):
+            raise SourceUnavailable('A fonte retornou um catálogo inválido.')
+        return self._normalize_list(records, total, bool(response.get('has_next')))
+
+    def _normalize_list(self, records, total, has_next):
         records = [record for record in records if self._remote(record) and record.get('title')]
         refs = register_many(self.source, 'manga', [(self._remote(r), r) for r in records])
         return {'itens': [{'id': ref.id, 'title': ref.payload['title'], 'source_name': SOURCES[self.source]} for ref in refs],
-                'total': total, 'has_next': page * self.limit < total if total is not None else len(records) >= self.limit}
+                'total': total, 'has_next': has_next}
 
     def info(self, ref):
         # ComicK accepts the slug for details and hid for chapter lists.
@@ -109,6 +133,7 @@ class MangaNovel:
         raw = self._request('/api/manga/' + quote(remote or ref.remote_id, safe=''))
         return {'id': ref.id, 'title': raw.get('title') or ref.payload.get('title', 'Sem título'),
                 'sinopse': raw.get('description') or 'Sem descrição', 'tags': raw.get('genres') or [],
+                'tag_links': raw.get('tagLinks') or [],
                 'autor': ', '.join(raw.get('authors') or []), 'ano': raw.get('year'),
                 'status': str(raw.get('status') or 'Não informado'),
                 'cover_url': raw.get('coverUrl') or ref.payload.get('coverUrl'),
@@ -132,8 +157,10 @@ class MangaNovel:
                     actual_language = item.get('lang', language)
                     if actual_language not in LANGUAGE_NAMES:
                         continue
-                    number = item.get('number') or item.get('chap')
-                    if not number:
+                    number = item.get('number')
+                    if number is None or number == '':
+                        number = item.get('chap')
+                    if number is None or number == '':
                         match = re.search(r'(?:chapter|cap[ií]tulo)\s*([\d.]+)', item.get('title', ''), re.I)
                         number = match.group(1) if match else 'Sem número'
                     records.append((self._remote(item), {'cap': str(number), 'language': actual_language,
@@ -149,7 +176,7 @@ class MangaNovel:
         return sorted(result, key=Mangas._chapter_order, reverse=True)
 
     def image_proxy_url(self, url):
-        if not url or not url.startswith(('https://', 'http://')):
+        if not isinstance(url, str) or not url.startswith(('https://', 'http://')):
             return '/static/img/cover-placeholder.svg'
         return self.base + '/api/proxy/image?' + urlencode({'url': url})
 
