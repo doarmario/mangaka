@@ -1,3 +1,5 @@
+from flask import make_response
+from mangadex.errors import ApiError
 from flask import Blueprint, render_template, redirect, url_for,flash,send_file, Response, request, stream_with_context, jsonify, g
 from flask_login import login_user,current_user,logout_user, login_required
 
@@ -61,7 +63,7 @@ def Etag(content):
 
 def proxy(url):
     try:
-        r = session.get(url, headers=header)
+        r = session.get(url, headers=header, timeout=(5, 20))
 
         if r.status_code == 200:
             content = r.content
@@ -97,6 +99,8 @@ def pageproxy():
 def coverproxy(uuid):
     size = request.args.get("size")
     url = manga.id2Cover(uuid)
+    if url.startswith("/static/"):
+        return redirect(url)
     if size is not None:
         url += f".{size}.jpg"
     return proxy(url)
@@ -111,7 +115,7 @@ def home():
     listar recomendados, recentes, ...
     """
     # Definindo a chave do cache para `dall`
-    cache_key = 'home_page'
+    cache_key = manga._key('home')
 
     # Tenta pegar o conteúdo de `dall` do cache
     dall = cache.get(cache_key)
@@ -163,7 +167,7 @@ def mangaCapReaded(cap_id):
 
         if not m:
             m = Manga(
-                uuid=uuid.UUID(data['manga_id']),
+                uuid=data['manga_id'],
                 title=data['manga']
             )
             db.session.add(m)
@@ -218,29 +222,14 @@ def mangaList(page):
     grid com todos os mangás
     """
 
-    #essas operações  impedem a API de quebrar pois tem limite do offset
-    max_pages = ceil((manga.getTotalPages())/manga.limit)-1
-    max_pages = max_pages if (max_pages * manga.limit) < 10000 else int((10000/manga.limit))
-    rpage = 1 if page <= 1 else page
-    rpage = page if rpage <= max_pages else max_pages
-    offset = manga.limit * (rpage)
-    offset = offset if offset <= manga.getTotalPages() else manga.getTotalPages()
-    offset = offset if offset < (10000-manga.limit) else (1000-manga.limit)
-
-    print(f"rpage:{rpage}\noffset:{offset}")
-
-
+    total = manga.getTotalPages()
+    max_pages = max(1, ceil(min(total, 10000) / manga.limit))
+    rpage = max(1, min(page, max_pages))
+    offset = manga.limit * (rpage - 1)
     dall = manga.listaGeral(offset)
+    paginator = {"page": rpage, "offset": offset, "total": dall["total"],
+                 "total_pages": max_pages, "active": max_pages > 1}
 
-
-    paginator = {
-            "page": rpage,
-            "offset": offset,
-            "total": dall["total"],
-            "total_pages": min(ceil(dall["total"] / manga.limit)-1,int(10000/manga.limit)),
-            "active": len(dall['itens']) >= manga.limit
-        }
-        
     return render_template('list.html',data=dall["itens"],paginator=paginator)
 
 @site.route('/manga/<manga_id>')
@@ -307,7 +296,7 @@ def searchTitles(page):
         if not query:
             return redirect(url_for('user.mangaList'))
 
-        page = max(page, 1)
+        page = max(1, min(page, 10000 // manga.limit))
         offset = manga.limit * (page - 1)
         dall = manga.searchMangaByTitle(query, offset)
 
@@ -315,8 +304,8 @@ def searchTitles(page):
             "page": page,
             "offset": offset,
             "total": dall["total"],
-            "total_pages": min(ceil(dall["total"] / manga.limit)-1,int(10000/manga.limit)),
-            "active": len(dall['itens']) >= manga.limit
+            "total_pages": max(1, ceil(min(dall["total"], 10000) / manga.limit)),
+            "active": dall["total"] > manga.limit
         }
 
         return render_template(
@@ -330,3 +319,15 @@ def searchTitles(page):
         return redirect(url_for('user.mangaList'))
 
 
+
+
+@site.errorhandler(ApiError)
+def mangadex_error(error):
+    status = 503 if str(error.code) == "429" else 502
+    response = make_response("MangaDex indisponível no momento. Tente novamente mais tarde.", status)
+    return response
+
+
+@site.errorhandler(requests.RequestException)
+def mangadex_network_error(error):
+    return "Não foi possível conectar ao MangaDex. Tente novamente mais tarde.", 503

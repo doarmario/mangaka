@@ -1,69 +1,41 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-    {% include 'header.html' %}
-<body>
-
-    {% include 'menu.html' %}
-
-    <div class="display">
-
-    {% if current_user.is_authenticated %}
-        {% for j in user_data.keys() %}
-            {% if user_data[j]|length > 0 %}
-            <section class="slider">
-
-                <div class="slider-title">
-                    <h2>{{ j }}</h2>
-                </div>
-
-                <div class="slider-itens">
-
-                        {% for i in user_data[j] %}
-                        <a href="/manga/{{ i.id }}#{{ i.chapter }}">
-                        <div class="item">
-                            <img src="{{ url_for('static', filename='img/page.png') }}" data-src="/img/cover/{{ i.id }}?size=256" alt="{{ i.title }}">
-                            <h3> {{ i.title }} </h3>
-                        </div>
-                        </a>
-                        {% endfor %}
-                    
-
-
-                </div>
-
-            </section>
-            {% endif %}
+{% extends 'base.html' %}
+{% from 'ui.html' import icon, card %}
+{% block content %}
+{% set featured = data.get('Recentes', []) %}
+<section class="hero">
+    <div class="hero-copy">
+        <span class="eyebrow"><span class="status-dot"></span> Seu próximo capítulo começa aqui</span>
+        <h1>Boas histórias.<br><em>Novos mundos.</em></h1>
+        <p>Descubra mangás, encontre seus favoritos e se perca em uma boa leitura. No seu tempo.</p>
+        <a class="button primary" href="{{ url_for('user.mangaList') }}">Explorar catálogo {{ icon('arrow') }}</a>
+        <span class="hero-note">Feito para quem ama virar a página.</span>
+    </div>
+    {% if featured %}
+    <div class="hero-gallery" aria-label="Mangás atualizados recentemente">
+        <span class="gallery-caption">NA SUA PRÓXIMA LEITURA</span>
+        {% for item in featured[:3] %}
+        <a class="hero-cover hero-cover-{{ loop.index }}" href="{{ url_for('user.manga_sinopse', manga_id=item.id) }}" aria-label="Conhecer {{ item.title }}">
+            <img src="{{ url_for('user.coverproxy', uuid=item.id, size=512) }}" alt="{{ item.title }}" width="256" height="360" {% if loop.index != 2 %}loading="lazy"{% endif %}>
+        </a>
         {% endfor %}
+        <span class="gallery-note">Histórias que merecem seu tempo. {{ icon('book') }}</span>
+    </div>
     {% endif %}
-
-
-    {% for j in data.keys() %}
-    <section class="slider">
-
-        <div class="slider-title">
-            <h2>{{ j }}</h2>
-        </div>
-
-        <div class="slider-itens">
-
-                {% for i in data[j] %}
-                <a href="/manga/{{ i.id }}">
-                <div class="item">
-                    <img src="{{ url_for('static', filename='img/page.png') }}" data-src="/img/cover/{{ i.id }}?size=256" alt="{{ i.title }}">
-                    <h3> {{ i.title }} </h3>
-                </div>
-                </a>
-                {% endfor %}
-            
-
-
-        </div>
-
+</section>
+<div class="discovery-strip"><span>SEU ESPAÇO DE LEITURA</span><p>Explore. Favorite. Continue de onde parou.</p>{{ icon('book') }}</div>
+{% if current_user.is_authenticated %}
+    {% for title, items in user_data.items() if items %}
+    <section class="shelf">
+        <div class="section-heading"><div><span class="eyebrow">Sua coleção</span><h2>{{ title }}</h2></div><span class="section-note">Seu próximo momento de leitura</span></div>
+        <div class="card-row">{% for item in items %}{{ card(item, chapter=true) }}{% endfor %}</div>
     </section>
     {% endfor %}
-
-    </div>
-
-    {% include 'footer.html' %}
-</body>
-</html>
+{% endif %}
+{% for title, items in data.items() %}
+<section class="shelf">
+    <div class="section-heading"><div><span class="eyebrow">{{ 'Acabaram de chegar' if loop.first else 'Explore outros mundos' }}</span><h2>{{ 'Atualizações recentes' if title == 'Recentes' else title }}</h2></div><a class="text-link" href="{{ url_for('user.mangaList') }}">Ver catálogo {{ icon('arrow') }}</a></div>
+    <div class="card-row">{% for item in items %}{{ card(item) }}{% else %}<p class="empty-state">Nenhum mangá por aqui ainda. Explore o catálogo para encontrar uma história.</p>{% endfor %}</div>
+</section>
+{% endfor %}
+{% if not current_user.is_authenticated %}<section class="join-banner"><div><span class="eyebrow">Um cantinho só seu</span><h2>Suas histórias, sempre por perto.</h2><p>Salve favoritos e acompanhe suas leituras em um só lugar.</p></div><a class="button primary" href="{{ url_for('auth.register') }}">Criar minha conta {{ icon('arrow') }}</a></section>{% endif %}
+{% endblock %}

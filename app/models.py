@@ -62,3 +62,12 @@ class Readed(db.Model):
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+class SourceReference(db.Model):
+    """Stable local IDs keep provider slugs out of existing UUID columns."""
+    id = db.Column(db.String(36), primary_key=True)
+    source = db.Column(db.String(32), nullable=False)
+    kind = db.Column(db.String(16), nullable=False)
+    remote_id = db.Column(db.Text, nullable=False)
+    parent_id = db.Column(db.String(36), nullable=True, index=True)
+    payload = db.Column(db.JSON, nullable=False, default=dict)

@@ -1,15 +1,4 @@
-<button id="btnTop" title="Voltar ao topo">
-<span class="material-icons-round">
-north
-</span>
-</button>
-
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
-
-<footer class="footer-box">
-    <p>- Mangaka</p>
-    <!--
-    <div class="footer-box-fonts">
-        <img src="{{ url_for('static',filename='img/mangadex-logo.svg') }}">
-    </div>-->
-</footer>
+{% from 'ui.html' import icon %}
+<footer class="site-footer"><a class="brand" href="{{ url_for('user.home') }}">mangaka<span class="brand-dot">.</span></a><p>Uma página de cada vez.</p><a href="https://mangadex.org" target="_blank" rel="noopener noreferrer">Conteúdo via MangaDex {{ icon('arrow') }}</a></footer>
+<button id="btnTop" class="icon-button back-top" aria-label="Voltar ao topo" hidden>{{ icon('up') }}</button>
+<script src="{{ url_for('static', filename='js/main.js', v='2') }}" defer></script>
