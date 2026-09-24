@@ -1,5 +1,23 @@
 # Mangaka Project
 
+## Instalar e começar a ler
+
+Com o Docker funcionando e este repositório clonado, abra um terminal na pasta
+`mangaka` e execute apenas:
+
+```bash
+docker compose -f compose.install.yaml run --build --rm installer
+```
+
+Funciona no Linux e no PowerShell do Windows com Docker Desktop no modo de
+containers Linux. O instalador gera as senhas, baixa a API adicional, prepara o
+banco e inicia o site com atualização automática. Não é necessário criar `.env`
+nem clonar outra API manualmente. A primeira instalação pode levar alguns minutos.
+Ao terminar, abra **http://localhost:5000** e crie sua conta.
+
+Mantenha o Docker funcionando para ler e receber atualizações. Para mais detalhes,
+consulte o [guia de instalação](docs/self-hosting.md).
+
 **Aviso Legal:** Este projeto é um trabalho educacional e de estudo, criado com o propósito de demonstrar habilidades técnicas e de desenvolvimento web.
 
 O Mangaka Project **não hospeda, distribui ou promove conteúdo protegido por direitos autorais** (como mangás completos, scans ou materiais piratas).
@@ -36,7 +54,7 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 
 Para dúvidas ou sugestões, abra uma issue ou entre em contato.
 
-## Executar localmente com Docker
+## Configuração manual com Docker (opcional)
 
 O projeto inclui MySQL, Redis e o servidor web em `compose.yaml`. Se o `.env`
 ainda não existir, copie `.env.example` para `.env` e substitua as três

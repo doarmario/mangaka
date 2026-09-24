@@ -1,5 +1,8 @@
 # Atualizações automáticas pelo Docker
 
+A [instalação em um comando](self-hosting.md#instalação-rápida) já ativa o
+atualizador. Os passos abaixo servem para instalações existentes.
+
 Em uma instalação já funcionando, execute na pasta do projeto, pelo terminal
 Linux ou PowerShell do Windows:
 
