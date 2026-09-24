@@ -5,6 +5,11 @@
         <nav class="desktop-nav" aria-label="Principal">
             <a href="{{ url_for('user.home') }}" {% if request.endpoint == 'user.home' %}aria-current="page"{% endif %}>Descobrir</a>
             <a href="{{ url_for('user.mangaList') }}" {% if request.endpoint in ['user.mangaList', 'user.searchTitles'] %}aria-current="page"{% endif %}>Catálogo</a>
+            <a href="{{ url_for('user.tags', source=g.selected_source if g.selected_source != 'mangadex' else none) }}" {% if request.endpoint == 'user.tags' %}aria-current="page"{% endif %}>Tags</a>
+            <a href="{{ url_for('user.status') }}" {% if request.endpoint == 'user.status' %}aria-current="page"{% endif %}>Status</a>
+            {% if current_user.is_authenticated %}<a href="{{ url_for('user.library') }}" {% if request.endpoint == 'user.library' %}aria-current="page"{% endif %}>Minha biblioteca</a>{% endif %}
+            {% if current_user.is_authenticated %}<a href="{{ url_for('user.updates') }}" {% if request.endpoint == 'user.updates' %}aria-current="page"{% endif %}>Novidades</a>{% endif %}
+            {% if current_user.is_authenticated %}<a href="{{ url_for('user.notifications') }}" {% if request.endpoint == 'user.notifications' %}aria-current="page"{% endif %}>Notificações{% if g.unread_notifications %} <span class="notification-count">{{ g.unread_notifications }}</span>{% endif %}</a>{% endif %}
         </nav>
         {% include 'search.html' %}
         <div class="nav-account">
@@ -14,6 +19,6 @@
         <button class="icon-button mobile-toggle" id="drop-btn" aria-label="Abrir navegação" aria-expanded="false" aria-controls="mobile-nav">{{ icon('menu') }}</button>
     </div>
     <nav id="mobile-nav" class="mobile-nav" aria-label="Navegação móvel" hidden>
-        <a href="{{ url_for('user.home') }}">Descobrir</a><a href="{{ url_for('user.mangaList') }}">Catálogo</a>
+        <a href="{{ url_for('user.home') }}">Descobrir</a><a href="{{ url_for('user.mangaList') }}">Catálogo</a><a href="{{ url_for('user.tags', source=g.selected_source if g.selected_source != 'mangadex' else none) }}">Tags</a><a href="{{ url_for('user.status') }}">Status</a>{% if current_user.is_authenticated %}<a href="{{ url_for('user.library') }}">Minha biblioteca</a><a href="{{ url_for('user.updates') }}">Novidades</a><a href="{{ url_for('user.notifications') }}">Notificações{% if g.unread_notifications %} ({{ g.unread_notifications }}){% endif %}</a>{% endif %}
     </nav>
 </header>

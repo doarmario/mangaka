@@ -9,7 +9,6 @@ __pycache__/
 *.db
 *.sqlite
 *.sqlite3
-migrations/
 instance/
 config/
 nginx/
@@ -18,4 +17,3 @@ docker-compose.yml
 *.log
 *.sh
 *.service
-

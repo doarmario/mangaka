@@ -71,3 +71,25 @@ class SourceReference(db.Model):
     remote_id = db.Column(db.Text, nullable=False)
     parent_id = db.Column(db.String(36), nullable=True, index=True)
     payload = db.Column(db.JSON, nullable=False, default=dict)
+
+
+class UpdateNotification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    manga_uuid = db.Column(db.String(36), nullable=False)
+    manga_title = db.Column(db.String(255), nullable=False)
+    chapter_uuid = db.Column(db.String(255), nullable=False)
+    chapter_label = db.Column(db.String(80), nullable=False)
+    source_name = db.Column(db.String(80), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    read_at = db.Column(db.DateTime, nullable=True)
+
+    user = db.relationship('User', backref=db.backref('update_notifications', lazy='dynamic'))
+
+
+class WorkerStatus(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    last_run_at = db.Column(db.DateTime, nullable=True)
+    last_success_at = db.Column(db.DateTime, nullable=True)
+    last_created = db.Column(db.Integer, nullable=False, default=0)
+    last_error = db.Column(db.Text, nullable=True)

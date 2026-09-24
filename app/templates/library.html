@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% from 'ui.html' import card %}
+{% block content %}
+<section class="catalog library-page">
+    <div class="page-heading"><span class="eyebrow">Seu espaço de leitura</span><h1>Minha biblioteca</h1><p>Continue suas histórias e encontre os títulos que você guardou.</p></div>
+    <section class="shelf library-shelf"><div class="section-heading"><div><span class="eyebrow">Retome de onde parou</span><h2>Continuar lendo</h2></div></div><div class="card-row">{% for item in recent %}{{ card(item, chapter=true) }}{% else %}<p class="empty-state">Você ainda não tem leituras em andamento.</p>{% endfor %}</div></section>
+    <section class="shelf library-shelf"><div class="section-heading"><div><span class="eyebrow">Guardados para depois</span><h2>Favoritos</h2></div></div><div class="card-row">{% for item in favorites %}<div class="library-item" data-manga-id="{{ item.id }}">{{ card(item) }}<button type="button" class="button secondary library-remove" aria-label="Remover {{ item.title }} dos favoritos">Remover</button></div>{% else %}<p class="empty-state">Você ainda não adicionou favoritos.</p>{% endfor %}</div></section>
+    <section class="shelf library-shelf"><div class="section-heading"><div><span class="eyebrow">Capítulos novos</span><h2>Novidades</h2></div></div><div class="card-row">{% for item in updates %}{{ card(item, chapter=true) }}{% else %}<p class="empty-state">Nenhuma novidade nos seus favoritos.</p>{% endfor %}</div></section>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/library.js', v='1') }}" defer></script>{% endblock %}

@@ -33,6 +33,9 @@ def create_app(config_object=None):
     bcrypt.init_app(app)
     csrf.init_app(app)
     login_manager.init_app(app)
+    login_manager.login_view = 'auth.login'
+    login_manager.login_message = 'Entre na sua conta para acessar sua biblioteca.'
+    login_manager.login_message_category = 'info'
     migrate.init_app(app,db)
     cache.init_app(app)
     session.init_app(app)
@@ -42,7 +45,7 @@ def create_app(config_object=None):
 
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        return db.session.get(User, int(user_id))
 
 
     from app.routes.manga import site

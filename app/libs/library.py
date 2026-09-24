@@ -3,19 +3,22 @@ from flask import abort, current_app, request
 from flask_login import current_user
 from app import db
 from app.libs.md import Mangas
-from app.libs.manga_novel import MangaNovel, SOURCES
+from app.libs.manga_novel import MangaNovel, SOURCES, VISIBLE_SOURCES
 from app.models import SourceReference, Manga, Chapter, Favorite, Readed
 
 
 class Library(Mangas):
     @staticmethod
     def sources():
-        return {'mangadex': 'MangaDex', **(SOURCES if current_app.config.get('MANGA_NOVEL_API_URL') else {})}
+        return {'mangadex': 'MangaDex', **(VISIBLE_SOURCES if current_app.config.get('MANGA_NOVEL_API_URL') else {})}
 
     @classmethod
     def selected_source(cls):
         source = request.args.get('source', 'mangadex')
-        if source not in cls.sources():
+        # Keep old provider URLs readable for existing bookmarks, while hiding
+        # disabled providers from the catalog selector.
+        configured = current_app.config.get('MANGA_NOVEL_API_URL')
+        if source not in cls.sources() and not (configured and source in SOURCES):
             abort(400, 'Fonte desconhecida ou não configurada.')
         return source
 
@@ -74,3 +77,28 @@ class Library(Mangas):
                 'index': index, 'caps': len(chapters) - 1,
                 'prev': chapters[index + 1]['cap_id'] if index is not None and index + 1 < len(chapters) else None,
                 'next': chapters[index - 1]['cap_id'] if index is not None and index > 0 else None}
+
+    def favorite_updates(self, limit=20):
+        """Return favorite titles whose latest chapters are still unread."""
+        favorites = Favorite.query.options(joinedload(Favorite.manga)).filter_by(
+            user_id=current_user.id).order_by(Favorite.id.desc()).limit(limit).all()
+        updates = []
+        for favorite in favorites:
+            try:
+                data = self.showManga(favorite.manga.uuid)
+            except Exception:
+                # One unavailable provider must not hide updates from others.
+                continue
+            unread = [chapter for chapter in data.get('chapters', []) if not chapter.get('is_readed')]
+            if not unread:
+                continue
+            latest = unread[0]
+            updates.append({
+                'id': favorite.manga.uuid,
+                'title': data.get('title', favorite.manga.title),
+                'chapter': latest.get('cap_id'),
+                'source_name': data.get('source_name', 'MangaDex'),
+                'latest_chapter': latest.get('cap', 'Sem número'),
+                'unread_count': len(unread),
+            })
+        return updates

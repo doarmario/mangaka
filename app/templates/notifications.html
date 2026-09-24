@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="catalog notifications-page">
+    <div class="page-heading"><span class="eyebrow">Acompanhe seus favoritos</span><h1>Notificações</h1><p>Capítulos novos encontrados pelo atualizador automático.</p><div class="notification-actions"><a class="button secondary" href="{{ url_for('user.notifications_refresh') }}">Atualizar agora</a><form method="post" action="{{ url_for('user.notifications_mark_all') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button secondary" type="submit">Marcar todas como lidas</button></form><button class="button secondary" type="button" id="browser-alerts">Ativar alertas</button></div></div>
+    {% if sources %}<form class="notification-filter" method="get"><label for="notification-source">Fonte</label><select id="notification-source" name="source"><option value="">Todas</option>{% for source in sources %}<option value="{{ source }}" {% if selected_source == source %}selected{% endif %}>{{ source }}</option>{% endfor %}</select><button class="button secondary" type="submit">Filtrar</button></form>{% endif %}
+    <div class="notification-list">{% for item in notifications %}<article class="notification-item {{ 'is-read' if item.read_at else '' }}"><div><span class="eyebrow">{{ item.source_name }}</span><h2>{{ item.manga_title }}</h2><p>Capítulo {{ item.chapter_label }}</p></div><a class="button secondary" href="{{ url_for('user.mangaCap', cap_id=item.chapter_uuid, notification=item.id) }}">Ler agora</a></article>{% else %}<div class="empty-state"><h2>Nenhuma notificação.</h2><p>Quando houver capítulos novos, eles aparecerão aqui.</p></div>{% endfor %}</div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/notifications.js', v='1') }}" defer></script>{% endblock %}
