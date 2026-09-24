@@ -23,6 +23,7 @@ import hashlib
 import time
 import uuid
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 site = Blueprint('user', __name__)
 
@@ -41,8 +42,13 @@ def before_request():
     g.selected_source = manga.selected_source()
     g.unread_notifications = 0
     if current_user.is_authenticated:
-        g.unread_notifications = UpdateNotification.query.filter_by(
-            user_id=current_user.id, read_at=None).count()
+        try:
+            g.unread_notifications = UpdateNotification.query.filter_by(
+                user_id=current_user.id, read_at=None).count()
+        except SQLAlchemyError:
+            # Keep login and the rest of the site usable while an older
+            # installation is applying the notification migrations.
+            db.session.rollback()
 
 
 # Função para gerar chave de cache única por usuário
