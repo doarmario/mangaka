@@ -1431,3 +1431,82 @@ svg {
 .notification-actions form { margin: 0; }
 .notification-filter { margin: 0 0 18px; font-size: 13px; }
 .notification-filter select { padding: 9px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--text); }
+
+/* Keep mobile overrides after component styles so filters retain their layout. */
+@media (max-width: 800px) {
+    .mobile-nav {
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:4px 12px;
+    }
+    .mobile-nav a {
+        display:flex;
+        align-items:center;
+        min-height:44px;
+        padding:8px;
+        overflow-wrap:anywhere;
+    }
+    .mobile-toggle { width:44px; height:44px; }
+    .button,.account-link,.chapter-toolbar select { min-height:44px; }
+    .nav-search { height:48px; padding-right:0; }
+    .nav-search button { min-width:44px; min-height:44px; }
+    .nav-search input { min-width:0; }
+    .nav-search kbd { display:none; }
+    input:not([type="range"]):not([type="checkbox"]),select,textarea {
+        font-size:16px;
+    }
+    .reader-top { flex-wrap:wrap; }
+    .reader-top>div,.library-item { min-width:0; }
+    .reader-top .eyebrow,.manga-info h1,.notification-item h2 {
+        overflow-wrap:anywhere;
+    }
+}
+
+@media (max-width: 560px) {
+    .nav-shell { gap:12px; }
+    .hero h1 { font-size:clamp(36px,10vw,49px); }
+    .source-picker,.search-filters,.notification-filter {
+        display:grid;
+        grid-template-columns:auto minmax(0,1fr);
+        align-items:center;
+        gap:10px;
+    }
+    .source-picker select,.search-filters select,.notification-filter select {
+        width:100%;
+        min-width:0;
+        min-height:44px;
+        font-size:16px;
+    }
+    .source-picker .button,.search-filters .button,.notification-filter .button {
+        grid-column:1/-1;
+        width:100%;
+    }
+    .reader-controls {
+        display:grid;
+        grid-template-columns:minmax(0,1fr);
+        width:100%;
+        gap:10px;
+    }
+    .reader-controls .read-mode,.reader-range {
+        justify-content:space-between;
+        min-height:44px;
+        font-size:14px;
+    }
+    .reader-range input { width:60%; min-height:44px; }
+    .reader-bottom nav { width:100%; flex-wrap:wrap; }
+    .reader-bottom nav .button { flex:1; }
+    .page-nav { width:22%; opacity:.65; }
+    .notification-actions,.notification-item {
+        align-items:stretch;
+        flex-direction:column;
+    }
+    .notification-actions .button,.notification-actions form,
+    .notification-item .button { width:100%; }
+    .tag-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .tag-card { padding:12px 10px; gap:6px; font-size:13px; overflow-wrap:anywhere; }
+    .tag-card span { min-width:0; }
+    .chapter-toolbar select { flex:1; min-width:0; font-size:16px; }
+    .chapter-list .section-heading { flex-wrap:wrap; }
+    .library-remove { min-height:44px; }
+    .back-top { bottom:calc(14px + env(safe-area-inset-bottom,0px)); }
+}

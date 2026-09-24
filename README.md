@@ -77,6 +77,10 @@ reinicie o site. Abra `http://IP_DO_COMPUTADOR:5000` no outro dispositivo.
 Consulte [docs/self-hosting.md](docs/self-hosting.md) para instalação em uma
 máquina nova, atualização, backup e publicação atrás de HTTPS.
 
+Para atualizar automaticamente a instalação a partir de novos commits, consulte
+[Atualizações automáticas](docs/auto-update.md). O serviço opcional roda no Docker,
+inclusive no Docker Desktop do Windows, sem agendamento no sistema operacional.
+
 ## Testes da integração MangaDex
 
 ```bash
