@@ -24,9 +24,9 @@ if [[ "$(id -u)" == 0 ]]; then
     mkdir -p "$workspace/.git/mangaka-update"
     exec 9>"$workspace/.git/mangaka-update/lock"
     flock 9
-    find "$workspace" -xdev -uid 0 -exec chown -h "$owner_uid:$owner_gid" {} +
+    find "$workspace" -xdev -user 0 -exec chown -h "$owner_uid:$owner_gid" {} +
     if [[ "$mode" == install && -d "$api" ]]; then
-        find "$api" -xdev -uid 0 -exec chown -h "$owner_uid:$owner_gid" {} +
+        find "$api" -xdev -user 0 -exec chown -h "$owner_uid:$owner_gid" {} +
     fi
     flock -u 9
     exec 9>&-
