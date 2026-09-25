@@ -1,5 +1,5 @@
 {% from 'ui.html' import icon %}
-<header class="site-header">
+<header class="site-header{% if reader_navigation %} reader-header{% endif %}">
     <div class="nav-shell">
         <a class="brand" href="{{ url_for('user.home') }}" aria-label="Mangaka, início"><span class="brand-mark">{{ icon('book') }}</span>mangaka<span class="brand-dot">.</span></a>
         <nav class="desktop-nav" aria-label="Principal">
