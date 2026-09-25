@@ -7,7 +7,7 @@ RUN pip install --no-cache-dir .
 
 FROM base AS test
 COPY tests ./tests
-RUN pip install --no-cache-dir 'pytest==8.3.5' && python -m pytest -q && touch /tests-passed
+RUN pip install --no-cache-dir '.[test]' && python -m pytest -q && touch /tests-passed
 
 FROM base AS runtime
 COPY --from=test /tests-passed /tests-passed
