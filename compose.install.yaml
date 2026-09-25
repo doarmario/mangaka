@@ -3,7 +3,7 @@ name: mangaka
 services:
   installer:
     build: ./integrations/updater
-    entrypoint: [/bin/bash, /opt/mangaka-install.sh]
+    command: [install]
     init: true
     environment:
       COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-mangaka}

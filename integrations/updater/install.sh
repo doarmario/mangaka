@@ -4,6 +4,10 @@ trap 'echo "Instalação interrompida. Seus dados foram preservados. Corrija o e
 ROOT_DIR="${MANGAKA_INSTALL_ROOT:-/workspace}"
 API_DIR="${MANGAKA_INSTALL_API:-/upstream}"
 cd "$ROOT_DIR"
+if [[ "$(id -u)" != "$(stat -c '%u' "$ROOT_DIR")" ]]; then
+    echo "Instalação bloqueada: use o instalador pelo Compose para preservar o dono dos arquivos." >&2
+    exit 1
+fi
 git config --global --add safe.directory "$ROOT_DIR"
 git config --global --add safe.directory "$API_DIR"
 git rev-parse --is-inside-work-tree >/dev/null
