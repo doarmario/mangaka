@@ -1,8 +1,12 @@
 # Mangaka Project
 
-![GitHub License](https://shields.io)
-![Python Version](https://shields.io)
-![Docker Supported](https://shields.io)
+<p align="left">
+  <img src="https://shields.io" alt="License MIT">
+  <img src="https://shields.io" alt="Python 3.13">
+  <img src="https://shields.io" alt="Docker">
+  <img src="https://shields.io" alt="MySQL">
+  <img src="https://shields.io" alt="Redis">
+</p>
 
 ## Instalar e começar a ler
 
