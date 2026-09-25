@@ -39,7 +39,7 @@ def test_tag_filter_keeps_pagination_and_cache(app, api):
     first = client.get('/mangas?tag=isekai-id')
     assert first.status_code == 200
     assert 'Tag: <strong>Isekai</strong>' in first.text
-    assert '/mangas/2?tag=isekai-id' in first.text
+    assert '/mangas/2?source=mangadex&amp;tag=isekai-id' in first.text
     assert 'Remover filtro' in first.text
     second = client.get('/mangas/2?tag=isekai-id')
     assert second.status_code == 200

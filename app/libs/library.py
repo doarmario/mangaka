@@ -16,7 +16,12 @@ class Library(Mangas):
 
     @classmethod
     def selected_source(cls):
-        source = request.args.get('source', 'mangadex')
+        default = 'all' if len(cls.sources()) > 1 else 'mangadex'
+        if request.endpoint == 'user.tags' or any(request.args.get(k) for k in ('tag', 'language', 'status')):
+            default = 'mangadex'
+        source = request.args.get('source', default)
+        if source == 'all':
+            return 'mangadex' if request.endpoint == 'user.tags' else source
         # Keep old provider URLs readable for existing bookmarks, while hiding
         # disabled providers from the catalog selector.
         configured = source_api_url(source)

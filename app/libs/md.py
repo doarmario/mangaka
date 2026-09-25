@@ -71,7 +71,12 @@ class Mangas:
         return self._text(values, "Sem título")
 
     def _manga_data(self, manga):
-        return {"id": manga.manga_id, "title": self._title(manga),
+        aliases = [*dict(manga.title or {}).values(),
+                   *(value for alternative in manga.alt_titles or [] for value in alternative.values())]
+        english = dict(manga.title or {}).get('en') or next(
+            (a['en'] for a in manga.alt_titles or [] if a.get('en')), None)
+        return {"id": manga.manga_id, "title": self._title(manga), "aliases": aliases,
+                "search_title": english or self._title(manga),
                 "sinopse": self._text(manga.description, "Sem descrição"),
                 "tags": [self._text(tag.name) for tag in manga.tags],
                 "tag_links": [{"id": tag.tag_id, "name": self._text(tag.name)} for tag in manga.tags],
@@ -95,7 +100,8 @@ class Mangas:
             for manga in items:
                 cache.set(self._key("manga", manga.manga_id),
                           self._manga_data(manga), timeout=3600)
-            return {"itens": [{"id": m.manga_id, "title": self._title(m)} for m in items],
+            return {"itens": [{key: value for key, value in self._manga_data(m).items()
+                               if key in {'id', 'title', 'aliases', 'ano'}} for m in items],
                     "total": response["total"]}
 
         return self._cached("list", (params,), load)

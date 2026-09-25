@@ -39,6 +39,7 @@ manga = Mangas()
 def before_request():
     g.form = SearchForm()
     g.sources = manga.sources()
+    g.catalog_sources = {'all': 'Todas as fontes', **g.sources}
     g.selected_source = manga.selected_source()
     g.unread_notifications = 0
     if current_user.is_authenticated:
@@ -339,6 +340,24 @@ def mangaCapReaded(cap_id):
     return jsonify(response), 401
         
 
+def unified_listing(page, query=None):
+    from app.libs.catalog import UnifiedCatalog
+    page = max(1, min(page, 500))
+    result = UnifiedCatalog(manga).listing(query, page)
+    return render_template('list.html', data=result['itens'], query=query,
+                           unavailable=result['unavailable'], filters=catalog_filters(),
+                           paginator={'page': page, 'total': None, 'total_pages': None,
+                                      'active': page > 1 or result['has_next'], 'has_next': result['has_next']})
+
+
+@site.route('/manga/<manga_id>/sources')
+def manga_sources(manga_id):
+    from app.libs.catalog import UnifiedCatalog
+    result = UnifiedCatalog(manga).alternatives(manga_id)
+    return jsonify({**result, 'sources': [{**source, 'url': url_for('user.manga_sinopse', manga_id=source['id'])}
+                                        for source in result['sources']]})
+
+
 def catalog_tag():
     tag_id = request.args.get('tag', '').strip()
     if not tag_id:
@@ -387,6 +406,8 @@ def mangaList(page):
     grid com todos os mangás
     """
 
+    if g.selected_source == 'all':
+        return unified_listing(page)
     tag = catalog_tag()
     filters = catalog_filters()
     active_filters = {key: value for key, value in filters.items() if value}
@@ -468,6 +489,11 @@ def mangaFav(manga_id):
 @site.route('/search', defaults={'page': 1}, methods=["GET"])
 @site.route('/search/<int:page>', methods=["GET"])
 def searchTitles(page):
+    if g.selected_source == 'all':
+        query = ' '.join(request.args.get('query', '').split())[:120]
+        if not query:
+            return redirect(url_for('user.mangaList', source='all'))
+        return unified_listing(page, query)
     tag = catalog_tag()
     filters = catalog_filters()
     active_filters = {key: value for key, value in filters.items() if value}
@@ -478,7 +504,7 @@ def searchTitles(page):
         query = ' '.join(form.query.data.split())[:120]
         if not query:
             params = {}
-            if g.selected_source != 'mangadex':
+            if g.selected_source != 'mangadex' or 'source' in request.args:
                 params['source'] = g.selected_source
             if tag:
                 params['tag'] = tag
@@ -514,7 +540,7 @@ def searchTitles(page):
     else:
         # Keep the selected provider when a malformed/blank query is submitted.
         params = {}
-        if g.selected_source != 'mangadex':
+        if g.selected_source != 'mangadex' or 'source' in request.args:
             params['source'] = g.selected_source
         if tag:
             params['tag'] = tag

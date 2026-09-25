@@ -8,6 +8,13 @@
         <img class="detail-cover" src="{{ url_for('user.coverproxy', uuid=data.id, size=512) }}" alt="Capa de {{ data.title }}" width="256" height="360">
         <div class="manga-info"><span class="eyebrow">{{ data.source_name | default('MangaDex') }}</span><h1>{{ data.title }}</h1>
             <div class="genre-box" aria-label="Tags do mangá">{% if data.tag_links %}{% for tag in data.tag_links %}<a class="genre" href="{{ url_for('user.mangaList', source=data.source_id, tag=tag.id) }}" title="Ver mangás de {{ tag.name }}">{{ tag.name }}</a>{% endfor %}{% else %}{% for tag in data.tags %}<span class="genre">{{ tag }}</span>{% endfor %}{% endif %}</div>
+            <section class="other-sources" data-source-url="{{ url_for('user.manga_sources', manga_id=data.id) }}">
+                <h2>Outras fontes</h2>
+                <p class="source-note">Correspondências por título; confira a obra e os capítulos antes de trocar. Favoritos e progresso permanecem separados por fonte.</p>
+                <p class="source-result" role="status">Consultando fontes disponíveis…</p>
+                <div class="source-links"></div>
+                <button type="button" class="button secondary source-retry" hidden>Tentar novamente</button>
+            </section>
             <p class="synopsis">{{ data.sinopse }}</p>
             <dl class="details"><div><dt>Autor</dt><dd>{{ data.autor or 'Não informado' }}</dd></div><div><dt>Status</dt><dd>{{ {'ongoing':'Em publicação', 'completed':'Concluído', 'hiatus':'Em pausa', 'cancelled':'Cancelado'}.get(data.status, data.status) }}</dd></div><div><dt>Capítulos</dt><dd>{{ data.caps }}</dd></div><div><dt>Ano</dt><dd>{{ data.ano or '—' }}</dd></div></dl>
             <div class="detail-actions">{% if data.chapters %}<a id="start-reading" class="button primary" href="{{ url_for('user.mangaCap', cap_id=data.first_chapter) }}">{{ icon('book') }} Começar a ler</a>{% endif %}
@@ -21,3 +28,4 @@
     </section>
 </section>
 {% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/sources.js', v='1') }}" defer></script>{% endblock %}
