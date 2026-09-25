@@ -8,6 +8,7 @@ path = Path(__file__).resolve().parent.parent / '.env'
 load_dotenv(path)
 
 class Config:
+    DEMONICSCANS_API_URL = os.getenv("DEMONICSCANS_API_URL", "")
     QISCANS_API_URL = os.getenv("QISCANS_API_URL", "")
     MANGA_NOVEL_API_URL = os.getenv("MANGA_NOVEL_API_URL", "")
     SECRET_KEY = os.getenv("SECRET_KEY", "default-secret-key")

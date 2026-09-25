@@ -197,7 +197,7 @@ as marcações de leitura.
 
 ## Fontes adicionais: Manga Novel API
 
-O catálogo permite escolher **MangaDex**, **AsuraScans** ou **Qi Scans**. Ao aplicar uma fonte, o catálogo carrega seus títulos automaticamente; a escolha
+O catálogo permite escolher **MangaDex**, **AsuraScans**, **Qi Scans** ou **Demonic Scans**. Ao aplicar uma fonte, o catálogo carrega seus títulos automaticamente; a escolha
 da fonte acompanha a busca e a paginação. Detalhes e leitor mostram a procedência.
 IDs locais próprios permitem usar favoritos e histórico sem confundir obras ou
 capítulos de provedores diferentes. Não há fusão automática de obras por título.
@@ -296,3 +296,22 @@ Mudanças na estrutura do site ou nos hosts de imagens podem exigir atualizaçã
 Os testes de contrato Python rodam durante a construção da imagem do wrapper.
 Os testes do Mangaka cobrem configuração independente, paginação, gêneros,
 leitor, favoritos, histórico e indisponibilidade da fonte.
+
+## Fonte Demonic Scans
+
+**Demonic Scans** está disponível no catálogo, na busca entre fontes e na aba de
+tags, com detalhes, capítulos em inglês e leitura de imagens. O scraper está
+incluído em [`integrations/demonicscans/`](integrations/demonicscans/README.md).
+O instalador e o atualizador iniciam o serviço automaticamente.
+
+Para atualizar uma instalação manual existente:
+
+```sh
+docker compose up -d --build demonicscans web updates-worker
+```
+
+A API fica na rede interna em `http://demonicscans:3003`. Fora do Compose,
+configure `DEMONICSCANS_API_URL`. O catálogo usa a paginação da fonte; busca com
+um gênero filtra cada página desse gênero e pode ter páginas sem correspondências.
+O wrapper mantém cache e respeita as respostas de limite de requisições; bloqueios
+ou mudanças no site aparecem como indisponibilidade da fonte.

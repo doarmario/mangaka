@@ -14,12 +14,14 @@ from app import cache, db
 from app.models import SourceReference
 from app.libs.md import LANGUAGE_NAMES, Mangas
 
-SOURCES = {'comick': 'ComicK', 'weebcentral': 'WeebCentral', 'asura': 'AsuraScans', 'qiscans': 'Qi Scans'}
-VISIBLE_SOURCES = {'asura': 'AsuraScans', 'qiscans': 'Qi Scans'}
+SOURCES = {'comick': 'ComicK', 'weebcentral': 'WeebCentral', 'asura': 'AsuraScans',
+           'qiscans': 'Qi Scans', 'demonicscans': 'Demonic Scans'}
+VISIBLE_SOURCES = {'asura': 'AsuraScans', 'qiscans': 'Qi Scans', 'demonicscans': 'Demonic Scans'}
 
 
 def source_api_url(source):
-    key = 'QISCANS_API_URL' if source == 'qiscans' else 'MANGA_NOVEL_API_URL'
+    key = {'qiscans': 'QISCANS_API_URL', 'demonicscans': 'DEMONICSCANS_API_URL'}.get(
+        source, 'MANGA_NOVEL_API_URL')
     return current_app.config.get(key, '').rstrip('/')
 
 
@@ -98,6 +100,8 @@ class MangaNovel:
     def search(self, query, page=1, tag=None):
         if tag:
             return self.catalog(page, tag=tag, query=query)
+        if self.source == 'demonicscans':
+            return self.catalog(page, query=query)
         # Asura returns a complete search, independent of the page argument.
         response = self._request('/api/manga/search', q=query, page=1 if self.source == 'asura' else page, limit=self.limit)
         records = response.get('results', [])
@@ -111,7 +115,7 @@ class MangaNovel:
         return self._normalize_list(records, total, page * self.limit < total if total is not None else len(records) >= self.limit)
 
     def tags(self):
-        if self.source not in {'asura', 'qiscans'}:
+        if self.source not in {'asura', 'qiscans', 'demonicscans'}:
             return []
         response = self._request('/api/manga/tags')
         return response.get('tags', [])
@@ -156,7 +160,7 @@ class MangaNovel:
         raw = self._request('/api/manga/' + quote(remote or ref.remote_id, safe=''))
         return {'id': ref.id, 'title': raw.get('title') or ref.payload.get('title', 'Sem título'),
                 'sinopse': raw.get('description') or 'Sem descrição', 'tags': raw.get('genres') or [],
-                'tag_links': raw.get('tagLinks') or [],
+                'tag_links': raw.get('tagLinks') or [], 'aliases': raw.get('aliases') or [],
                 'autor': ', '.join(raw.get('authors') or []), 'ano': raw.get('year'),
                 'status': str(raw.get('status') or 'Não informado'),
                 'cover_url': raw.get('coverUrl') or ref.payload.get('coverUrl'),
