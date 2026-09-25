@@ -4,6 +4,10 @@ set -Eeuo pipefail
 umask 077
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
+if [[ "$(id -u)" != "$(stat -c '%u' "$ROOT_DIR")" ]]; then
+    echo "Atualização bloqueada: execute como o dono do projeto. No Docker, use /opt/mangaka-entrypoint.sh update-once." >&2
+    exit 1
+fi
 # Always use only the application stack. The updater must not rebuild or stop
 # itself, nor resolve host bind mounts from inside its container.
 compose() { docker compose --project-directory "$ROOT_DIR" -f "$ROOT_DIR/compose.yaml" "$@"; }

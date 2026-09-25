@@ -95,6 +95,16 @@ class InstallTests(unittest.TestCase):
         self.assertNotEqual(self.install(FAIL_MIGRATION="1").returncode, 0)
         self.assertNotIn('"auto-updater"', self.calls.read_text())
 
+    def test_wrong_user_cannot_create_configuration(self):
+        fake_id = Path(self.env['PATH'].split(':')[0]) / 'id'
+        fake_id.write_text('#!/bin/sh\necho 987654\n')
+        fake_id.chmod(0o755)
+        result = self.install()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('dono dos arquivos', result.stderr)
+        self.assertFalse((self.repo / '.env').exists())
+        self.assertFalse(self.calls.exists())
+
 
 if __name__ == "__main__":
     unittest.main()

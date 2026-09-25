@@ -81,6 +81,18 @@ class AutoUpdateTests(unittest.TestCase):
         self.assertNotEqual(self.update().returncode, 0)
         self.assertFalse(self.calls.exists())
 
+    def test_wrong_user_cannot_write_git_or_invoke_docker(self):
+        fake_id = Path(self.env['PATH'].split(':')[0]) / 'id'
+        fake_id.write_text('#!/bin/sh\necho 987654\n')
+        fake_id.chmod(0o755)
+        before = (self.repo / '.git/index').read_bytes()
+        result = self.update()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('dono do projeto', result.stderr)
+        self.assertFalse(self.calls.exists())
+        self.assertFalse(self.marker.parent.exists())
+        self.assertEqual((self.repo / '.git/index').read_bytes(), before)
+
     def test_unpushed_commit_does_not_touch_docker(self):
         self.git("commit", "--allow-empty", "-m", "local")
         self.assertNotEqual(self.update().returncode, 0)

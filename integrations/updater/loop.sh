@@ -6,7 +6,7 @@ if [[ ! "$interval" =~ ^[0-9]{1,6}$ ]] || (( 10#$interval < 60 )); then
     exit 1
 fi
 interval=$((10#$interval))
-# The host checkout may be owned by a different UID (including Docker Desktop).
+# The entrypoint has already switched to the owner of the host checkout.
 git config --global --add safe.directory /workspace
 echo "Atualizador iniciado; verificação a cada ${interval}s."
 while true; do

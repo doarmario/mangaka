@@ -48,8 +48,12 @@ Configurações pessoais devem ficar no `.env`, que é preservado junto com os
 volumes. Por padrão, o container acessa repositórios públicos via HTTPS. Credenciais
 Git e agentes SSH do computador não são herdados; repositórios privados exigem
 configuração de autenticação dentro do container. Mudanças só locais não são
-publicadas por este sistema. Use um checkout dedicado: no Linux, arquivos gravados
-pelo atualizador podem ficar pertencendo ao root. Os scripts usam finais de linha
+publicadas por este sistema. O instalador e o atualizador detectam o UID/GID do
+dono do checkout e executam com essa identidade, incluindo as operações Git.
+O grupo do socket é adicionado para permitir o acesso ao Docker. Na inicialização,
+arquivos pertencentes ao root deixados por versões antigas são devolvidos ao dono
+do projeto; links simbólicos não são seguidos e outros usuários são preservados.
+Os scripts usam finais de linha
 LF definidos em `.gitattributes` para também funcionarem em clones no Windows.
 
 O processo baixa commits, avança apenas por fast-forward e constrói as imagens
@@ -75,7 +79,7 @@ para outro local. Excluir a instalação também exclui esses backups.
 docker compose -f compose.yaml -f compose.updater.yaml ps auto-updater
 docker compose -f compose.yaml -f compose.updater.yaml logs --tail=100 auto-updater
 # Executar agora (o lock impede dois ciclos simultâneos)
-docker compose -f compose.yaml -f compose.updater.yaml exec auto-updater bash scripts/auto-update.sh
+docker compose -f compose.yaml -f compose.updater.yaml exec auto-updater bash /opt/mangaka-entrypoint.sh update-once
 # Desativar (aguarde o fim de uma atualização em andamento antes de parar)
 docker compose -f compose.yaml -f compose.updater.yaml stop auto-updater
 ```
@@ -84,6 +88,30 @@ Evite `--remove-orphans` ao operar apenas `compose.yaml`, pois o atualizador fic
 no arquivo adicional. Inclua ambos os arquivos para administrar a instalação toda.
 O script `scripts/enable-auto-update.sh` continua disponível como alternativa
 opcional para instalações Linux sem o container de atualização.
+
+### Corrigir arquivos Git criados como root por versões antigas
+
+Após obter esta versão, reconstrua o atualizador:
+
+```bash
+docker compose -f compose.yaml -f compose.updater.yaml up -d --build auto-updater
+```
+
+O novo entrypoint repara os arquivos do checkout pertencentes ao root e muda para
+o UID/GID do dono da pasta antes de iniciar o loop. Isso preserva o modo privado
+dos backups e do `.env`, sem usar `chmod 777`. O teste de permissões é executado
+durante a construção da imagem, com troca real de UID/GID e operações Git.
+
+Se o índice já estiver bloqueado e impedir o próprio `git pull`, pare o atualizador
+antigo e recupere o acesso ao Git uma vez, na pasta do projeto, antes de baixar a
+correção (Linux):
+
+```bash
+docker compose -f compose.yaml -f compose.updater.yaml stop auto-updater
+sudo chown -R "$(id -u):$(id -g)" .git
+git pull --ff-only
+docker compose -f compose.yaml -f compose.updater.yaml up -d --build auto-updater
+```
 
 Referências: [Docker Desktop no Windows](https://docs.docker.com/desktop/setup/install/windows-install/)
 e [imagem oficial do Docker CLI](https://hub.docker.com/_/docker).
