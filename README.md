@@ -1,5 +1,9 @@
 # Mangaka Project
 
+![GitHub License](https://shields.io)
+![Python Version](https://shields.io)
+![Docker Supported](https://shields.io)
+
 ## Instalar e começar a ler
 
 Com o Docker funcionando e este repositório clonado, abra um terminal na pasta
