@@ -172,16 +172,17 @@ def status():
         checks.append({'name': 'Cache', 'state': 'ok' if cache.get(probe) else 'error', 'detail': 'Redis ativo'})
     except Exception:
         checks.append({'name': 'Cache', 'state': 'error', 'detail': 'Indisponível'})
-    api_url = current_app.config.get('MANGA_NOVEL_API_URL', '').rstrip('/')
-    if api_url:
-        try:
-            response = requests.get(f'{api_url}/api/health', timeout=(1, 3))
-            checks.append({'name': 'API de fontes', 'state': 'ok' if response.ok else 'error',
-                           'detail': 'Conectada' if response.ok else f'HTTP {response.status_code}'})
-        except requests.RequestException:
-            checks.append({'name': 'API de fontes', 'state': 'error', 'detail': 'Indisponível'})
-    else:
-        checks.append({'name': 'API de fontes', 'state': 'warning', 'detail': 'Não configurada'})
+    for key, name in [('MANGA_NOVEL_API_URL', 'API de fontes'), ('QISCANS_API_URL', 'Qi Scans')]:
+        api_url = current_app.config.get(key, '').rstrip('/')
+        if api_url:
+            try:
+                response = requests.get(f'{api_url}/api/health', timeout=(1, 3))
+                checks.append({'name': name, 'state': 'ok' if response.ok else 'error',
+                               'detail': 'Conectada' if response.ok else f'HTTP {response.status_code}'})
+            except requests.RequestException:
+                checks.append({'name': name, 'state': 'error', 'detail': 'Indisponível'})
+        else:
+            checks.append({'name': name, 'state': 'warning', 'detail': 'Não configurada'})
     worker = db.session.get(WorkerStatus, 1)
     checks.append({'name': 'Worker de novidades',
                    'state': 'warning' if worker is None or worker.last_success_at is None else 'ok',
@@ -344,8 +345,8 @@ def catalog_tag():
         return None
     if g.selected_source == 'mangadex':
         tags = manga.listTags()
-    elif g.selected_source == 'asura':
-        tags = MangaNovel('asura').tags()
+    elif g.selected_source in {'asura', 'qiscans'}:
+        tags = MangaNovel(g.selected_source).tags()
     else:
         abort(400, 'Esta fonte ainda não oferece filtro por gênero.')
     tag = next((item for item in tags if item['id'] == tag_id), None)
@@ -371,8 +372,8 @@ def tags():
     """List every tag available for the currently selected provider."""
     if g.selected_source == 'mangadex':
         available = manga.listTags()
-    elif g.selected_source == 'asura':
-        available = MangaNovel('asura').tags()
+    elif g.selected_source in {'asura', 'qiscans'}:
+        available = MangaNovel(g.selected_source).tags()
     else:
         abort(400, 'Esta fonte não oferece tags.')
     available = sorted(available, key=lambda item: str(item.get('name', '')).casefold())
@@ -393,7 +394,8 @@ def mangaList(page):
         page = max(1, min(page, 500))
         result = MangaNovel(g.selected_source).catalog(page, tag=tag)
         total = result['total']
-        total_pages = max(1, ceil(total / manga.limit)) if total is not None else None
+        page = result.get('page', page)
+        total_pages = result.get('total_pages', max(1, ceil(total / manga.limit)) if total is not None else None)
         return render_template('list.html', data=result['itens'], filters=filters,
                                paginator={'page': page, 'total': total, 'total_pages': total_pages,
                                           'active': page > 1 or result['has_next'], 'has_next': result['has_next']})
@@ -487,7 +489,8 @@ def searchTitles(page):
         if g.selected_source != 'mangadex':
             dall = MangaNovel(g.selected_source).search(query, page, tag=tag)
             total = dall['total']
-            total_pages = max(1, ceil(total / manga.limit)) if total is not None else None
+            page = dall.get('page', page)
+            total_pages = dall.get('total_pages', max(1, ceil(total / manga.limit)) if total is not None else None)
             return render_template('list.html', data=dall['itens'], query=query, filters=filters,
                                    paginator={'page': page, 'total': total, 'total_pages': total_pages,
                                               'active': page > 1 or dall['has_next'], 'has_next': dall['has_next']})
