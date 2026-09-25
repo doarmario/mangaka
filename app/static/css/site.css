@@ -753,6 +753,23 @@ svg {
     padding:3px 10px;
     border-radius:4px
 }
+.reader-header.is-reading {
+    background:transparent;
+    border-bottom-color:transparent;
+    pointer-events:none
+}
+.reader-header.is-reading .nav-shell>:not(.brand),
+.reader-header.is-reading .mobile-nav {
+    visibility:hidden;
+    pointer-events:none
+}
+.reader-header.is-reading .brand {
+    opacity:.4;
+    pointer-events:auto
+}
+.reader-header.is-reading .brand:focus-visible {
+    opacity:1
+}
 .reader {
     max-width:1000px;
     margin:30px auto 0

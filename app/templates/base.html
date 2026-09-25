@@ -3,7 +3,7 @@
 {% include 'header.html' %}
 <body>
 <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
-{% include 'menu.html' %}
+{% block navigation %}{% include 'menu.html' %}{% endblock %}
 <main id="conteudo" class="display" tabindex="-1">{% block content %}{% endblock %}</main>
 {% include 'footer.html' %}
 {% block scripts %}{% endblock %}

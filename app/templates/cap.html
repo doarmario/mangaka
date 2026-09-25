@@ -1,6 +1,10 @@
 {% extends 'base.html' %}
 {% from 'ui.html' import icon %}
 {% set page_title = data.manga ~ ' · Capítulo ' ~ data.cap %}
+{% block navigation %}
+{% set reader_navigation = true %}
+{% include 'menu.html' %}
+{% endblock %}
 {% block content %}
 <section class="reader">
     <div class="reader-top"><div><a class="eyebrow" href="{{ url_for('user.manga_sinopse', manga_id=data.manga_id) }}">{{ icon('left') }} {{ data.manga }}</a><h1>Capítulo {{ data.cap if data.cap is not none else 'sem número' }}</h1><span class="language-badge" lang="{{ data.language }}">{{ data.language_name }}</span></div><div class="reader-controls"><label class="read-mode" for="scrollToggle">Páginas <input type="checkbox" id="scrollToggle"> Rolagem contínua</label><button class="button secondary" type="button" id="fullscreenToggle">Tela cheia</button><label class="reader-range" for="readerWidth">Largura <input id="readerWidth" type="range" min="60" max="100" value="100"></label><label class="reader-range" for="readerBrightness">Brilho <input id="readerBrightness" type="range" min="70" max="130" value="100"></label></div></div>
@@ -10,6 +14,7 @@
 </section>
 {% endblock %}
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/reader-header.js', v='1') }}" defer></script>
 <script>const cap = {{ data.id | tojson }}; const pages = {{ data.pages | tojson }}; const readerAuthenticated = {{ current_user.is_authenticated | tojson }};</script>
 <script src="{{ url_for('static', filename='js/reader.js', v='3') }}" defer></script>
 {% endblock %}
