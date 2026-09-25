@@ -99,6 +99,26 @@ Para atualizar automaticamente a instalação a partir de novos commits, consult
 [Atualizações automáticas](docs/auto-update.md). O serviço opcional roda no Docker,
 inclusive no Docker Desktop do Windows, sem agendamento no sistema operacional.
 
+## Catálogo e busca entre fontes
+
+Com mais de uma fonte configurada, a busca e o catálogo abrem em **Todas as
+fontes**. Cada página consulta uma página de cada provedor e agrupa títulos
+correspondentes nessa seleção. A paginação não representa um índice completo
+deduplicado: uma obra pode reaparecer em outra página de outro provedor.
+
+Na página do mangá, **Outras fontes** consulta os outros provedores sem bloquear
+a abertura dos capítulos. O cruzamento usa títulos e aliases exatos após
+normalização, ignora diferenças de caixa e pontuação e evita correspondências
+ambíguas ou anos explicitamente diferentes. Nomes iguais ainda podem representar
+obras diferentes; confira a edição antes de trocar. Traduções sem aliases comuns
+podem não ser encontradas. É pesquisada a primeira página de resultados de cada
+outra fonte, com cache de uma hora (um minuto se uma fonte falhar), além dos caches
+existentes dos provedores. Não é feita uma varredura dos catálogos.
+
+IDs, capítulos, favoritos e progresso permanecem vinculados à fonte original.
+Os filtros de gênero, idioma e status continuam disponíveis no modo de fonte
+individual. Fontes indisponíveis são indicadas sem esconder resultados das demais.
+
 ## Testes da integração MangaDex
 
 ```bash

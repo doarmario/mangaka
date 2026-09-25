@@ -1,3 +1,8 @@
+.other-sources { margin:20px 0; padding:16px; border:1px solid var(--line); border-radius:8px; }
+.other-sources h2 { font-size:18px; margin:0 0 10px; }
+.source-note,.source-result { font-size:13px; color:var(--muted); line-height:1.6; }
+.source-links { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
+.source-links .button { min-height:44px; }
 :root {
     --bg:#131613;
     --panel:#1c201b;
