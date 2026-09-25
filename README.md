@@ -13,10 +13,10 @@
 
 <br>
 
-[![GitHub stars](https://img.shields.io/github/stars/tillingspore/mangaka?style=flat-square&logo=github)](https://github.com/tillingspore/mangaka/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/tillingspore/mangaka?style=flat-square&logo=github)](https://github.com/tillingspore/mangaka/network/members)
-[![GitHub issues](https://img.shields.io/github/issues/tillingspore/mangaka?style=flat-square&logo=github)](https://github.com/tillingspore/mangaka/issues)
-[![Last commit](https://img.shields.io/github/last-commit/tillingspore/mangaka?style=flat-square&logo=github)](https://github.com/tillingspore/mangaka/commits/main)
+[![GitHub stars](https://img.shields.io/github/stars/tillingspore/mangaka?style=flat-square&logo=github)](https://github.com/doarmario/mangaka/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/tillingspore/mangaka?style=flat-square&logo=github)](https://github.com/doarmario/mangaka/network/members)
+[![GitHub issues](https://img.shields.io/github/issues/tillingspore/mangaka?style=flat-square&logo=github)](https://github.com/doarmario/mangaka/issues)
+[![Last commit](https://img.shields.io/github/last-commit/tillingspore/mangaka?style=flat-square&logo=github)](https://github.com/doarmario/mangaka/commits/main)
 
 </div>
 
