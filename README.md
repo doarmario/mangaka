@@ -1,8 +1,24 @@
 # Mangaka Project
 
-![GitHub License](https://shields.io)
-![Python Version](https://shields.io)
-![Docker Supported](https://shields.io)
+<div align="center">
+
+## Self-hosted manga reader & aggregator
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-7c3aed?style=for-the-badge&logo=opensourceinitiative&logoColor=white)](LICENSE)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-Web_App-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![MySQL](https://img.shields.io/badge/MySQL-Database-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Redis](https://img.shields.io/badge/Redis-Cache-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
+
+<br>
+
+[![GitHub stars](https://img.shields.io/github/stars/tillingspore/mangaka?style=flat-square&logo=github)](https://github.com/tillingspore/mangaka/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/tillingspore/mangaka?style=flat-square&logo=github)](https://github.com/tillingspore/mangaka/network/members)
+[![GitHub issues](https://img.shields.io/github/issues/tillingspore/mangaka?style=flat-square&logo=github)](https://github.com/tillingspore/mangaka/issues)
+[![Last commit](https://img.shields.io/github/last-commit/tillingspore/mangaka?style=flat-square&logo=github)](https://github.com/tillingspore/mangaka/commits/main)
+
+</div>
 
 ## Instalar e começar a ler
 
