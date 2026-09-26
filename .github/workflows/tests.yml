@@ -1,5 +1,6 @@
 name: Tests
 on: [push, pull_request]
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -12,6 +13,7 @@ jobs:
       - run: python -m pip install -r requirements.txt
       - run: python -m pip check
       - run: python -m pytest -q
+
   qiscans:
     runs-on: ubuntu-latest
     defaults:
@@ -27,6 +29,7 @@ jobs:
       - run: python -m pip install '.[test]'
       - run: python -m pip check
       - run: python -m pytest -q
+
   demonicscans:
     runs-on: ubuntu-latest
     defaults:
@@ -42,6 +45,7 @@ jobs:
       - run: python -m pip install '.[test]'
       - run: python -m pip check
       - run: python -m pytest -q
+
   thunderscans:
     runs-on: ubuntu-latest
     defaults:
@@ -57,3 +61,10 @@ jobs:
       - run: python -m pip install '.[test]'
       - run: python -m pip check
       - run: python -m pytest -q
+
+  updater-permissions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t mangaka-updater-test integrations/updater
+      - run: docker run --rm --entrypoint bash -v "$PWD:/fixture:ro" mangaka-updater-test /fixture/tests/updater-legacy.test.sh

@@ -35,7 +35,6 @@ if [[ ! -f .env ]]; then
      sed -i "s/^DB_PASSWORD=.*/DB_PASSWORD=$db_password/" .env.installing
      sed -i "s/^MYSQL_ROOT_PASSWORD=.*/MYSQL_ROOT_PASSWORD=$root_password/" .env.installing
      sed -i 's|^MANGA_NOVEL_SOURCE_DIR=.*|MANGA_NOVEL_SOURCE_DIR=./.local/manga-novel-api|' .env.installing
-     chown "$(stat -c '%u:%g' "$ROOT_DIR")" .env.installing
      mv .env.installing .env)
 else
     echo "[1/5] Preservando a configuração existente..."
@@ -56,7 +55,7 @@ if [[ ! -f "$API_DIR/package.json" ]]; then
     staging="$(mktemp -d)"
     git clone --depth 1 https://github.com/Raby012/-manga-novel-api.git "$staging/api"
     cp -a "$staging/api/." "$API_DIR/"
-    chown -R "$(stat -c '%u:%g' "$ROOT_DIR")" "$API_DIR"
+    # The entrypoint already selected the checkout owner; new files inherit it.
 fi
 export MANGA_NOVEL_SOURCE_DIR="$API_DIR"
 compose() { docker compose --project-directory "$ROOT_DIR" -f "$ROOT_DIR/compose.yaml" "$@"; }

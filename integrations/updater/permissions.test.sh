@@ -35,4 +35,23 @@ MANGAKA_INSTALL_ROOT="$workspace" MANGAKA_DOCKER_SOCKET="$fixture/socket" \
 test "$(stat -c %u "$fixture/outside")" = 0
 test "$(stat -c %u "$workspace/tracked.txt")" = 10001
 test "$(stat -c %a "$workspace/tracked.txt")" = 600
+# Fresh installers also receive a root-created bind directory from Docker.
+api="$fixture/api"
+mkdir "$api"
+chmod 700 "$api"
+cp /opt/mangaka-install.sh "$fixture/original-install.sh"
+cat > /opt/mangaka-install.sh <<'EOF'
+set -Eeuo pipefail
+test "$(id -u)" = 10001
+umask 077
+printf 'secret\n' > "$MANGAKA_INSTALL_ROOT/.env"
+printf 'source\n' > "$MANGAKA_INSTALL_API/package.json"
+EOF
+MANGAKA_INSTALL_ROOT="$workspace" MANGAKA_INSTALL_API="$api" \
+    MANGAKA_DOCKER_SOCKET="$fixture/socket" bash "$entrypoint" install
+mv "$fixture/original-install.sh" /opt/mangaka-install.sh
+test "$(stat -c %u "$api/package.json")" = 10001
+test "$(stat -c %u "$workspace/.env")" = 10001
+test "$(stat -c %a "$workspace/.env")" = 600
+test -z "$(find /tmp -maxdepth 1 -name 'mangaka-user.*' -print)"
 echo 'Permission regression passed: Git, backup ownership, socket group and symlink isolation.'
