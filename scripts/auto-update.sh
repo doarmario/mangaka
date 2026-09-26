@@ -39,7 +39,7 @@ docker info >/dev/null
 git merge --ff-only "$TARGET"
 compose config --quiet
 # Build first, while the current site is still available.
-compose build web manga-novel qiscans demonicscans
+compose build web manga-novel qiscans demonicscans thunderscans
 compose up -d --wait mysql redis
 compose stop web updates-worker
 mkdir -p "$STATE_DIR/backups"
@@ -48,6 +48,6 @@ compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_PASSWORD" mysqldump -u "$MYSQL_US
 test -s "$BACKUP.partial"
 mv "$BACKUP.partial" "$BACKUP"
 compose run --rm --no-deps web flask --app app db upgrade
-compose up -d --wait --wait-timeout 180 web updates-worker manga-novel qiscans demonicscans
+compose up -d --wait --wait-timeout 180 web updates-worker manga-novel qiscans demonicscans thunderscans
 printf '%s\n' "$TARGET" > "$STATE_DIR/deployed"
 echo "Atualização concluída: $TARGET. Backup: $BACKUP"

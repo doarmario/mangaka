@@ -62,12 +62,12 @@ export MANGA_NOVEL_SOURCE_DIR="$API_DIR"
 compose() { docker compose --project-directory "$ROOT_DIR" -f "$ROOT_DIR/compose.yaml" "$@"; }
 echo "[3/5] Construindo o site (a primeira instalação pode demorar)..."
 compose config --quiet
-compose build web manga-novel qiscans demonicscans
+compose build web manga-novel qiscans demonicscans thunderscans
 compose up -d --wait mysql redis
 echo "[4/5] Preparando o banco e iniciando o site..."
 compose run --rm --no-deps web flask --app app init-db
 compose run --rm --no-deps web flask --app app db upgrade
-compose up -d --wait --wait-timeout 180 web updates-worker manga-novel qiscans demonicscans
+compose up -d --wait --wait-timeout 180 web updates-worker manga-novel qiscans demonicscans thunderscans
 echo "[5/5] Ativando as atualizações automáticas..."
 docker compose --project-directory "$ROOT_DIR" -f "$ROOT_DIR/compose.yaml" -f "$ROOT_DIR/compose.updater.yaml" up -d --build auto-updater
 port="$(compose config --format json | jq -r '.services.web.ports[0].published')"
