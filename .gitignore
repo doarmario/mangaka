@@ -22,3 +22,4 @@ docker-compose.yml
 !scripts/
 !scripts/*.sh
 !integrations/updater/*.sh
+!tests/updater-legacy.test.sh

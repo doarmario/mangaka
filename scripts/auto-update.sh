@@ -5,6 +5,15 @@ umask 077
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 if [[ "$(id -u)" != "$(stat -c '%u' "$ROOT_DIR")" ]]; then
+    # Older updater images run this checkout script directly as root forever.
+    # Load the current entrypoint BEFORE any Git writes so those installations
+    # can repair ownership and adopt the host UID without rebuilding by hand.
+    if [[ "$(id -u)" == 0 && "$ROOT_DIR" == /workspace &&
+          -f /opt/mangaka-update-loop.sh ]]; then
+        echo "Migrando atualizador antigo para o usuário dono do projeto..."
+        exec env MANGAKA_INSTALL_ROOT="$ROOT_DIR" /bin/bash \
+            "$ROOT_DIR/integrations/updater/entrypoint.sh" update-once
+    fi
     echo "Atualização bloqueada: execute como o dono do projeto. No Docker, use /opt/mangaka-entrypoint.sh update-once." >&2
     exit 1
 fi
