@@ -66,9 +66,9 @@ class AutoUpdateTests(unittest.TestCase):
             self.assertNotIn("auto-updater", call)
             self.assertNotIn("--remove-orphans", call)
         commands = [call[5:] for call in compose_calls]
-        self.assertIn(["build", "web", "manga-novel", "qiscans", "demonicscans"], commands)
+        self.assertIn(["build", "web", "manga-novel", "qiscans", "demonicscans", "thunderscans"], commands)
         self.assertEqual(commands[-1], ["up", "-d", "--wait", "--wait-timeout", "180",
-                                        "web", "updates-worker", "manga-novel", "qiscans", "demonicscans"])
+                                        "web", "updates-worker", "manga-novel", "qiscans", "demonicscans", "thunderscans"])
         backup = list((self.marker.parent / "backups").glob("*.sql"))
         self.assertEqual(len(backup), 1)
         self.assertEqual(backup[0].read_text().strip(), "SQL_BACKUP")

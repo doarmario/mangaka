@@ -197,7 +197,7 @@ as marcações de leitura.
 
 ## Fontes adicionais: Manga Novel API
 
-O catálogo permite escolher **MangaDex**, **AsuraScans**, **Qi Scans** ou **Demonic Scans**. Ao aplicar uma fonte, o catálogo carrega seus títulos automaticamente; a escolha
+O catálogo permite escolher **MangaDex**, **AsuraScans**, **Qi Scans**, **Demonic Scans** ou **Thunder Scans**. Ao aplicar uma fonte, o catálogo carrega seus títulos automaticamente; a escolha
 da fonte acompanha a busca e a paginação. Detalhes e leitor mostram a procedência.
 IDs locais próprios permitem usar favoritos e histórico sem confundir obras ou
 capítulos de provedores diferentes. Não há fusão automática de obras por título.
@@ -315,3 +315,22 @@ configure `DEMONICSCANS_API_URL`. O catálogo usa a paginação da fonte; busca 
 um gênero filtra cada página desse gênero e pode ter páginas sem correspondências.
 O wrapper mantém cache e respeita as respostas de limite de requisições; bloqueios
 ou mudanças no site aparecem como indisponibilidade da fonte.
+
+## Fonte Thunder Scans
+
+**Thunder Scans** está integrada ao catálogo, à busca entre fontes, às tags e ao
+leitor, com capítulos públicos em inglês. O scraper está incluído em
+[`integrations/thunderscans/`](integrations/thunderscans/README.md); o instalador e
+o auto-updater iniciam o serviço automaticamente.
+
+Para atualizar uma instalação manual:
+
+```sh
+docker compose up -d --build thunderscans web updates-worker
+```
+
+A API fica na rede interna em `http://thunderscans:3004`. Fora do Compose,
+configure `THUNDERSCANS_API_URL`. A integração mantém a paginação da fonte e o
+cache; não é necessário varrer todo o catálogo. Ao combinar busca e tag, os
+termos filtram os títulos de cada página do gênero. Capítulos bloqueados não são
+apresentados como disponíveis para leitura.

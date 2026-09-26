@@ -10,6 +10,7 @@ x-app: &app
     DB_PASSWORD: ${DB_PASSWORD:?Configure DB_PASSWORD no .env}
     DB_NAME: ${DB_NAME:-mangaka}
     MANGA_NOVEL_API_URL: http://manga-novel:3001
+    THUNDERSCANS_API_URL: http://thunderscans:3004
     DEMONICSCANS_API_URL: http://demonicscans:3003
     QISCANS_API_URL: http://qiscans:3002
     REDIS_HOST_CACHE: redis://redis:6379/0
@@ -17,6 +18,10 @@ x-app: &app
     UPDATES_INTERVAL_SECONDS: ${UPDATES_INTERVAL_SECONDS:-1800}
 
 services:
+  thunderscans:
+    build: ./integrations/thunderscans
+    restart: unless-stopped
+
   demonicscans:
     build: ./integrations/demonicscans
     restart: unless-stopped
