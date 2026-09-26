@@ -174,7 +174,7 @@ def status():
     except Exception:
         checks.append({'name': 'Cache', 'state': 'error', 'detail': 'Indisponível'})
     for key, name in [('MANGA_NOVEL_API_URL', 'API de fontes'), ('QISCANS_API_URL', 'Qi Scans'),
-                      ('DEMONICSCANS_API_URL', 'Demonic Scans')]:
+                      ('DEMONICSCANS_API_URL', 'Demonic Scans'), ('THUNDERSCANS_API_URL', 'Thunder Scans')]:
         api_url = current_app.config.get(key, '').rstrip('/')
         if api_url:
             try:
@@ -365,7 +365,7 @@ def catalog_tag():
         return None
     if g.selected_source == 'mangadex':
         tags = manga.listTags()
-    elif g.selected_source in {'asura', 'qiscans', 'demonicscans'}:
+    elif g.selected_source in {'asura', 'qiscans', 'demonicscans', 'thunderscans'}:
         tags = MangaNovel(g.selected_source).tags()
     else:
         abort(400, 'Esta fonte ainda não oferece filtro por gênero.')
@@ -392,7 +392,7 @@ def tags():
     """List every tag available for the currently selected provider."""
     if g.selected_source == 'mangadex':
         available = manga.listTags()
-    elif g.selected_source in {'asura', 'qiscans', 'demonicscans'}:
+    elif g.selected_source in {'asura', 'qiscans', 'demonicscans', 'thunderscans'}:
         available = MangaNovel(g.selected_source).tags()
     else:
         abort(400, 'Esta fonte não oferece tags.')
