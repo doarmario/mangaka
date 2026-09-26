@@ -6,11 +6,11 @@ if [[ ! "$interval" =~ ^[0-9]{1,6}$ ]] || (( 10#$interval < 60 )); then
     exit 1
 fi
 interval=$((10#$interval))
-# The entrypoint has already switched to the owner of the host checkout.
-git config --global --add safe.directory /workspace
 echo "Atualizador iniciado; verificação a cada ${interval}s."
 while true; do
-    if ! bash /workspace/scripts/auto-update.sh; then
+    # Pick up fixes to permission handling from the checkout, too. No Git or
+    # Docker operations happen in the scheduler itself.
+    if ! bash /workspace/integrations/updater/entrypoint.sh update-once; then
         echo "Falha no ciclo de atualização; nova tentativa em ${interval}s." >&2
     fi
     sleep "$interval" &

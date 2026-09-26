@@ -62,8 +62,11 @@ migrações e sobe os serviços com verificação de saúde do Compose. Há uma 
 indisponibilidade durante o backup, migração e reinício. O código externo da API
 Asura não recebe `git pull` automático; permanece na versão instalada.
 O atualizador não recria a si próprio. Alterações em sua imagem ou configuração
-exigem executar novamente o comando de ativação; o script do ciclo é lido do
-checkout a cada execução.
+exigem executar novamente o comando de ativação; o script do ciclo e o tratamento de permissões são lidos do
+checkout a cada execução. Containers antigos que iniciavam o ciclo como root
+passam automaticamente pelo entrypoint atual antes de qualquer escrita no Git.
+Assim, a mudança para o UID/GID do dono também funciona sem reconstruir a imagem
+quando o novo script já está no checkout. O agendador não executa Git diretamente.
 
 O commit só é marcado como implantado após o sucesso; falhas são tentadas novamente
 no próximo ciclo. Falhas após a parada podem deixar o site parado. Consulte os
@@ -102,16 +105,18 @@ o UID/GID do dono da pasta antes de iniciar o loop. Isso preserva o modo privado
 dos backups e do `.env`, sem usar `chmod 777`. O teste de permissões é executado
 durante a construção da imagem, com troca real de UID/GID e operações Git.
 
-Se o índice já estiver bloqueado e impedir o próprio `git pull`, pare o atualizador
-antigo e recupere o acesso ao Git uma vez, na pasta do projeto, antes de baixar a
-correção (Linux):
+Se um container antigo já estiver bloqueado antes de conseguir baixar novos
+commits, o código de recuperação ainda não chegou àquela instalação. Reexecute
+o comando de ativação acima para carregar o entrypoint disponível no checkout;
+não é necessário alterar permissões manualmente. Esse passo de recuperação vale
+para instalações antigas já travadas, não para cada atualização. Uma instalação
+com esta versão executa os ciclos com o usuário correto desde o início.
 
-```bash
-docker compose -f compose.yaml -f compose.updater.yaml stop auto-updater
-sudo chown -R "$(id -u):$(id -g)" .git
-git pull --ff-only
-docker compose -f compose.yaml -f compose.updater.yaml up -d --build auto-updater
-```
+A CI testa a imagem com UID/GID diferentes, diretórios criados pelo Docker como
+root, `.git` legado privado, ciclos repetidos, instalação e atualização sem root.
+Também executa o script real como um container antigo faria, verificando que a
+recuperação acontece antes do Git e que arquivos de terceiros e alvos de links
+simbólicos não são alterados.
 
 Referências: [Docker Desktop no Windows](https://docs.docker.com/desktop/setup/install/windows-install/)
 e [imagem oficial do Docker CLI](https://hub.docker.com/_/docker).
