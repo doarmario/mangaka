@@ -126,18 +126,21 @@ fontes**. Cada página consulta uma página de cada provedor e agrupa títulos
 correspondentes nessa seleção. A paginação não representa um índice completo
 deduplicado: uma obra pode reaparecer em outra página de outro provedor.
 
-Na página do mangá, **Outras fontes** consulta os outros provedores sem bloquear
-a abertura dos capítulos. O cruzamento usa títulos e aliases exatos após
-normalização, ignora diferenças de caixa e pontuação e evita correspondências
-ambíguas ou anos explicitamente diferentes. Nomes iguais ainda podem representar
-obras diferentes; confira a edição antes de trocar. Traduções sem aliases comuns
-podem não ser encontradas. É pesquisada a primeira página de resultados de cada
-outra fonte, com cache de uma hora (um minuto se uma fonte falhar), além dos caches
-existentes dos provedores. Não é feita uma varredura dos catálogos.
+As obras possuem uma identidade local independente dos provedores. Títulos e
+aliases exatos, metadados compatíveis e IDs externos opcionais ajudam a associar
+fontes à mesma obra. Casos ambíguos permanecem separados; fuzzy matching não faz
+uniões automáticas.
 
-IDs, capítulos, favoritos e progresso permanecem vinculados à fonte original.
-Os filtros de gênero, idioma e status continuam disponíveis no modo de fonte
-individual. Fontes indisponíveis são indicadas sem esconder resultados das demais.
+Favoritos, status e progresso pertencem à obra. **Continuar lendo** procura o
+mesmo capítulo lógico em outra fonte quando a última falha ou é removida.
+A página é aproximada pelo percentual quando o número de páginas muda. Histórico
+e mapeamentos antigos são preservados. As rotas e integrações anteriores continuam
+funcionando; a migração é aditiva e executada pelo instalador/auto-updater.
+
+A descoberta consulta uma página por provider, com cache; não é uma varredura dos
+catálogos. Capítulos antigos sem número/volume só podem ser associados a outra
+fonte depois do enriquecimento de seus metadados. Detalhes, schema, contratos e
+limitações estão em [Identidade canônica e leitura](docs/canonical-reading.md).
 
 ## Testes da integração MangaDex
 
@@ -192,15 +195,16 @@ No leitor, anterior/próximo mantêm o idioma do capítulo aberto.
 
 Os capítulos são consultados e armazenados no Redis separadamente por idioma,
 porque o endpoint de agregação do MangaDex não identifica o idioma de cada item.
-Números iguais em traduções diferentes continuam disponíveis, sem misturar
-as marcações de leitura.
+Números iguais em traduções diferentes continuam disponíveis. A marcação de
+leitura é compartilhada quando representam o mesmo capítulo lógico; as páginas
+e a preferência de idioma continuam específicas da edição consultada.
 
 ## Fontes adicionais: Manga Novel API
 
 O catálogo permite escolher **MangaDex**, **AsuraScans**, **Qi Scans**, **Demonic Scans** ou **Thunder Scans**. Ao aplicar uma fonte, o catálogo carrega seus títulos automaticamente; a escolha
 da fonte acompanha a busca e a paginação. Detalhes e leitor mostram a procedência.
-IDs locais próprios permitem usar favoritos e histórico sem confundir obras ou
-capítulos de provedores diferentes. Não há fusão automática de obras por título.
+IDs locais dos providers são mantidos como referências de compatibilidade. A camada
+canônica reúne obras e capítulos equivalentes sem atrelar o progresso à fonte.
 
 A integração usa uma cópia local de
 [Raby012/-manga-novel-api](https://github.com/Raby012/-manga-novel-api), commit

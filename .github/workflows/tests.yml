@@ -2,6 +2,29 @@ name: Tests
 on: [push, pull_request]
 
 jobs:
+  canonical-mysql:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: canonical-test-only
+          MYSQL_DATABASE: canonical_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -pcanonical-test-only"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+      - run: python -m pip install -r requirements.txt
+      - run: python -m pytest -q tests/test_canonical_mysql.py
+        env:
+          MANGAKA_TEST_MYSQL_URL: mysql+pymysql://root:canonical-test-only@127.0.0.1:3306/canonical_test
   test:
     runs-on: ubuntu-latest
     steps:
@@ -13,6 +36,7 @@ jobs:
       - run: python -m pip install -r requirements.txt
       - run: python -m pip check
       - run: python -m pytest -q
+      - run: node --test tests/reader-progress.test.cjs
 
   qiscans:
     runs-on: ubuntu-latest
