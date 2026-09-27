@@ -404,3 +404,20 @@ def test_resynchronizing_many_chapters_uses_bounded_reads(context):
     assert len(reads) < 12
     assert SourceChapter.query.count() == 100
     assert LogicalChapter.query.count() == 100
+
+
+def test_alias_consolidation_during_resume_uses_surviving_progress(context, monkeypatch):
+    a, b = work('a', 'a', 'Original'), work('b', 'b', 'Translation')
+    ca, cb = chapter(a, 'ca'), chapter(b, 'cb')
+    reader = user()
+    save_progress(reader.id, ca, 5, 10)
+    save_progress(reader.id, cb, 7, 10)
+    monkeypatch.setattr(Library, 'sources', staticmethod(lambda: {'a': 'A'}))
+    monkeypatch.setattr(Library, '_source_manga', lambda *args: {'id': 'a', 'title': 'Original',
+        'aliases': ['Translation'], 'source_id': 'a', 'chapters': [{'cap_id': 'ca', 'cap': '50', 'language': 'en'}]})
+    monkeypatch.setattr(Library, '_source_chapter', lambda *args: {'id': 'ca', 'manga_id': 'a',
+        'manga': 'Original', 'source_id': 'a', 'cap': '50', 'pages': ['page'] * 10})
+    selected, page = resolve_source_for_chapter(reader.id, a.work, Library())
+    assert selected.id == 'ca' and page == 7
+    assert ReadingProgress.query.count() == 1
+    assert Readed.query.count() == 2

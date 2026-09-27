@@ -3,7 +3,7 @@ from flask import current_app
 from app import db
 from app.models import (SourceChapter, ReadingProgress, Readed, Chapter,
                         Favorite, utc_now)
-from app.libs.canonical import lock_catalog, ensure_legacy_manga
+from app.libs.canonical import lock_catalog, ensure_legacy_manga, canonical_work
 from app.libs.identity import approximate_page
 from app.libs.manga_novel import SourceUnavailable
 import requests
@@ -62,12 +62,17 @@ def resolve_source_for_chapter(user_id, work, library):
     # Discover equivalent works using the existing bounded, cached catalog search.
     # No source is required to remain online to obtain the search title.
     library.discover_work_sources(work)
+    work = canonical_work(work.id)
+    progress = ReadingProgress.query.filter_by(user_id=user_id, work_id=work.id).one()
     sources = source_order(work, library, progress)
     for sw in sources:
         try:
             # Refresh the chapter mapping. A failed source is retained, not deleted.
             library.showManga(sw.id)
-            db.session.refresh(progress)
+            # Enriched aliases can consolidate two works and replace the
+            # progress row while a provider's details are being loaded.
+            work = canonical_work(work.id)
+            progress = ReadingProgress.query.filter_by(user_id=user_id, work_id=work.id).one()
             target_id = progress.logical_chapter_id
             candidates = SourceChapter.query.filter_by(source_work_id=sw.id,
                                                        logical_chapter_id=target_id, available=True).all()
