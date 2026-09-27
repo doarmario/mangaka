@@ -56,8 +56,12 @@ do projeto; links simbólicos não são seguidos e outros usuários são preserv
 Os scripts usam finais de linha
 LF definidos em `.gitattributes` para também funcionarem em clones no Windows.
 
-O processo baixa commits, avança apenas por fast-forward e constrói as imagens
-antes de parar o site e o worker. Em seguida, salva um dump MySQL, aplica as
+O processo baixa commits, avança apenas por fast-forward e carrega a etapa de
+implantação (`scripts/deploy-update.sh`) da revisão recém-baixada. Os serviços são
+descobertos pelo `compose.yaml`, incluindo novas fontes, sem uma lista fixa no
+script antigo. `init-db` continua sendo uma tarefa de inicialização; o atualizador
+não recria a si próprio. As imagens são construídas antes de parar o site e o
+worker. Em seguida, salva um dump MySQL, aplica as
 migrações e sobe os serviços com verificação de saúde do Compose. Há uma breve
 indisponibilidade durante o backup, migração e reinício. O código externo da API
 Asura não recebe `git pull` automático; permanece na versão instalada.
@@ -68,8 +72,14 @@ passam automaticamente pelo entrypoint atual antes de qualquer escrita no Git.
 Assim, a mudança para o UID/GID do dono também funciona sem reconstruir a imagem
 quando o novo script já está no checkout. O agendador não executa Git diretamente.
 
-O commit só é marcado como implantado após o sucesso; falhas são tentadas novamente
-no próximo ciclo. Falhas após a parada podem deixar o site parado. Consulte os
+O commit só é marcado como implantado após o sucesso e a confirmação de que os
+serviços permanentes estão rodando, com healthcheck saudável quando disponível.
+Mesmo que o commit já esteja marcado em `deployed`, cada ciclo verifica os
+containers. Se algum estiver ausente, parado ou sem saúde, a implantação é
+reparada automaticamente. Nesse caso, a marca antiga vai para `deployed.previous`
+e só volta a `deployed` após o sucesso. Falhas são tentadas novamente no próximo
+ciclo; um erro ao consultar o Docker não provoca uma parada dos serviços. Falhas
+após a parada podem deixar o site parado. Consulte os
 logs e corrija a causa antes de reiniciar. Não há rollback automático, pois uma
 migração pode alterar dados de forma incompatível com o código antigo.
 
