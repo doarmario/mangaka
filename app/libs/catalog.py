@@ -1,5 +1,4 @@
-"""Federated discovery without merging provider IDs or reading histories."""
-import unicodedata
+"""Federated discovery backed by the local canonical catalog."""
 from hashlib import sha256
 from itertools import zip_longest
 
@@ -9,18 +8,11 @@ from app import cache
 from app.libs.manga_novel import MangaNovel, SourceUnavailable
 
 
-def titles(item):
-    values = [item.get('title', ''), *item.get('aliases', [])]
-    return {normalized for value in values if isinstance(value, str)
-            if (normalized := ' '.join(''.join(
-                c if c.isalnum() else ' ' for c in unicodedata.normalize('NFKC', value).casefold()
-            ).split())) not in {'', 'sem título', 'untitled'}}
+from app.libs.identity import title_keys as titles, match_confidence
 
 
 def matches(left, right):
-    if left.get('ano') and right.get('ano') and left['ano'] != right['ano']:
-        return False
-    return bool(titles(left) & titles(right))
+    return match_confidence(left, right)[0] == 1.0
 
 
 def group_results(items):
@@ -71,17 +63,46 @@ class UnifiedCatalog:
         if len(unavailable) == len(sources):
             raise SourceUnavailable('As fontes estão indisponíveis. Tente novamente em instantes.')
         items = [item for row in zip_longest(*batches) for item in row if item]
-        return {'itens': group_results(items), 'unavailable': unavailable, 'has_next': has_next}
+        from app.libs.canonical import resolve_work, canonical_work
+        from app import db
+        grouped = group_results(items)
+        for group in grouped:
+            for item in group['sources']:
+                sw = resolve_work(item, item['source_id'], allow_title_match=not group['ambiguous'])
+                item['work_id'] = sw.work_id
+            group['work_id'] = group['sources'][0]['work_id']
+        db.session.commit()
+        persisted = {}
+        for group in grouped:
+            for item in group['sources']:
+                identity = canonical_work(item['work_id']).id
+                if identity not in persisted:
+                    persisted[identity] = {**item, 'work_id': identity, 'sources': []}
+                persisted[identity]['sources'].append(item)
+        return {'itens': list(persisted.values()), 'unavailable': unavailable, 'has_next': has_next}
 
     def alternatives(self, identifier):
         sources = self.library.sources()
-        key = 'cross-source-v1:' + sha256(repr((identifier, sources)).encode()).hexdigest()
+        key = 'cross-source-v2:' + sha256(repr((identifier, sources)).encode()).hexdigest()
         stored = cache.get(key)
         if stored is not None:
             return stored
         ref = self.library.reference(identifier, 'manga')
         source = ref.source if ref else 'mangadex'
-        item = MangaNovel(source).info(ref) if ref else self.library.getManga(identifier)
+        from app.models import SourceWork
+        from app.libs.canonical import work_data
+        from app import db
+        known = db.session.get(SourceWork, identifier)
+        try:
+            item = MangaNovel(source).info(ref) if ref else self.library.getManga(identifier)
+        except (SourceUnavailable, ApiError, requests.RequestException):
+            if known is None:
+                raise
+            item = {**work_data(known.work), 'id': identifier}
+        from app.libs.canonical import resolve_work
+        from app import db
+        origin = known or resolve_work(item, source)
+        db.session.commit()
         found, unavailable = [], []
         # Limit requests: one title search per other provider, with provider and
         # aggregate caches. Prefer an English alias when MangaDex has one.
@@ -93,7 +114,12 @@ class UnifiedCatalog:
                 result = self.provider(target, query, 1)
                 candidates = [other for other in result['itens'] if matches(item, other)]
                 if len(candidates) == 1:
-                    found.append({'id': candidates[0]['id'], 'source_id': target, 'source_name': name})
+                    sw = resolve_work(candidates[0], target)
+                    db.session.commit()
+                    from app.libs.canonical import canonical_work
+                    if canonical_work(sw.work_id).id != canonical_work(origin.work_id).id:
+                        continue
+                    found.append({'id': candidates[0]['id'], 'work_id': sw.work_id, 'source_id': target, 'source_name': name})
             except (SourceUnavailable, ApiError, requests.RequestException):
                 unavailable.append(name)
         data = {'sources': found, 'unavailable': unavailable}

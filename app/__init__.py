@@ -29,6 +29,13 @@ def create_app(config_object=None):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(config_object)
 
+    # Identity resolution uses a short row mutex. Reads after waiting for it
+    # must see the winner's committed aliases/mappings, not an older RR snapshot.
+    if str(app.config.get('SQLALCHEMY_DATABASE_URI', '')).startswith('mysql'):
+        options = dict(app.config.get('SQLALCHEMY_ENGINE_OPTIONS') or {})
+        options['isolation_level'] = 'READ COMMITTED'
+        app.config['SQLALCHEMY_ENGINE_OPTIONS'] = options
+
     db.init_app(app)
     bcrypt.init_app(app)
     csrf.init_app(app)

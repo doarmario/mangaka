@@ -7,7 +7,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const fullscreen = document.getElementById('fullscreenToggle');
     const width = document.getElementById('readerWidth');
     const brightness = document.getElementById('readerBrightness');
-    let index = 0;
+    let index = Math.max(0, Math.min(pages.length - 1, resumePage - 1));
+    let saveTimer;
+    let saveInFlight = false;
+    let pendingSave = false;
     let marked = false;
     let marking = false;
     let observer;
@@ -33,10 +36,30 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     try {
         const saved = JSON.parse(localStorage.getItem(`mangaka-reader:${cap}`) || 'null');
-        if (saved && Number.isInteger(saved.page) && saved.page >= 0 && saved.page < pages.length) index = saved.page;
+        if (!readerAuthenticated && saved && Number.isInteger(saved.page) && saved.page >= 0 && saved.page < pages.length) index = saved.page;
     } catch { /* Progress storage is optional. */ }
 
+    async function sendProgress() {
+        if (!readerAuthenticated || !pages.length) return;
+        if (saveInFlight) { pendingSave = true; return; }
+        saveInFlight = true;
+        pendingSave = false;
+        try {
+            const response = await fetch(`/cap/${encodeURIComponent(cap)}/progress`, {
+                method: 'POST', keepalive: true,
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': readerCsrf },
+                body: JSON.stringify({ page: index + 1, page_count: pages.length })
+            });
+            if (!response.ok) progress.textContent = 'Leitura disponível; não foi possível sincronizar o progresso agora.';
+        } catch { /* Local progress is retained if offline. */ }
+        finally {
+            saveInFlight = false;
+            if (pendingSave) sendProgress();
+        }
+    }
     function saveProgress() {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(sendProgress, 600);
         try { localStorage.setItem(`mangaka-reader:${cap}`, JSON.stringify({ page: index, total: pages.length, savedAt: Date.now() })); } catch { /* Optional. */ }
     }
 
@@ -80,13 +103,19 @@ document.addEventListener('DOMContentLoaded', () => {
             progress.textContent = `${pages.length} páginas · Rolagem contínua`;
             if ('IntersectionObserver' in window) {
                 observer = new IntersectionObserver(entries => {
-                    if (entries.some(entry => entry.isIntersecting)) markRead();
+                    if (entries.some(entry => entry.isIntersecting)) { index = pages.length - 1; saveProgress(); markRead(); }
                 }, { threshold: 0.5 });
             }
             pages.forEach((_, number) => container.appendChild(image(number, true)));
+            if (index > 0) {
+                const target = container.children[index];
+                const restore = () => target.scrollIntoView({ block: 'start' });
+                requestAnimationFrame(restore);
+                if (!target.complete) target.addEventListener('load', restore, { once: true });
+            }
             try {
                 const saved = JSON.parse(localStorage.getItem(`mangaka-reader:${cap}`) || 'null');
-                if (saved?.scroll) setTimeout(() => window.scrollTo({ top: saved.scroll, behavior: 'auto' }), 100);
+                if (!readerAuthenticated && saved?.scroll) setTimeout(() => window.scrollTo({ top: saved.scroll, behavior: 'auto' }), 100);
             } catch { /* Optional. */ }
             const end = document.createElement('div');
             end.id = 'reader-end';
@@ -123,11 +152,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     window.addEventListener('scroll', () => {
         if (!mode.checked) return;
+        const images = [...container.querySelectorAll('img')];
+        const visible = images.findIndex(img => img.getBoundingClientRect().bottom > window.innerHeight * .25);
+        if (visible >= 0 && visible !== index) { index = visible; saveProgress(); }
         try { localStorage.setItem(`mangaka-reader:${cap}`, JSON.stringify({ page: index, total: pages.length, scroll: window.scrollY, savedAt: Date.now() })); } catch { /* Optional. */ }
     }, { passive: true });
     mode.addEventListener('change', () => {
         try { localStorage.setItem('mode', mode.checked ? 'scroll' : 'páginas'); } catch { /* Optional. */ }
         render();
     });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) { clearTimeout(saveTimer); sendProgress(); } });
     render();
 });

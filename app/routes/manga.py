@@ -204,7 +204,9 @@ def service_worker():
 @site.route('/biblioteca')
 @login_required
 def library():
-    return render_template('library.html',
+    from app.models import ReadingProgress
+    shelves = ReadingProgress.query.filter_by(user_id=current_user.id).order_by(ReadingProgress.last_read_at.desc()).all()
+    return render_template('library.html', shelves=shelves,
                            recent=manga.continuar_lendo(0),
                            favorites=manga.lista_ultimos_favoritos(0),
                            updates=manga.favorite_updates(20))
@@ -277,69 +279,117 @@ def mangaCap(cap_id):
             entry.read_at = utc_now()
             db.session.commit()
 
+    from app.models import ReadingProgress
+    dall['resume_page'] = request.args.get('page', type=int)
+    if dall['resume_page'] is None and current_user.is_authenticated:
+        progress = ReadingProgress.query.filter_by(user_id=current_user.id, work_id=dall['work_id']).first()
+        if progress and progress.last_source_chapter_id == cap_id:
+            dall['resume_page'] = progress.page_number
+        elif progress and progress.logical_chapter_id == dall['logical_chapter_id']:
+            from app.libs.identity import approximate_page
+            dall['resume_page'] = approximate_page(progress.progress_percent, len(dall.get('pages', [])))
+    dall['resume_page'] = max(1, min(dall['resume_page'] or 1, max(1, len(dall.get('pages', [])))))
     return render_template('cap.html',data=dall)
 
 
 @site.route('/cap/<cap_id>/readed')
 @login_required
 def mangaCapReaded(cap_id):
-    """
-        lista de lidos
-    """
-    if current_user.is_authenticated:
-        data = manga.getChapter(cap_id)
+    from app.libs.reading import save_progress
+    from app.models import SourceChapter
+    data = manga.getChapter(cap_id)
+    count = len(data.get('pages', []))
+    save_progress(current_user.id, db.session.get(SourceChapter, cap_id), max(1, count), count, completed=True)
+    return jsonify(status='success', message='Request was successful')
 
-        m = Manga.query.filter_by(uuid=data['manga_id']).first()
 
-        if not m:
-            m = Manga(
-                uuid=data['manga_id'],
-                title=data['manga']
-            )
-            db.session.add(m)
-            db.session.commit()
+@site.route('/cap/<cap_id>/progress', methods=['POST'])
+@login_required
+def chapter_progress(cap_id):
+    from app.models import SourceChapter
+    from app.libs.reading import save_progress
+    data = request.get_json(silent=True) or {}
+    if not isinstance(data, dict):
+        abort(400, 'Progresso inválido.')
+    page, count = data.get('page'), data.get('page_count')
+    if type(page) is not int or type(count) is not int or not 1 <= page <= count <= 10000:
+        abort(400, 'Página inválida.')
+    sc = db.session.get(SourceChapter, cap_id)
+    if sc is None:
+        manga.getChapter(cap_id)
+        sc = db.session.get(SourceChapter, cap_id)
+    progress = save_progress(current_user.id, sc, page, count, completed=page == count)
+    return jsonify(status='success', work_id=progress.work_id, progress_percent=progress.progress_percent)
 
-        c = Chapter.query.filter_by(uuid=cap_id).first()
 
-        if not c:
-            c = Chapter(
-                uuid=cap_id,
-                manga_id=m.id
-            )
-            db.session.add(c)
-            db.session.commit()
+@site.route('/work/<work_id>')
+def work_detail(work_id):
+    from app.libs.canonical import canonical_work
+    work = canonical_work(work_id)
+    if work is None:
+        abort(404)
+    return render_template('manga.html', data=manga.work_details(work))
 
-        read = Readed.query.filter_by(
-            user_id=current_user.id,
-            chapter_id=c.id
-        ).first()
 
-        if read:
-            read.updated_at = utc_now()
-            db.session.commit()
+@site.route('/api/works/<work_id>')
+def work_metadata(work_id):
+    from app.libs.canonical import canonical_work
+    from app.models import ReadingProgress
+    work = canonical_work(work_id)
+    if work is None:
+        abort(404)
+    progress = (ReadingProgress.query.filter_by(user_id=current_user.id, work_id=work.id).first()
+                if current_user.is_authenticated else None)
+    response = jsonify(id=work.id, title=work.canonical_title,
+        aliases=[alias.alias for alias in work.aliases],
+        sources=[{'id': source.id, 'source': source.source,
+                  'available': source.available and source.source in manga.sources(),
+                  'url': url_for('user.manga_sinopse', manga_id=source.id)} for source in work.sources],
+        reading_progress={'chapter_key': progress.logical_chapter.chapter_key if progress.logical_chapter else None,
+                          'logical_chapter_id': progress.logical_chapter_id,
+                          'progress_percent': progress.progress_percent, 'status': progress.status,
+                          'last_source': progress.last_source} if progress else None)
+    response.headers['Cache-Control'] = 'private, no-store'
+    return response
 
-        else:
-            read = Readed(
-                user_id=current_user.id,
-                chapter_id=c.id
-            )
-            db.session.add(read)
-            db.session.commit()
 
-        response = {
-            "status": "success",
-            "message": "Request was successful"
-        }
-        
-        # Retornando o JSON com o status 200 (default)
-        return jsonify(response)
-    
-    response = {
-        "status": "error",
-        "message": "Unauthorized access"
-    }
-    return jsonify(response), 401
-        
+@site.route('/work/<work_id>/continue')
+@login_required
+def continue_work(work_id):
+    from app.libs.canonical import canonical_work
+    from app.libs.reading import resolve_source_for_chapter
+    work = canonical_work(work_id)
+    if work is None:
+        abort(404)
+    chapter, page = resolve_source_for_chapter(current_user.id, work, manga)
+    return redirect(url_for('user.mangaCap', cap_id=chapter.id, page=page))
+
+
+@site.route('/work/<work_id>/status', methods=['POST'])
+@login_required
+def reading_status(work_id):
+    from app.models import ReadingProgress
+    from app.libs.canonical import canonical_work
+    from app.libs.reading import STATUSES
+    work = canonical_work(work_id)
+    if work is None:
+        abort(404)
+    payload = request.get_json(silent=True) or {}
+    if not isinstance(payload, dict):
+        abort(400)
+    status = payload.get('status')
+    if not isinstance(status, str) or status not in STATUSES:
+        abort(400)
+    from app.libs.canonical import lock_catalog
+    lock_catalog()
+    progress = ReadingProgress.query.filter_by(user_id=current_user.id, work_id=work.id).first()
+    if progress is None:
+        progress = ReadingProgress(user_id=current_user.id, work_id=work.id)
+        db.session.add(progress)
+    progress.status = status
+    db.session.commit()
+    return jsonify(status='success')
+
 
 def unified_listing(page, query=None):
     from app.libs.catalog import UnifiedCatalog
@@ -437,54 +487,32 @@ def manga_sinopse(manga_id):
     """
     abre um titulo especifico
     """
-    dall = manga.showManga(manga_id)
-
+    from app.libs.reading import PROVIDER_ERRORS
+    from app.models import SourceWork
+    try:
+        dall = manga.showManga(manga_id)
+    except PROVIDER_ERRORS:
+        source_work = db.session.get(SourceWork, manga_id)
+        if source_work is None:
+            raise
+        source_work.available = False
+        db.session.commit()
+        dall = manga.work_details(source_work.work)
     return render_template('manga.html', data=dall)
 
 
 @site.route('/manga/<manga_id>/favorite')
 @login_required
 def mangaFav(manga_id):
-    if current_user.is_authenticated:
-        data = manga.showManga(manga_id=manga_id)
-
-        m = Manga.query.filter_by(uuid=data['id']).first()
-
-        if not m:
-            m = Manga(
-                uuid=data['id'],
-                title=data['title']
-            )
-            db.session.add(m)
-            db.session.commit()
-
-        favorite = Favorite.query.filter_by(user_id=current_user.id,manga_id=m.id).first()
-        if not favorite:
-            status = "added"
-            favorite = Favorite(
-                user_id=current_user.id,
-                manga_id=m.id
-            )
-            db.session.add(favorite)
-            db.session.commit()
-        else:
-            status = "deleted"
-            db.session.delete(favorite)
-            db.session.commit()
-        
-        response = {
-            "status": "success",
-            "message": status
-        }
-        
-        # Retornando o JSON com o status 200 (default)
-        return jsonify(response)
-    
-    response = {
-        "status": "error",
-        "message": "Unauthorized access"
-    }
-    return jsonify(response), 401
+    from app.libs.canonical import canonical_work
+    from app.models import SourceWork
+    from app.libs.reading import toggle_favorite
+    work = canonical_work(manga_id)
+    sw = next(iter(work.sources), None) if work else db.session.get(SourceWork, manga_id)
+    if sw is None:
+        data = manga.showManga(manga_id)
+        sw = db.session.get(SourceWork, data['id'])
+    return jsonify(status='success', message=toggle_favorite(current_user.id, sw))
 
 
 @site.route('/search', defaults={'page': 1}, methods=["GET"])

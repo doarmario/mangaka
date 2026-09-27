@@ -7,7 +7,7 @@ from flask import current_app
 
 from app import create_app, db
 from app.libs.library import Library
-from app.models import Favorite, Readed, Chapter, UpdateNotification, WorkerStatus, utc_now
+from app.models import Favorite, Readed, Chapter, UpdateNotification, WorkerStatus, SourceChapter, utc_now
 from sqlalchemy.exc import IntegrityError
 
 
@@ -23,9 +23,14 @@ def refresh_once(user_id=None):
             UpdateNotification.read_at.isnot(None),
             UpdateNotification.created_at < utc_now() - timedelta(days=90),
         ).delete(synchronize_session=False)
+    visited = set()
     for favorite in favorites:
+        key = (favorite.user_id, favorite.work_id or favorite.manga.uuid)
+        if key in visited:
+            continue
+        visited.add(key)
         try:
-            details = library.showManga(favorite.manga.uuid)
+            details = library.work_details(favorite.work) if favorite.work else library.showManga(favorite.manga.uuid)
             chapters = details.get('chapters', [])
             if not chapters:
                 continue
@@ -35,18 +40,30 @@ def refresh_once(user_id=None):
                 if not chapter_id:
                     continue
                 already_read = db.session.query(Readed.id).join(Chapter).filter(
-                    Readed.user_id == favorite.user_id, Chapter.uuid == chapter_id).first()
+                    Readed.user_id == favorite.user_id, Readed.completed.is_(True), Chapter.uuid == chapter_id).first()
+                mapped = db.session.get(SourceChapter, chapter_id)
+                if mapped and not already_read:
+                    already_read = Readed.query.filter_by(user_id=favorite.user_id, logical_chapter_id=mapped.logical_chapter_id, completed=True).first()
                 if not already_read:
                     unread.append(chapter)
             if not unread:
                 continue
             latest = unread[0]
+            from app.libs.canonical import lock_catalog
+            lock_catalog()
             exists = UpdateNotification.query.filter_by(
                 user_id=favorite.user_id, chapter_uuid=latest['cap_id']).first()
+            mapped = db.session.get(SourceChapter, latest['cap_id'])
+            if mapped and not exists:
+                exists = UpdateNotification.query.filter_by(
+                    user_id=favorite.user_id, logical_chapter_id=mapped.logical_chapter_id).first()
             if exists:
+                db.session.commit()
                 continue
             db.session.add(UpdateNotification(
                 user_id=favorite.user_id,
+                work_id=mapped.source_work.work_id if mapped else favorite.work_id,
+                logical_chapter_id=mapped.logical_chapter_id if mapped else None,
                 manga_uuid=favorite.manga.uuid,
                 manga_title=details.get('title', favorite.manga.title),
                 chapter_uuid=latest['cap_id'],

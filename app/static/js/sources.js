@@ -30,3 +30,19 @@ document.querySelectorAll('[data-source-url]').forEach(panel => {
     retry.addEventListener('click', load);
     load();
 });
+
+const readingStatus = document.getElementById('reading-status');
+readingStatus?.addEventListener('change', async () => {
+    if (!readingStatus.value) return;
+    const feedback = document.getElementById('action-status');
+    readingStatus.disabled = true;
+    try {
+        const response = await fetch(readingStatus.dataset.url, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': readingStatus.dataset.csrf },
+            body: JSON.stringify({ status: readingStatus.value })
+        });
+        if (!response.ok) throw new Error('status');
+        feedback.textContent = 'Status salvo na sua biblioteca.';
+    } catch { feedback.textContent = 'Não foi possível salvar o status. Tente novamente.'; }
+    finally { readingStatus.disabled = false; }
+});

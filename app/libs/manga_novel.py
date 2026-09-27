@@ -166,7 +166,9 @@ class MangaNovel:
                 'autor': ', '.join(raw.get('authors') or []), 'ano': raw.get('year'),
                 'status': str(raw.get('status') or 'Não informado'),
                 'cover_url': raw.get('coverUrl') or ref.payload.get('coverUrl'),
-                'source_name': SOURCES[self.source]}
+                'source_name': SOURCES[self.source], 'type': raw.get('type') or 'manga',
+                'external_ids': raw.get('external_ids') or {}, 'artist': raw.get('artist'),
+                'country': raw.get('country'), 'source_url': raw.get('url')}
 
     def chapters(self, ref):
         records = []
@@ -192,7 +194,7 @@ class MangaNovel:
                     if number is None or number == '':
                         match = re.search(r'(?:chapter|cap[ií]tulo)\s*([\d.]+)', item.get('title', ''), re.I)
                         number = match.group(1) if match else 'Sem número'
-                    records.append((self._remote(item), {'cap': str(number), 'language': actual_language,
+                    records.append((self._remote(item), {'cap': str(number), 'title': item.get('title'), 'volume': item.get('volume'), 'language': actual_language,
                                     'language_name': LANGUAGE_NAMES[actual_language]}))
                 total = response.get('total')
                 if self.source != 'comick' or not batch or (isinstance(total, int) and page * 100 >= total):

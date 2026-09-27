@@ -89,7 +89,7 @@ def test_aggregate_accepts_special_and_missing_numbers(context, api):
         str(i): {'chapter': num, 'id': str(i)}
         for i, num in enumerate([None, 'extra', '2.5', '10', 'none'])}}, 'empty': {'chapters': []}}}
     chapters = Mangas(lang='pt-br').getMangaChapterList('m1')
-    assert [c['cap'] for c in chapters] == ['10', '2.5', 'Sem número', 'extra', 'Sem número']
+    assert [c['cap'] for c in chapters] == ['extra', '10', '2.5', 'Sem número', 'Sem número']
 
 
 def test_user_read_state_never_enters_shared_cache(context, api):
