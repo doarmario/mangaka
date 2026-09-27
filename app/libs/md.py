@@ -81,7 +81,8 @@ class Mangas:
                 "tags": [self._text(tag.name) for tag in manga.tags],
                 "tag_links": [{"id": tag.tag_id, "name": self._text(tag.name)} for tag in manga.tags],
                 "authors": list(manga.author_id), "cover_id": manga.cover_id,
-                "ano": manga.year, "status": manga.status}
+                "ano": manga.year, "status": manga.status, "type": "manga",
+                "external_ids": {{"al": "anilist", "mal": "myanimelist", "mu": "mangaupdates"}[k]: str(v) for k, v in (getattr(manga, "links", None) or {}).items() if k in {"al", "mal", "mu"}}}
 
     def _list(self, offset, **filters):
         offset = max(0, min(int(offset), 10000 - self.limit))
@@ -214,13 +215,8 @@ class Mangas:
     
     @staticmethod
     def _chapter_order(chapter):
-        try:
-            number = float(chapter["cap"])
-            if math.isfinite(number):
-                return (1, number)
-        except (ValueError, TypeError):
-            pass
-        return (0, 0)
+        from app.libs.identity import chapter_order
+        return chapter_order(chapter['cap'])
 
     def getMangaChapterList(self, manga_id, is_read=True, language=None):
         def load(language):
@@ -233,7 +229,7 @@ class Mangas:
                 for chapter in chapters.values() if isinstance(chapters, dict) else chapters:
                     number = chapter.get("chapter")
                     data.append({"cap": str(number) if number not in (None, "none") else "Sem número",
-                                 "cap_id": chapter["id"], "language": language,
+                                 "cap_id": chapter["id"], "volume": volume.get("volume"), "language": language,
                                  "language_name": LANGUAGE_NAMES.get(language, language),
                                  "others": chapter.get("others", []), "is_readed": False})
             return sorted(data, key=self._chapter_order, reverse=True)
@@ -246,7 +242,7 @@ class Mangas:
             data.extend(self._cached("chapters", (manga_id, selected),
                                      lambda: load(selected)))
         data.sort(key=self._chapter_order, reverse=True)
-        if is_read and current_user.is_authenticated:
+        if is_read and current_user and current_user.is_authenticated:
             ids = [c["cap_id"] for c in data]
             read_ids = {uuid for (uuid,) in db.session.query(Chapter.uuid).join(Readed).filter(
                 Readed.user_id == current_user.id, Chapter.uuid.in_(ids)).all()}
@@ -258,7 +254,7 @@ class Mangas:
         def load():
             cap = self.chapters.get_chapter_by_id(chapter_id=cap_id)
             return {"id": cap.chapter_id, "cap": cap.chapter,
-                    "manga_id": cap.manga_id, "language": cap.translated_language,
+                    "manga_id": cap.manga_id, "volume": getattr(cap, "volume", None), "title": getattr(cap, "title", None), "language": cap.translated_language,
                     "language_name": LANGUAGE_NAMES.get(cap.translated_language, cap.translated_language)}
         metadata = self._cached("chapter", (cap_id,), load, timeout=3600)
         manga = self.getManga(metadata["manga_id"])
@@ -273,7 +269,7 @@ class Mangas:
             return chapter.fetch_chapter_images()
         # At-home URLs expire; keep their cache separate from chapter metadata.
         urls = self._cached("pages", (cap_id,), images, timeout=600)
-        return {**metadata, "manga": manga["title"],
+        return {**metadata, "manga": manga["title"], "work_metadata": manga,
                 "pages": ["/img/page/proxy?" + urlencode({"url": url}) for url in urls],
                 "index": index, "caps": len(caps) - 1,
                 "prev": caps[index + 1]["cap_id"] if index is not None and index + 1 < len(caps) else None,
@@ -291,7 +287,7 @@ class Mangas:
         data = {"languages": available, "first_chapter": preferred[-1]["cap_id"] if preferred else None,
                 **manga, "autor": ", ".join(authors), "chapters": caps,
                 "caps": len(caps), "is_favorite": False}
-        if current_user.is_authenticated:
+        if current_user and current_user.is_authenticated:
             data["is_favorite"] = db.session.query(Favorite).join(Manga).filter(
                 Favorite.user_id == current_user.id, Manga.uuid == manga_id).first() is not None
         return data

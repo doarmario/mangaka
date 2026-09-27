@@ -10,15 +10,21 @@
             <div class="genre-box" aria-label="Tags do mangá">{% if data.tag_links %}{% for tag in data.tag_links %}<a class="genre" href="{{ url_for('user.mangaList', source=data.source_id, tag=tag.id) }}" title="Ver mangás de {{ tag.name }}">{{ tag.name }}</a>{% endfor %}{% else %}{% for tag in data.tags %}<span class="genre">{{ tag }}</span>{% endfor %}{% endif %}</div>
             <section class="other-sources" data-source-url="{{ url_for('user.manga_sources', manga_id=data.id) }}">
                 <h2>Outras fontes</h2>
-                <p class="source-note">Correspondências por título; confira a obra e os capítulos antes de trocar. Favoritos e progresso permanecem separados por fonte.</p>
+                <p class="source-note">Fontes da mesma obra compartilham favoritos e progresso. Ao continuar, o Mangaka procura o capítulo equivalente disponível.</p>
                 <p class="source-result" role="status">Consultando fontes disponíveis…</p>
                 <div class="source-links"></div>
                 <button type="button" class="button secondary source-retry" hidden>Tentar novamente</button>
             </section>
             <p class="synopsis">{{ data.sinopse }}</p>
             <dl class="details"><div><dt>Autor</dt><dd>{{ data.autor or 'Não informado' }}</dd></div><div><dt>Status</dt><dd>{{ {'ongoing':'Em publicação', 'completed':'Concluído', 'hiatus':'Em pausa', 'cancelled':'Cancelado'}.get(data.status, data.status) }}</dd></div><div><dt>Capítulos</dt><dd>{{ data.caps }}</dd></div><div><dt>Ano</dt><dd>{{ data.ano or '—' }}</dd></div></dl>
-            <div class="detail-actions">{% if data.chapters %}<a id="start-reading" class="button primary" href="{{ url_for('user.mangaCap', cap_id=data.first_chapter) }}">{{ icon('book') }} Começar a ler</a>{% endif %}
+            {% if data.reading_progress and data.reading_progress.logical_chapter_id %}<p class="source-note">Progresso: capítulo {{ data.reading_progress.logical_chapter.label }} · {{ (data.reading_progress.progress_percent * 100) | round | int }}% · Última fonte: {{ data.reading_progress.last_source }}</p>{% endif %}
+            {% if data.work_sources %}<p class="source-note">{% for source in data.work_sources %}{{ source.source }} — {{ 'disponível' if source.available and source.source in g.sources else 'indisponível' }}{% if not loop.last %} · {% endif %}{% endfor %}</p>{% endif %}
+            <div class="detail-actions">{% if data.reading_progress and data.reading_progress.logical_chapter_id %}<a class="button primary" href="{{ url_for('user.continue_work', work_id=data.work_id) }}">{{ icon('book') }} Continuar lendo</a>{% endif %}{% if data.chapters %}<a id="start-reading" class="button primary" href="{{ url_for('user.mangaCap', cap_id=data.first_chapter) }}">{{ icon('book') }} Começar a ler</a>{% endif %}
             {% if current_user.is_authenticated %}<button class="button secondary favorite-button" id="favorite-btn" data-manga-id="{{ data.id }}" aria-pressed="{{ 'true' if data.is_favorite else 'false' }}">{{ icon('heart') }}<span>{{ 'Nos favoritos' if data.is_favorite else 'Favoritar' }}</span></button>{% else %}<a class="button secondary" href="{{ url_for('auth.login') }}">{{ icon('heart') }} Entrar para favoritar</a>{% endif %}</div>
+            {% if current_user.is_authenticated and data.work_id %}<label for="reading-status">Na minha biblioteca</label>
+            <select id="reading-status" data-url="{{ url_for('user.reading_status', work_id=data.work_id) }}" data-csrf="{{ csrf_token() }}">
+                <option value="">Selecionar status</option>{% for value, label in [('plan_to_read', 'Quero ler'), ('reading', 'Lendo'), ('completed', 'Concluído'), ('paused', 'Pausado'), ('dropped', 'Abandonado')] %}<option value="{{ value }}" {% if data.reading_progress and data.reading_progress.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select>{% endif %}
             <p id="action-status" class="action-status" role="status"></p>
         </div>
     </div>
@@ -28,4 +34,4 @@
     </section>
 </section>
 {% endblock %}
-{% block scripts %}<script src="{{ url_for('static', filename='js/sources.js', v='1') }}" defer></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/sources.js', v='2') }}" defer></script>{% endblock %}
