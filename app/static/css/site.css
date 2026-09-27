@@ -764,8 +764,18 @@ svg {
     pointer-events:none
 }
 .reader-header.is-reading .brand {
-    opacity:.4;
+    position:relative;
+    isolation:isolate;
+    opacity:.85;
     pointer-events:auto
+}
+.reader-header.is-reading .brand::before {
+    content:"";
+    position:absolute;
+    inset:-8px -12px;
+    z-index:-1;
+    background:rgba(65,65,65,.8);
+    border-radius:10px
 }
 .reader-header.is-reading .brand:focus-visible {
     opacity:1
