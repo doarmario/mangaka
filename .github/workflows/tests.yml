@@ -68,3 +68,12 @@ jobs:
       - uses: actions/checkout@v4
       - run: docker build -t mangaka-updater-test integrations/updater
       - run: docker run --rm --entrypoint bash -v "$PWD:/fixture:ro" mangaka-updater-test /fixture/tests/updater-legacy.test.sh
+  source-image-permissions:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        source: [qiscans, demonicscans, thunderscans]
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tests/source_image_permissions.py "${{ matrix.source }}"
