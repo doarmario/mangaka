@@ -39,7 +39,7 @@ manga = Mangas()
 def before_request():
     g.form = SearchForm()
     g.sources = manga.sources()
-    g.catalog_sources = {'all': 'Todas as fontes', **g.sources}
+    g.catalog_sources = {'all': 'All sources', **g.sources}
     g.selected_source = manga.selected_source()
     g.unread_notifications = 0
     if current_user.is_authenticated:
@@ -95,10 +95,10 @@ def proxy(url):
 
             return response
         else:
-            return send_file('static/img/page.png', mimetype='image/jpeg'),503
+            return send_from_directory(current_app.static_folder, 'img/cover-placeholder.svg', mimetype='image/svg+xml'),503
 
     except Exception:
-        return send_file('static/img/page.png', mimetype='image/jpeg'),503
+        return send_from_directory(current_app.static_folder, 'img/cover-placeholder.svg', mimetype='image/svg+xml'),503
 
 
 
@@ -114,7 +114,7 @@ def pageproxy():
 def coverproxy(uuid):
     size = request.args.get("size")
     if size not in (None, "256", "512"):
-        return "Tamanho de capa inválido", 400
+        return 'Invalid cover size', 400
     url = manga.id2Cover(uuid, size=size)
     if url.startswith("/static/"):
         return redirect(url)
@@ -149,9 +149,9 @@ def home():
 
     if current_user.is_authenticated:
         d = {
-            "Lidos Recentemente":manga.continuar_lendo(0),
-            "Favoritos":manga.lista_ultimos_favoritos(0),
-            "Novidades":manga.favorite_updates(20),
+            'Recently read':manga.continuar_lendo(0),
+            'Favorites':manga.lista_ultimos_favoritos(0),
+            'Updates':manga.favorite_updates(20),
         }
     else:
         d = {}
@@ -164,32 +164,32 @@ def status():
     checks = []
     try:
         db.session.execute(text('SELECT 1'))
-        checks.append({'name': 'Banco de dados', 'state': 'ok', 'detail': 'Conectado'})
+        checks.append({'name': 'Database', 'state': 'ok', 'detail': 'Connected'})
     except Exception:
-        checks.append({'name': 'Banco de dados', 'state': 'error', 'detail': 'Indisponível'})
+        checks.append({'name': 'Database', 'state': 'error', 'detail': 'Unavailable'})
     try:
         probe = 'mangaka_status_probe'
         cache.set(probe, True, timeout=10)
-        checks.append({'name': 'Cache', 'state': 'ok' if cache.get(probe) else 'error', 'detail': 'Redis ativo'})
+        checks.append({'name': 'Cache', 'state': 'ok' if cache.get(probe) else 'error', 'detail': 'Redis is running'})
     except Exception:
-        checks.append({'name': 'Cache', 'state': 'error', 'detail': 'Indisponível'})
-    for key, name in [('MANGA_NOVEL_API_URL', 'API de fontes'), ('QISCANS_API_URL', 'Qi Scans'),
+        checks.append({'name': 'Cache', 'state': 'error', 'detail': 'Unavailable'})
+    for key, name in [('MANGA_NOVEL_API_URL', 'Source API'), ('QISCANS_API_URL', 'Qi Scans'),
                       ('DEMONICSCANS_API_URL', 'Demonic Scans'), ('THUNDERSCANS_API_URL', 'Thunder Scans')]:
         api_url = current_app.config.get(key, '').rstrip('/')
         if api_url:
             try:
                 response = requests.get(f'{api_url}/api/health', timeout=(1, 3))
                 checks.append({'name': name, 'state': 'ok' if response.ok else 'error',
-                               'detail': 'Conectada' if response.ok else f'HTTP {response.status_code}'})
+                               'detail': 'Connected' if response.ok else f'HTTP {response.status_code}'})
             except requests.RequestException:
-                checks.append({'name': name, 'state': 'error', 'detail': 'Indisponível'})
+                checks.append({'name': name, 'state': 'error', 'detail': 'Unavailable'})
         else:
-            checks.append({'name': name, 'state': 'warning', 'detail': 'Não configurada'})
+            checks.append({'name': name, 'state': 'warning', 'detail': 'Not configured'})
     worker = db.session.get(WorkerStatus, 1)
-    checks.append({'name': 'Worker de novidades',
+    checks.append({'name': 'Update worker',
                    'state': 'warning' if worker is None or worker.last_success_at is None else 'ok',
-                   'detail': 'Aguardando primeira execução' if worker is None or worker.last_success_at is None
-                   else f'Última execução: {worker.last_success_at.strftime("%d/%m/%Y %H:%M")}'})
+                   'detail': 'Waiting for the first run' if worker is None or worker.last_success_at is None
+                   else f'Last run: {worker.last_success_at.strftime("%Y-%m-%d %H:%M")}'})
     return render_template('status.html', checks=checks, worker=worker)
 
 
@@ -310,10 +310,10 @@ def chapter_progress(cap_id):
     from app.libs.reading import save_progress
     data = request.get_json(silent=True) or {}
     if not isinstance(data, dict):
-        abort(400, 'Progresso inválido.')
+        abort(400, 'Invalid reading progress.')
     page, count = data.get('page'), data.get('page_count')
     if type(page) is not int or type(count) is not int or not 1 <= page <= count <= 10000:
-        abort(400, 'Página inválida.')
+        abort(400, 'Invalid page.')
     sc = db.session.get(SourceChapter, cap_id)
     if sc is None:
         manga.getChapter(cap_id)
@@ -419,10 +419,10 @@ def catalog_tag():
     elif g.selected_source in {'asura', 'qiscans', 'demonicscans', 'thunderscans'}:
         tags = MangaNovel(g.selected_source).tags()
     else:
-        abort(400, 'Esta fonte ainda não oferece filtro por gênero.')
+        abort(400, 'This source does not support genre filters yet.')
     tag = next((item for item in tags if item['id'] == tag_id), None)
     if not tag:
-        abort(404, 'Tag não encontrada nesta fonte.')
+        abort(404, 'Tag not found in this source.')
     g.selected_tag = tag
     return tag_id
 
@@ -446,7 +446,7 @@ def tags():
     elif g.selected_source in {'asura', 'qiscans', 'demonicscans', 'thunderscans'}:
         available = MangaNovel(g.selected_source).tags()
     else:
-        abort(400, 'Esta fonte não oferece tags.')
+        abort(400, 'This source does not support tags.')
     available = sorted(available, key=lambda item: str(item.get('name', '')).casefold())
     return render_template('tags.html', tags=available)
 
@@ -582,13 +582,13 @@ def searchTitles(page):
 @site.errorhandler(ApiError)
 def mangadex_error(error):
     status = 503 if str(error.code) == "429" else 502
-    response = make_response("MangaDex indisponível no momento. Tente novamente mais tarde.", status)
+    response = make_response('MangaDex is currently unavailable. Please try again later.', status)
     return response
 
 
 @site.errorhandler(requests.RequestException)
 def mangadex_network_error(error):
-    return "Não foi possível conectar ao MangaDex. Tente novamente mais tarde.", 503
+    return 'Could not connect to MangaDex. Please try again later.', 503
 
 
 @site.errorhandler(SourceUnavailable)

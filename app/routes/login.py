@@ -33,10 +33,10 @@ def login():
 
         if user and bcrypt.check_password_hash(user.password_hash, password):  # Verifica a senha com bcrypt
             login_user(user, remember=form.remember_me.data)  # Realiza o login
-            flash("Login bem-sucedido!", 'success')
+            flash('Signed in successfully!', 'success')
             return redirect(url_for('user.home'))  # Redireciona para a home do usuário
         else:
-            flash('Falha no login. Verifique suas credenciais.', 'danger')
+            flash('Sign-in failed. Check your credentials.', 'danger')
 
     return render_template('login.html', form=form)
 
@@ -44,7 +44,7 @@ def login():
 @login_required
 def logout():
     logout_user()
-    flash("logout.",'info')
+    flash("Signed out.",'info')
     return redirect(url_for('auth.login'))
 
 
@@ -56,7 +56,7 @@ def register():
         user.set_password(form.password.data)  # Use the set_password method to hash and store the password
         db.session.add(user)
         db.session.commit()
-        flash('Conta criada com sucesso! Faça login.', 'success')
+        flash('Account created successfully! Please sign in.', 'success')
         return redirect(url_for('auth.login'))
     return render_template('register.html', form=form)
 

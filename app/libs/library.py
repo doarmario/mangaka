@@ -26,7 +26,7 @@ class Library(Mangas):
         # disabled providers from the catalog selector.
         configured = source_api_url(source)
         if source not in cls.sources() and not (configured and source in SOURCES):
-            abort(400, 'Fonte desconhecida ou não configurada.')
+            abort(400, 'Unknown or unconfigured source.')
         return source
 
     @staticmethod
@@ -110,7 +110,7 @@ class Library(Mangas):
                 'title': data.get('title', favorite.manga.title),
                 'chapter': latest.get('cap_id'),
                 'source_name': data.get('source_name', 'MangaDex'),
-                'latest_chapter': latest.get('cap', 'Sem número'),
+                'latest_chapter': latest.get('cap', 'Unnumbered'),
                 'unread_count': len(unread),
             })
         return updates
@@ -186,7 +186,7 @@ class Library(Mangas):
             data = {'id': first.id if first else work.id, 'title': work.canonical_title,
                     'sinopse': work.description or '', 'chapters': [], 'caps': 0,
                     'languages': [], 'source_id': first.source if first else '',
-                    'source_name': 'Fontes indisponíveis', 'tags': [], 'tag_links': [],
+                    'source_name': 'Sources unavailable', 'tags': [], 'tag_links': [],
                     'is_favorite': bool(current_user and current_user.is_authenticated and
                                         Favorite.query.filter_by(user_id=current_user.id, work_id=work.id).first())}
         return {**data, 'work_id': work.id, 'title': work.canonical_title,

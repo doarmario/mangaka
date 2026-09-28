@@ -12,17 +12,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) return;
             const { count } = await response.json();
             if (Notification.permission === 'granted' && count > previous) {
-                new Notification('Mangaka', { body: `${count - previous} capítulo(s) novo(s) nos seus favoritos.` });
+                new Notification('Mangaka', { body: `${count - previous} new chapter(s) in your favorites.` });
             }
             previous = count;
             localStorage.setItem(key, String(count));
         } catch { /* Alerts are optional. */ }
     }
-    if (Notification.permission === 'granted') button.textContent = 'Alertas ativados';
+    if (Notification.permission === 'granted') button.textContent = 'Alerts enabled';
     button.addEventListener('click', async () => {
         const permission = await Notification.requestPermission();
         if (permission === 'granted') {
-            button.textContent = 'Alertas ativados';
+            button.textContent = 'Alerts enabled';
             check();
         }
     });

@@ -2,42 +2,42 @@
 {% from 'ui.html' import icon %}
 {% set page_title = data.title %}
 {% block content %}
-<a class="breadcrumb" href="{{ url_for('user.mangaList') }}">{{ icon('left') }} Voltar ao catálogo</a>
+<a class="breadcrumb" href="{{ url_for('user.mangaList') }}">{{ icon('left') }} Back to catalog</a>
 <section class="manga-page">
     <div class="manga-header">
-        <img class="detail-cover" src="{{ url_for('user.coverproxy', uuid=data.id, size=512) }}" alt="Capa de {{ data.title }}" width="256" height="360">
-        <div class="manga-info"><span class="eyebrow">{{ data.source_name | default('MangaDex') }}</span><h1>{{ data.title }}</h1>
-            <div class="genre-box" aria-label="Tags do mangá">{% if data.tag_links %}{% for tag in data.tag_links %}<a class="genre" href="{{ url_for('user.mangaList', source=data.source_id, tag=tag.id) }}" title="Ver mangás de {{ tag.name }}">{{ tag.name }}</a>{% endfor %}{% else %}{% for tag in data.tags %}<span class="genre">{{ tag }}</span>{% endfor %}{% endif %}</div>
+        <img class="detail-cover" src="{{ url_for('user.coverproxy', uuid=data.id, size=512) }}" alt="Cover of {{ data.title | display_text }}" width="256" height="360">
+        <div class="manga-info"><span class="eyebrow">{{ data.source_name | default('MangaDex') }}</span><h1>{{ data.title | display_text }}</h1>
+            <div class="genre-box" aria-label="Manga tags">{% if data.tag_links %}{% for tag in data.tag_links %}<a class="genre" href="{{ url_for('user.mangaList', source=data.source_id, tag=tag.id) }}" title="Browse manga tagged {{ tag.name }}">{{ tag.name }}</a>{% endfor %}{% else %}{% for tag in data.tags %}<span class="genre">{{ tag }}</span>{% endfor %}{% endif %}</div>
             <section class="other-sources" data-source-url="{{ url_for('user.manga_sources', manga_id=data.id) }}">
-                <h2>Outras fontes</h2>
-                <p class="source-note">Fontes da mesma obra compartilham favoritos e progresso. Ao continuar, o Mangaka procura o capítulo equivalente disponível.</p>
-                <p class="source-result" role="status">Consultando fontes disponíveis…</p>
+                <h2>Other sources</h2>
+                <p class="source-note">Sources for the same work share favorites and reading progress. Continue reading to find an available equivalent chapter.</p>
+                <p class="source-result" role="status">Checking available sources…</p>
                 <div class="source-links"></div>
-                <button type="button" class="button secondary source-retry" hidden>Tentar novamente</button>
+                <button type="button" class="button secondary source-retry" hidden>Try again</button>
             </section>
-            <p class="synopsis">{{ data.sinopse }}</p>
-            <dl class="details"><div><dt>Autor</dt><dd>{{ data.autor or 'Não informado' }}</dd></div><div><dt>Status</dt><dd>{{ {'ongoing':'Em publicação', 'completed':'Concluído', 'hiatus':'Em pausa', 'cancelled':'Cancelado'}.get(data.status, data.status) }}</dd></div><div><dt>Capítulos</dt><dd>{{ data.caps }}</dd></div><div><dt>Ano</dt><dd>{{ data.ano or '—' }}</dd></div></dl>
-            {% if data.reading_progress and data.reading_progress.logical_chapter_id %}<p class="source-note">Progresso: capítulo {{ data.reading_progress.logical_chapter.label }} · {{ (data.reading_progress.progress_percent * 100) | round | int }}% · Última fonte: {{ data.reading_progress.last_source }}</p>{% endif %}
-            {% if data.work_sources %}<p class="source-note">{% for source in data.work_sources %}{{ source.source }} — {{ 'disponível' if source.available and source.source in g.sources else 'indisponível' }}{% if not loop.last %} · {% endif %}{% endfor %}</p>{% endif %}
-            <div class="detail-actions">{% if data.reading_progress and data.reading_progress.logical_chapter_id %}<a class="button primary" href="{{ url_for('user.continue_work', work_id=data.work_id) }}">{{ icon('book') }} Continuar lendo</a>{% endif %}{% if data.chapters %}<a id="start-reading" class="button primary" href="{{ url_for('user.mangaCap', cap_id=data.first_chapter) }}">{{ icon('book') }} Começar a ler</a>{% endif %}
-            {% if current_user.is_authenticated %}<button class="button secondary favorite-button" id="favorite-btn" data-manga-id="{{ data.id }}" aria-pressed="{{ 'true' if data.is_favorite else 'false' }}">{{ icon('heart') }}<span>{{ 'Nos favoritos' if data.is_favorite else 'Favoritar' }}</span></button>{% else %}<a class="button secondary" href="{{ url_for('auth.login') }}">{{ icon('heart') }} Entrar para favoritar</a>{% endif %}</div>
+            <p class="synopsis">{{ data.sinopse | display_text }}</p>
+            <dl class="details"><div><dt>Author</dt><dd>{{ (data.autor or 'Unknown') | display_text }}</dd></div><div><dt>Status</dt><dd>{{ {'ongoing':'Ongoing', 'completed':'Completed', 'hiatus':'On hiatus', 'cancelled':'Cancelled'}.get(data.status, data.status) | display_text }}</dd></div><div><dt>Chapters</dt><dd>{{ data.caps }}</dd></div><div><dt>Year</dt><dd>{{ data.ano or '—' }}</dd></div></dl>
+            {% if data.reading_progress and data.reading_progress.logical_chapter_id %}<p class="source-note">Progress: chapter {{ data.reading_progress.logical_chapter.label | display_text }} · {{ (data.reading_progress.progress_percent * 100) | round | int }}% · Last source: {{ data.reading_progress.last_source }}</p>{% endif %}
+            {% if data.work_sources %}<p class="source-note">{% for source in data.work_sources %}{{ source.source }} — {{ 'available' if source.available and source.source in g.sources else 'unavailable' }}{% if not loop.last %} · {% endif %}{% endfor %}</p>{% endif %}
+            <div class="detail-actions">{% if data.reading_progress and data.reading_progress.logical_chapter_id %}<a class="button primary" href="{{ url_for('user.continue_work', work_id=data.work_id) }}">{{ icon('book') }} Continue reading</a>{% endif %}{% if data.chapters %}<a id="start-reading" class="button primary" href="{{ url_for('user.mangaCap', cap_id=data.first_chapter) }}">{{ icon('book') }} Start reading</a>{% endif %}
+            {% if current_user.is_authenticated %}<button class="button secondary favorite-button" id="favorite-btn" data-manga-id="{{ data.id }}" aria-pressed="{{ 'true' if data.is_favorite else 'false' }}">{{ icon('heart') }}<span>{{ 'In favorites' if data.is_favorite else 'Add to favorites' }}</span></button>{% else %}<a class="button secondary" href="{{ url_for('auth.login') }}">{{ icon('heart') }} Sign in to add favorites</a>{% endif %}</div>
             {% if current_user.is_authenticated and data.work_id %}
             <div class="library-status-control">
                 <div class="library-status-heading">
                     {{ icon('book') }}
-                    <div><label for="reading-status">Na minha biblioteca</label><p id="reading-status-help">Organize sua leitura desta obra.</p></div>
+                    <div><label for="reading-status">In my library</label><p id="reading-status-help">Organize your reading for this work.</p></div>
                 </div>
             <select id="reading-status" aria-describedby="reading-status-help action-status" data-url="{{ url_for('user.reading_status', work_id=data.work_id) }}" data-csrf="{{ csrf_token() }}">
-                <option value="">Selecionar status</option>{% for value, label in [('plan_to_read', 'Quero ler'), ('reading', 'Lendo'), ('completed', 'Concluído'), ('paused', 'Pausado'), ('dropped', 'Abandonado')] %}<option value="{{ value }}" {% if data.reading_progress and data.reading_progress.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                <option value="">Select reading status</option>{% for value, label in reading_status_labels.items() %}<option value="{{ value }}" {% if data.reading_progress and data.reading_progress.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
             </select>
             </div>{% endif %}
             <p id="action-status" class="action-status" role="status"></p>
         </div>
     </div>
-    <section class="chapter-list"><div class="section-heading"><div><span class="eyebrow">Uma página de cada vez</span><h2>Capítulos <span class="count">{{ data.caps }}</span></h2></div><button class="button secondary" id="chapter-filter" aria-label="Inverter ordem dos capítulos">{{ icon('sort') }}<span>Mais recentes</span></button></div>
-        <div class="chapter-toolbar"><label for="chapter-language">Idioma dos capítulos</label><select id="chapter-language"><option value="all">Português e inglês</option>{% for language in data.languages %}<option value="{{ language.code }}">{{ language.name }}</option>{% endfor %}</select><span id="chapter-language-status" role="status"></span></div>
-        <ul>{% for chapter in data.chapters %}<li id="{{ chapter.cap_id }}" data-number="{{ chapter.cap }}" data-language="{{ chapter.language }}" class="{{ 'read' if chapter.is_readed else '' }}"><a href="{{ url_for('user.mangaCap', cap_id=chapter.cap_id) }}"><span>Capítulo {{ chapter.cap }}</span><span class="chapter-end"><span class="language-badge" lang="{{ chapter.language }}">{{ chapter.language_name }}</span>{% if chapter.is_readed %}<span class="user-state">Lido</span>{% endif %}{{ icon('right') }}</span></a></li>{% else %}<li class="empty-state">Ainda não há capítulos disponíveis em português ou inglês.</li>{% endfor %}</ul>
+    <section class="chapter-list"><div class="section-heading"><div><span class="eyebrow">One page at a time</span><h2>Chapters <span class="count">{{ data.caps }}</span></h2></div><button class="button secondary" id="chapter-filter" aria-label="Reverse chapter order">{{ icon('sort') }}<span>Newest first</span></button></div>
+        <div class="chapter-toolbar"><label for="chapter-language">Chapter language</label><select id="chapter-language"><option value="all">Portuguese and English</option>{% for language in data.languages %}<option value="{{ language.code }}">{{ language.name }}</option>{% endfor %}</select><span id="chapter-language-status" role="status"></span></div>
+        <ul>{% for chapter in data.chapters %}<li id="{{ chapter.cap_id }}" data-number="{{ chapter.cap }}" data-language="{{ chapter.language }}" class="{{ 'read' if chapter.is_readed else '' }}"><a href="{{ url_for('user.mangaCap', cap_id=chapter.cap_id) }}"><span>Chapter {{ chapter.cap | display_text }}</span><span class="chapter-end"><span class="language-badge" lang="{{ chapter.language }}">{{ chapter.language_name }}</span>{% if chapter.is_readed %}<span class="user-state">Read</span>{% endif %}{{ icon('right') }}</span></a></li>{% else %}<li class="empty-state">No chapters are available in Portuguese or English yet.</li>{% endfor %}</ul>
     </section>
 </section>
 {% endblock %}
-{% block scripts %}<script src="{{ url_for('static', filename='js/sources.js', v='2') }}" defer></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/sources.js', v='3') }}" defer></script>{% endblock %}

@@ -1,4 +1,4 @@
-const CACHE = 'mangaka-shell-v1';
+const CACHE = 'mangaka-shell-v2-en';
 const SHELL = [
   '/static/css/site.css',
   '/static/js/main.js',

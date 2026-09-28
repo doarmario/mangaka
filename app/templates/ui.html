@@ -15,11 +15,11 @@
 {% macro card(item, chapter=false) -%}
 <a class="manga-card" href="{{ url_for('user.continue_work', work_id=item.work_id) if item.resume and item.work_id else url_for('user.mangaCap', cap_id=item.chapter) if chapter and item.chapter else url_for('user.work_detail', work_id=item.work_id) if item.work_id else url_for('user.manga_sinopse', manga_id=item.id) }}">
     <div class="card-art">
-        <img src="{{ url_for('static', filename='img/cover-placeholder.svg') }}" data-src="{{ url_for('user.coverproxy', uuid=item.id, size=256) }}" alt="Capa de {{ item.title }}" loading="lazy" width="256" height="360">
+        <img src="{{ url_for('static', filename='img/cover-placeholder.svg') }}" data-src="{{ url_for('user.coverproxy', uuid=item.id, size=256) }}" alt="Cover of {{ item.title | display_text }}" loading="lazy" width="256" height="360">
         <span class="card-open">{{ icon('arrow') }}</span>
-        {% if chapter and item.chapter %}<span class="card-label">Continuar leitura</span>{% endif %}
+        {% if chapter and item.chapter %}<span class="card-label">Continue reading</span>{% endif %}
     </div>
-    <h3>{{ item.title }}</h3>
-    <span class="card-caption">{% if item.sources %}{{ item.sources | map(attribute='source_name') | unique | join(' · ') }}{% else %}{{ 'Voltar à história' if chapter and item.chapter else item.source_name | default('Conhecer mangá') }}{% endif %}</span>
+    <h3>{{ item.title | display_text }}</h3>
+    <span class="card-caption">{% if item.sources %}{{ item.sources | map(attribute='source_name') | unique | join(' · ') }}{% else %}{{ 'Back to the story' if chapter and item.chapter else item.source_name | default('View manga') }}{% endif %}</span>
 </a>
 {%- endmacro %}

@@ -77,16 +77,16 @@ def test_library_requires_authentication(app):
 def test_status_page_reports_local_components(app):
     response = app.test_client().get('/status')
     assert response.status_code == 200
-    assert 'Banco de dados' in response.text
+    assert 'Database' in response.text
     assert 'Cache' in response.text
-    assert 'Worker de novidades' in response.text
+    assert 'Update worker' in response.text
 
 
 def test_service_worker_is_available(app):
     response = app.test_client().get('/service-worker.js')
     assert response.status_code == 200
     assert 'Service-Worker-Allowed' in response.headers
-    assert 'mangaka-shell-v1' in response.text
+    assert 'mangaka-shell-v2-en' in response.text
 
 
 def test_security_headers_are_present(app):
@@ -137,8 +137,8 @@ def test_manga_shows_language_selector_and_prefers_portuguese(app, api):
         '1': {'id': p['translatedLanguage[]'][0] + '-1', 'chapter': '1', 'others': []}}}}}
     response = app.test_client().get('/manga/m1')
     assert response.status_code == 200
-    assert 'Português (Brasil)' in response.text
-    assert 'Português (Portugal)' in response.text
+    assert 'Portuguese (Brazil)' in response.text
+    assert 'Portuguese (Portugal)' in response.text
     assert 'English' in response.text
     assert 'id="chapter-language"' in response.text
     assert 'id="start-reading" class="button primary" href="/cap/pt-br-1"' in response.text

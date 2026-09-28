@@ -31,8 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             if (document.fullscreenElement) await document.exitFullscreen();
             else await document.querySelector('.reader').requestFullscreen();
-            fullscreen.textContent = document.fullscreenElement ? 'Sair da tela cheia' : 'Tela cheia';
-        } catch { progress.textContent = 'Tela cheia não disponível neste navegador.'; }
+            fullscreen.textContent = document.fullscreenElement ? 'Exit fullscreen' : 'Fullscreen';
+        } catch { progress.textContent = 'Fullscreen is not available in this browser.'; }
     });
     try {
         const saved = JSON.parse(localStorage.getItem(`mangaka-reader:${cap}`) || 'null');
@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': readerCsrf },
                 body: JSON.stringify({ page: index + 1, page_count: pages.length })
             });
-            if (!response.ok) progress.textContent = 'Leitura disponível; não foi possível sincronizar o progresso agora.';
+            if (!response.ok) progress.textContent = 'You can keep reading, but your progress could not be synced right now.';
         } catch { /* Local progress is retained if offline. */ }
         finally {
             saveInFlight = false;
@@ -74,11 +74,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function image(number, scroll) {
         const img = new Image();
-        img.alt = `Página ${number + 1}`;
+        img.alt = `Page ${number + 1}`;
         img.loading = scroll && number > 1 ? 'lazy' : 'eager';
         img.addEventListener('load', () => {
             if (!scroll && number === index) {
-                progress.textContent = `Página ${number + 1} de ${pages.length} · Use as setas do teclado para navegar`;
+                progress.textContent = `Page ${number + 1} of ${pages.length} · Use the arrow keys to navigate`;
                 saveProgress();
                 if (number === pages.length - 1) markRead();
             }
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         img.addEventListener('error', () => {
-            progress.textContent = `Não foi possível carregar a página ${number + 1}. Recarregue para tentar novamente.`;
+            progress.textContent = `Could not load page ${number + 1}. Reload to try again.`;
         });
         img.src = pages[number];
         return img;
@@ -98,9 +98,9 @@ document.addEventListener('DOMContentLoaded', () => {
         container.replaceChildren();
         previous.hidden = mode.checked || index === 0 || !pages.length;
         next.hidden = mode.checked || index === pages.length - 1 || !pages.length;
-        if (!pages.length) { progress.textContent = 'Este capítulo não tem páginas disponíveis.'; return; }
+        if (!pages.length) { progress.textContent = 'This chapter has no available pages.'; return; }
         if (mode.checked) {
-            progress.textContent = `${pages.length} páginas · Rolagem contínua`;
+            progress.textContent = `${pages.length} pages · Continuous scroll`;
             if ('IntersectionObserver' in window) {
                 observer = new IntersectionObserver(entries => {
                     if (entries.some(entry => entry.isIntersecting)) { index = pages.length - 1; saveProgress(); markRead(); }
@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
             end.setAttribute('aria-hidden', 'true');
             container.appendChild(end);
         } else {
-            progress.textContent = `Carregando página ${index + 1} de ${pages.length}…`;
+            progress.textContent = `Loading page ${index + 1} of ${pages.length}…`;
             container.appendChild(image(index, false));
             if (pages[index + 1]) { const preload = new Image(); preload.src = pages[index + 1]; }
         }

@@ -45,9 +45,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.status !== 'success') throw new Error('request');
             const added = data.message === 'added';
             favorite.setAttribute('aria-pressed', String(added));
-            favorite.querySelector('span').textContent = added ? 'Nos favoritos' : 'Favoritar';
-            status.textContent = added ? 'Adicionado aos seus favoritos.' : 'Removido dos favoritos.';
-        } catch { status.textContent = 'Não foi possível salvar. Tente novamente.'; }
+            favorite.querySelector('span').textContent = added ? 'In favorites' : 'Add to favorites';
+            status.textContent = added ? 'Added to your favorites.' : 'Removed from favorites.';
+        } catch { status.textContent = 'Could not save. Please try again.'; }
         finally { favorite.disabled = false; }
     });
     const sort = document.getElementById('chapter-filter');
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return descending ? y - x : x - y;
         });
         items.forEach(item => chapters.appendChild(item));
-        sort.querySelector('span').textContent = descending ? 'Mais recentes' : 'Primeiros capítulos';
+        sort.querySelector('span').textContent = descending ? 'Newest first' : 'Oldest first';
     });
     const language = document.getElementById('chapter-language');
     const startReading = document.getElementById('start-reading');
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const items = [...chapters.querySelectorAll('li[data-language]')];
         items.forEach(item => { item.hidden = language.value !== 'all' && item.dataset.language !== language.value; });
         const visible = items.filter(item => !item.hidden);
-        document.getElementById('chapter-language-status').textContent = `${visible.length} capítulos`;
+        document.getElementById('chapter-language-status').textContent = `${visible.length} chapters`;
         if (startReading) {
             if (language.value === 'all') startReading.href = defaultStart;
             else {

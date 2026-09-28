@@ -120,7 +120,7 @@ def test_thunderscans_failure_uses_existing_unavailable_page(app, thunderscans_a
     monkeypatch.setattr(requests, 'get', unavailable)
     result = app.test_client().get('/mangas?source=thunderscans')
     assert result.status_code == 503
-    assert 'Buscar em MangaDex' in result.text
+    assert 'Search in MangaDex' in result.text
 
 
 def test_thunderscans_health_is_visible(app, thunderscans_api):

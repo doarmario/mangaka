@@ -45,7 +45,7 @@ def test_partial_failure_keeps_working_source(unified, monkeypatch):
     result = unified.get('/search?query=test')
     assert result.status_code == 200
     assert 'Still available' in result.text
-    assert 'Não foi possível consultar: AsuraScans' in result.text
+    assert 'Could not reach: AsuraScans' in result.text
 
 
 def test_all_failures_report_unavailability(unified, monkeypatch):

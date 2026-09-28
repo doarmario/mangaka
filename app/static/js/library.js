@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.remove();
             } catch {
                 button.disabled = false;
-                button.textContent = 'Tentar novamente';
+                button.textContent = 'Try again';
             }
         });
     });

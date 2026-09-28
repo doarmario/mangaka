@@ -58,7 +58,7 @@ def source_order(work, library, progress=None):
 def resolve_source_for_chapter(user_id, work, library):
     progress = ReadingProgress.query.filter_by(user_id=user_id, work_id=work.id).first()
     if progress is None or progress.logical_chapter_id is None:
-        raise SourceUnavailable('Esta obra ainda não tem progresso salvo. Escolha um capítulo para começar.')
+        raise SourceUnavailable('This work has no saved progress yet. Choose a chapter to start reading.')
     # Discover equivalent works using the existing bounded, cached catalog search.
     # No source is required to remain online to obtain the search title.
     library.discover_work_sources(work)
@@ -98,7 +98,7 @@ def resolve_source_for_chapter(user_id, work, library):
         except PROVIDER_ERRORS:
             sw.available = False
             db.session.commit()
-    raise SourceUnavailable('Seu progresso foi preservado. Nenhuma fonte disponível possui este capítulo no momento.')
+    raise SourceUnavailable('Your progress has been preserved. No available source has this chapter right now.')
 
 
 def toggle_favorite(user_id, sw):

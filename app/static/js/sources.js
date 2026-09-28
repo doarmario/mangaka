@@ -4,7 +4,7 @@ document.querySelectorAll('[data-source-url]').forEach(panel => {
     const retry = panel.querySelector('.source-retry');
     async function load() {
         retry.hidden = true;
-        status.textContent = 'Consultando fontes disponíveis…';
+        status.textContent = 'Checking available sources…';
         try {
             const response = await fetch(panel.dataset.sourceUrl);
             if (!response.ok) throw new Error('sources');
@@ -18,12 +18,12 @@ document.querySelectorAll('[data-source-url]').forEach(panel => {
                 links.appendChild(link);
             }
             status.textContent = data.unavailable.length
-                ? `Não foi possível consultar: ${data.unavailable.join(', ')}.`
-                : data.sources.length ? 'Títulos correspondentes encontrados:'
-                : 'Nenhuma correspondência encontrada nas fontes consultadas.';
+                ? `Could not reach: ${data.unavailable.join(', ')}.`
+                : data.sources.length ? 'Matching titles found:'
+                : 'No matches found in the sources checked.';
             retry.hidden = !data.unavailable.length;
         } catch {
-            status.textContent = 'Não foi possível consultar outras fontes agora.';
+            status.textContent = 'Could not check other sources right now.';
             retry.hidden = false;
         }
     }
@@ -42,7 +42,7 @@ readingStatus?.addEventListener('change', async () => {
             body: JSON.stringify({ status: readingStatus.value })
         });
         if (!response.ok) throw new Error('status');
-        feedback.textContent = 'Status salvo na sua biblioteca.';
-    } catch { feedback.textContent = 'Não foi possível salvar o status. Tente novamente.'; }
+        feedback.textContent = 'Reading status saved to your library.';
+    } catch { feedback.textContent = 'Could not save your reading status. Please try again.'; }
     finally { readingStatus.disabled = false; }
 });

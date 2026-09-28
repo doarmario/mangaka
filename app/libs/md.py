@@ -17,7 +17,7 @@ from app import cache, db
 from app.models import Manga, Favorite, Readed, Chapter
 
 
-LANGUAGE_NAMES = {"pt-br": "Português (Brasil)", "pt": "Português (Portugal)", "en": "English"}
+LANGUAGE_NAMES = {"pt-br": 'Portuguese (Brazil)', "pt": 'Portuguese (Portugal)', "en": "English"}
 
 
 class Mangas:
@@ -25,7 +25,7 @@ class Mangas:
         self.languages = (lang,) if lang else ("pt-br", "pt", "en")
         self.langs = tuple(dict.fromkeys(langs or self.languages))
         self.limit = limit
-        self.prefix = prefix + "v5_"
+        self.prefix = prefix + "v6_"
         self.mangas = dex.series.Manga()
         self.tags = dex.series.Tag()
         self.covers = dex.series.Cover()
@@ -68,7 +68,10 @@ class Mangas:
         for alternative in manga.alt_titles or []:
             for lang, value in alternative.items():
                 values.setdefault(lang, value)
-        return self._text(values, "Sem título")
+        return self._text(values, 'Untitled')
+
+    def _tag_text(self, values, fallback='Uncategorized'):
+        return (values or {}).get('en') or self._text(values, fallback)
 
     def _manga_data(self, manga):
         titles = [{'title': value, 'language': language}
@@ -80,9 +83,9 @@ class Mangas:
             (a['en'] for a in manga.alt_titles or [] if a.get('en')), None)
         return {"id": manga.manga_id, "title": self._title(manga), "aliases": aliases, "titles": titles,
                 "search_title": english or self._title(manga),
-                "sinopse": self._text(manga.description, "Sem descrição"),
-                "tags": [self._text(tag.name) for tag in manga.tags],
-                "tag_links": [{"id": tag.tag_id, "name": self._text(tag.name)} for tag in manga.tags],
+                "sinopse": self._text(manga.description, 'No description available'),
+                "tags": [self._tag_text(tag.name) for tag in manga.tags],
+                "tag_links": [{"id": tag.tag_id, "name": self._tag_text(tag.name)} for tag in manga.tags],
                 "authors": list(manga.author_id), "cover_id": manga.cover_id,
                 "ano": manga.year, "status": manga.status, "type": "manga",
                 "external_ids": {{"al": "anilist", "mal": "myanimelist", "mu": "mangaupdates"}[k]: str(v) for k, v in (getattr(manga, "links", None) or {}).items() if k in {"al", "mal", "mu"}}}
@@ -132,7 +135,7 @@ class Mangas:
         return self.listAll(offset, language=language, status=status)
 
     def recentes(self, offset=0):
-        return {"tag": "Recentes", **self.listRecents(offset)}
+        return {"tag": 'Recent updates', **self.listRecents(offset)}
 
     def searchMangaByTitle(self, title, offset=0, tag=None, language=None, status=None):
         filters = {"includedTags[]": [tag]} if tag else {}
@@ -142,13 +145,13 @@ class Mangas:
 
     def listTags(self):
         return self._cached("tags", (), lambda: [
-            {"id": tag.tag_id, "name": self._text(tag.name, "Sem categoria")}
+            {"id": tag.tag_id, "name": self._tag_text(tag.name, 'Uncategorized')}
             for tag in self.tags.tag_list()], timeout=86400)
 
     def choiceTags(self, offset=0):
         tags = self.listTags()
         if not tags:
-            return {"tag": "Categorias", "itens": [], "total": 0}
+            return {"tag": "Categories", "itens": [], "total": 0}
         tag = rd.choice(tags)
         return {"tag": tag["name"], **self.listMangaByTag(tag["id"], offset)}
 
@@ -162,7 +165,7 @@ class Mangas:
         def load():
             cover_id = self.getManga(uuid)["cover_id"]
             if not cover_id:
-                return "/static/img/page.png"
+                return "/static/img/cover-placeholder.svg"
             return self.covers.get_cover(cover_id=cover_id).fetch_cover_image()
         return self._cached("cover", (uuid,), load, timeout=3600)
 
@@ -231,7 +234,7 @@ class Mangas:
                 # The aggregate endpoint can encode empty collections as [].
                 for chapter in chapters.values() if isinstance(chapters, dict) else chapters:
                     number = chapter.get("chapter")
-                    data.append({"cap": str(number) if number not in (None, "none") else "Sem número",
+                    data.append({"cap": str(number) if number not in (None, "none") else 'Unnumbered',
                                  "cap_id": chapter["id"], "volume": volume.get("volume"), "language": language,
                                  "language_name": LANGUAGE_NAMES.get(language, language),
                                  "others": chapter.get("others", []), "is_readed": False})

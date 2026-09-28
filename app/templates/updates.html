@@ -2,7 +2,7 @@
 {% from 'ui.html' import card %}
 {% block content %}
 <section class="catalog library-page">
-    <div class="page-heading"><span class="eyebrow">Acompanhe suas histórias</span><h1>Novidades</h1><p>Capítulos novos dos seus favoritos que ainda não foram lidos.</p></div>
-    <div class="card-grid">{% for item in updates %}{{ card(item, chapter=true) }}{% else %}<div class="empty-state"><h2>Tudo em dia.</h2><p>Quando um favorito receber um capítulo novo, ele aparecerá aqui.</p><a class="button secondary" href="{{ url_for('user.mangaList') }}">Explorar catálogo</a></div>{% endfor %}</div>
+    <div class="page-heading"><span class="eyebrow">Follow your stories</span><h1>Updates</h1><p>Unread chapters from your favorites.</p></div>
+    <div class="card-grid">{% for item in updates %}{{ card(item, chapter=true) }}{% else %}<div class="empty-state"><h2>You are all caught up.</h2><p>New chapters from your favorites will appear here.</p><a class="button secondary" href="{{ url_for('user.mangaList') }}">Explore catalog</a></div>{% endfor %}</div>
 </section>
 {% endblock %}

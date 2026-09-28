@@ -104,7 +104,9 @@ def parse_chapter(value):
             numeric = number if len(number.as_tuple().digits) <= 24 and number.as_tuple().exponent >= -8 and number < 10**16 else None
             return (format(number, 'f').rstrip('0').rstrip('.') or '0') if '.' in raw else str(int(raw)), numeric
         return '.'.join(str(int(part)) for part in raw.split('.')), None
-    return normalize_title(raw), None
+    key = normalize_title(raw)
+    # Keep the persisted identity of legacy unnumbered chapters unchanged.
+    return ('sem número' if key == 'unnumbered' else key), None
 
 
 def chapter_order(value):
@@ -124,7 +126,7 @@ def chapter_order(value):
 
 def chapter_identity(number, volume=None, title=None, discriminator=None):
     key, numeric = parse_chapter(number)
-    label = key if key not in {'', 'none', 'sem número'} else 'Sem número'
+    label = key if key not in {'', 'none', 'sem número'} else 'Unnumbered'
     vol, _ = parse_chapter(volume)
     if volume is None or str(volume).casefold() in {'', 'none'}:
         vol = ''

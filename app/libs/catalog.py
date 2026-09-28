@@ -67,7 +67,7 @@ class UnifiedCatalog:
                             for item in result['itens']])
             has_next |= result['has_next']
         if len(unavailable) == len(sources):
-            raise SourceUnavailable('As fontes estão indisponíveis. Tente novamente em instantes.')
+            raise SourceUnavailable('The sources are unavailable. Please try again shortly.')
         items = [item for row in zip_longest(*batches) for item in row if item]
         from app.libs.canonical import resolve_work, canonical_work
         from app import db

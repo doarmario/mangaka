@@ -120,7 +120,7 @@ def test_demonicscans_failure_uses_existing_unavailable_page(app, demonicscans_a
     monkeypatch.setattr(requests, 'get', unavailable)
     result = app.test_client().get('/mangas?source=demonicscans')
     assert result.status_code == 503
-    assert 'Buscar em MangaDex' in result.text
+    assert 'Search in MangaDex' in result.text
 
 
 def test_demonicscans_health_is_visible(app, demonicscans_api):
