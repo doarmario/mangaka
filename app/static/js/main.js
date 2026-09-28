@@ -1,20 +1,27 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const images = document.querySelectorAll('img[data-src]');
-    const load = img => {
-        img.src = img.dataset.src;
-        img.removeAttribute('data-src');
-    };
-    if ('IntersectionObserver' in window) {
-        const observer = new IntersectionObserver(entries => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) { load(entry.target); observer.unobserve(entry.target); }
-            });
-        }, { rootMargin: '150px' });
-        images.forEach(img => observer.observe(img));
-    } else { images.forEach(load); }
-    document.querySelectorAll('img').forEach(img => img.addEventListener('error', () => {
-        if (!img.src.endsWith('/static/img/cover-placeholder.svg')) img.src = '/static/img/cover-placeholder.svg';
-    }, { once: true }));
+    let imageObserver;
+    function initializeImages() {
+        imageObserver?.disconnect();
+        const images = document.querySelectorAll('img[data-src]');
+        const load = img => {
+            img.src = img.dataset.src;
+            img.removeAttribute('data-src');
+        };
+        if ('IntersectionObserver' in window) {
+            const observer = imageObserver = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) { load(entry.target); observer.unobserve(entry.target); }
+                });
+            }, { rootMargin: '150px' });
+            images.forEach(img => observer.observe(img));
+        } else { images.forEach(load); }
+        document.querySelectorAll('img').forEach(img => img.addEventListener('error', () => {
+            if (!img.src.endsWith('/static/img/cover-placeholder.svg')) img.src = '/static/img/cover-placeholder.svg';
+        }, { once: true }));
+
+    }
+    initializeImages();
+    document.addEventListener('mangaka:content-updated', initializeImages);
 
     const toggle = document.getElementById('drop-btn');
     const mobileNav = document.getElementById('mobile-nav');

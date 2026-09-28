@@ -1,8 +1,12 @@
 """Federated discovery backed by the local canonical catalog."""
 from hashlib import sha256
 from itertools import zip_longest
+from copy import deepcopy
+from uuid import uuid4
+from time import monotonic, sleep
 
 import requests
+from flask import current_app
 from mangadex.errors import ApiError
 from app import cache
 from app.libs.manga_novel import MangaNovel, SourceUnavailable
@@ -52,24 +56,74 @@ class UnifiedCatalog:
         return adapter.search(query, page) if query else adapter.catalog(page)
 
     def listing(self, query=None, page=1):
-        batches, unavailable, has_next = [], [], False
+        result = None
+        for result in self.iter_listing(query, page):
+            pass
+        return result
+
+    def iter_listing(self, query=None, page=1):
+        from app.libs.source_loading import provider_results
         sources = self.library.sources()
-        for source, name in sources.items():
-            try:
-                result = self.provider(source, query, page)
-            except (SourceUnavailable, ApiError, requests.RequestException):
-                unavailable.append(name)
-                continue
-            # Some providers clamp out-of-range pages to the last page.
-            if result.get('page', page) != page:
-                continue
-            batches.append([{**item, 'source_id': source, 'source_name': name}
-                            for item in result['itens']])
-            has_next |= result['has_next']
-        if len(unavailable) == len(sources):
-            raise SourceUnavailable('The sources are unavailable. Please try again shortly.')
+        settings = [current_app.config.get(key, '') for key in (
+            'MANGA_NOVEL_API_URL', 'QISCANS_API_URL', 'DEMONICSCANS_API_URL', 'THUNDERSCANS_API_URL')]
+        key = 'unified-listing-v1:' + sha256(repr((query, page, sources, settings,
+            self.library.languages, self.library.langs, self.library.limit)).encode()).hexdigest()
+        stored = cache.get(key)
+        if stored is not None:
+            result = deepcopy(stored)
+            result['itens'] = self.persisted_items([s for item in result['itens'] for s in item['sources']])
+            yield result
+            return
+        token = str(uuid4())
+        lock = key + ':loading'
+        if not cache.add(lock, token, timeout=120):
+            # Readers of the same page share the in-flight refresh instead of
+            # each issuing another batch of upstream requests.
+            owner, seen, deadline = cache.get(lock), None, monotonic() + 40
+            yield {'waiting': True}
+            while monotonic() < deadline:
+                finished = cache.get(key)
+                progress = cache.get(key + ':progress')
+                if finished is not None:
+                    finished = deepcopy(finished)
+                    finished['itens'] = self.persisted_items([s for item in finished['itens'] for s in item['sources']])
+                    yield finished
+                    return
+                if progress and progress['owner'] == owner and progress['result']['completed'] != seen:
+                    snapshot = deepcopy(progress['result'])
+                    seen = snapshot['completed']
+                    yield snapshot
+                if cache.get(lock) != owner:
+                    break
+                sleep(.25)
+            raise SourceUnavailable('Some sources did not finish loading. Please try again.')
+        batches, unavailable, completed, has_next = {}, [], [], False
+        try:
+            for source, result in provider_results(self, sources, query, page):
+                completed.append(source)
+                if result is None:
+                    unavailable.append(sources[source])
+                elif result.get('page', page) == page:
+                    batches[source] = [{**item, 'source_id': source, 'source_name': sources[source]}
+                                       for item in result['itens']]
+                    has_next |= result['has_next']
+                items = self.resolve_batches([batches[s] for s in sources if s in batches])
+                final = len(completed) == len(sources)
+                if final and len(unavailable) == len(sources):
+                    raise SourceUnavailable('The sources are unavailable. Please try again shortly.')
+                snapshot = {'itens': items, 'unavailable': list(unavailable), 'has_next': has_next,
+                            'completed': len(completed), 'total_sources': len(sources), 'done': final}
+                cache.set(key + ':progress', {'owner': token, 'result': snapshot}, timeout=120)
+                if final:
+                    cache.set(key, snapshot, timeout=30 if unavailable else 120)
+                yield snapshot
+        finally:
+            if cache.get(lock) == token:
+                cache.delete(lock)
+
+    def resolve_batches(self, batches):
         items = [item for row in zip_longest(*batches) for item in row if item]
-        from app.libs.canonical import resolve_work, canonical_work
+        from app.libs.canonical import resolve_work
         from app import db
         grouped = group_results(items)
         for group in grouped:
@@ -78,14 +132,18 @@ class UnifiedCatalog:
                 item['work_id'] = sw.work_id
             group['work_id'] = group['sources'][0]['work_id']
         db.session.commit()
+        return self.persisted_items(items)
+
+    @staticmethod
+    def persisted_items(items):
+        from app.libs.canonical import canonical_work
         persisted = {}
-        for group in grouped:
-            for item in group['sources']:
-                identity = canonical_work(item['work_id']).id
-                if identity not in persisted:
-                    persisted[identity] = {**item, 'work_id': identity, 'sources': []}
-                persisted[identity]['sources'].append(item)
-        return {'itens': list(persisted.values()), 'unavailable': unavailable, 'has_next': has_next}
+        for item in items:
+            identity = canonical_work(item['work_id']).id
+            if identity not in persisted:
+                persisted[identity] = {**item, 'work_id': identity, 'sources': []}
+            persisted[identity]['sources'].append(item)
+        return list(persisted.values())
 
     def alternatives(self, identifier):
         sources = self.library.sources()
@@ -113,11 +171,11 @@ class UnifiedCatalog:
         # Limit requests: one title search per other provider, with provider and
         # aggregate caches. Prefer an English alias when MangaDex has one.
         query = item.get('search_title') or item['title']
-        for target, name in sources.items():
-            if target == source:
-                continue
-            try:
-                result = self.provider(target, query, 1)
+        from app.libs.source_loading import provider_results
+        targets = {key: name for key, name in sources.items() if key != source}
+        for target, result in provider_results(self, targets, query, 1):
+            name = sources[target]
+            if result is not None:
                 candidates = [other for other in result['itens'] if matches(item, other)]
                 if len(candidates) == 1:
                     sw = resolve_work(candidates[0], target)
@@ -126,7 +184,7 @@ class UnifiedCatalog:
                     if canonical_work(sw.work_id).id != canonical_work(origin.work_id).id:
                         continue
                     found.append({'id': candidates[0]['id'], 'work_id': sw.work_id, 'source_id': target, 'source_name': name})
-            except (SourceUnavailable, ApiError, requests.RequestException):
+            else:
                 unavailable.append(name)
         data = {'sources': found, 'unavailable': unavailable}
         cache.set(key, data, timeout=60 if unavailable else 3600)

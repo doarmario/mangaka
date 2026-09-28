@@ -55,17 +55,19 @@ def source_order(work, library, progress=None):
         priority.index(s.source) if s.source in priority else len(priority), s.id))
 
 
-def resolve_source_for_chapter(user_id, work, library):
+def resolve_source_for_chapter(user_id, work, library, *, discover=True, _attempted=None):
+    attempted = set() if _attempted is None else _attempted
     progress = ReadingProgress.query.filter_by(user_id=user_id, work_id=work.id).first()
     if progress is None or progress.logical_chapter_id is None:
         raise SourceUnavailable('This work has no saved progress yet. Choose a chapter to start reading.')
-    # Discover equivalent works using the existing bounded, cached catalog search.
-    # No source is required to remain online to obtain the search title.
-    library.discover_work_sources(work)
+    # Try known chapter mappings first; discovery should not delay a working source.
     work = canonical_work(work.id)
     progress = ReadingProgress.query.filter_by(user_id=user_id, work_id=work.id).one()
     sources = source_order(work, library, progress)
     for sw in sources:
+        if sw.id in attempted:
+            continue
+        attempted.add(sw.id)
         try:
             # Refresh the chapter mapping. A failed source is retained, not deleted.
             library.showManga(sw.id)
@@ -98,6 +100,10 @@ def resolve_source_for_chapter(user_id, work, library):
         except PROVIDER_ERRORS:
             sw.available = False
             db.session.commit()
+    if discover:
+        library.discover_work_sources(work)
+        return resolve_source_for_chapter(user_id, canonical_work(work.id), library,
+                                          discover=False, _attempted=attempted)
     raise SourceUnavailable('Your progress has been preserved. No available source has this chapter right now.')
 
 
