@@ -1,151 +1,260 @@
-# Mangaka Project
+# Mangaka — Self-Hosted Manga Reader & Multi-Source Library
 
-<div align="center">
+**Your manga library. Your server. Your reading progress.**
 
-## Self-hosted manga reader & aggregator
+Mangaka is a free, open-source **manga reader and manga aggregator** you can
+self-host with Docker. Discover manga, manhwa, and manhua across multiple sources,
+organize your personal library, and read from your computer, phone, or tablet.
+Your reading progress follows the work across content providers.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-7c3aed?style=for-the-badge&logo=opensourceinitiative&logoColor=white)](LICENSE)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
-[![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![Flask](https://img.shields.io/badge/Flask-Web_App-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
-[![MySQL](https://img.shields.io/badge/MySQL-Database-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
-[![Redis](https://img.shields.io/badge/Redis-Cache-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-7c3aed)](LICENSE)
+[![Tests](https://github.com/doarmario/mangaka/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/doarmario/mangaka/actions/workflows/tests.yml)
+[![Docker installation](https://img.shields.io/badge/install-Docker-2496ed?logo=docker&logoColor=white)](#install-mangaka-with-docker)
+[![GitHub stars](https://img.shields.io/github/stars/doarmario/mangaka?style=flat)](https://github.com/doarmario/mangaka/stargazers)
 
-<br>
+[Install Mangaka](#install-mangaka-with-docker) ·
+[Features](#what-you-can-do-with-mangaka) ·
+[Supported sources](#supported-manga-sources) ·
+[Documentation](#documentation) ·
+[Contribute](#contributing)
 
-[![GitHub stars](https://img.shields.io/github/stars/tillingspore/mangaka?style=flat-square&logo=github)](https://github.com/doarmario/mangaka/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/tillingspore/mangaka?style=flat-square&logo=github)](https://github.com/doarmario/mangaka/network/members)
-[![GitHub issues](https://img.shields.io/github/issues/tillingspore/mangaka?style=flat-square&logo=github)](https://github.com/doarmario/mangaka/issues)
-[![Last commit](https://img.shields.io/github/last-commit/tillingspore/mangaka?style=flat-square&logo=github)](https://github.com/doarmario/mangaka/commits/main)
+## What you can do with Mangaka
 
-</div>
+- **Search multiple manga sources together.** Browse a shared catalog and find
+  matching works without choosing a provider for every search.
+- **Keep your place when a source changes.** Resume the same logical chapter from
+  another available provider when an equivalent chapter is known.
+- **Build your own reading library.** Save favorites and organize works as
+  reading, plan to read, completed, paused, or dropped.
+- **Read comfortably on desktop and mobile.** Use single-page or continuous-scroll
+  mode, keyboard navigation, touch gestures, fullscreen, width, and brightness controls.
+- **Find your next read by genre.** Explore tags and filter supported source
+  catalogs by genres such as isekai, action, and fantasy.
+- **Follow new chapters.** A background worker checks favorite titles and creates
+  notifications for unread updates.
+- **Preserve multilingual titles.** Store original titles, translated names,
+  aliases, and provider-supplied romanizations with their language and source.
+- **Run and maintain it with Docker.** The installer prepares the application,
+  database, cache, source services, and automatic updater.
 
-## Instalar e começar a ler
+Mangaka is built for readers who want to run their own software at home. The
+reader interface has no advertising or subscription billing built in. You control
+the installation, accounts, configuration, and locally stored reading metadata.
 
-Com o Docker funcionando e este repositório clonado, abra um terminal na pasta
-`mangaka` e execute apenas:
+## Install Mangaka with Docker
+
+### Requirements
+
+- Git to clone the repository.
+- Docker with the Docker Compose plugin, running and accessible from your terminal.
+- An internet connection for installation and access to external manga sources.
+- At least 2 GB of available memory for the services.
+
+On Windows, use Docker Desktop in **Linux containers** mode and run the commands
+in PowerShell. The installer itself runs inside Docker. Windows is not currently
+part of routine project testing.
+
+### Quick start
+
+Clone the repository and enter its directory:
+
+```bash
+git clone https://github.com/doarmario/mangaka.git
+cd mangaka
+```
+
+Then run the installer:
 
 ```bash
 docker compose -f compose.install.yaml run --build --rm installer
 ```
 
-Funciona no Linux e no PowerShell do Windows com Docker Desktop no modo de
-containers Linux. O instalador gera as senhas, baixa a API adicional, prepara o
-banco e inicia o site com atualização automática. Não é necessário criar `.env`
-nem clonar outra API manualmente. A primeira instalação pode levar alguns minutos.
-Ao terminar, abra **http://localhost:5000** e crie sua conta.
+The installer generates configuration and passwords, retrieves the additional
+source API, builds the services, prepares the database, applies migrations, and
+enables automatic updates. You do not need to install Python or Node.js, edit an
+`.env` file, or clone a source API separately for this installation path.
 
-Mantenha o Docker funcionando para ler e receber atualizações. Para mais detalhes,
-consulte o [guia de instalação](docs/self-hosting.md).
+The first build can take several minutes. When it finishes, open
+**[http://localhost:5000](http://localhost:5000)** and create your local account.
+Keep Docker running while you read or receive updates.
 
-**Aviso Legal:** Este projeto é um trabalho educacional e de estudo, criado com o propósito de demonstrar habilidades técnicas e de desenvolvimento web.
+For installation details, backups, and troubleshooting, see the
+[self-hosting guide](docs/self-hosting.md).
 
-O Mangaka Project **não hospeda, distribui ou promove conteúdo protegido por direitos autorais** (como mangás completos, scans ou materiais piratas).
+### Read on your phone or tablet
 
-Este repositório contém apenas o código-fonte de um site que consome dados de uma API pública para fins de aprendizado. O uso do código é **responsabilidade do usuário** e deve ser feito de acordo com as leis de direitos autorais e as permissões das APIs utilizadas.
+To access the same library from devices on your home network, set this value in
+the generated `.env` file:
 
-Qualquer uso deste código para fins ilegais ou para distribuição de conteúdo protegido é de **responsabilidade exclusiva do usuário que o fizer**.
-
----
-
-## Sobre o Projeto
-
-O Mangaka Project é uma iniciativa para desenvolvimento de um site de mangás baseado em APIs públicas, focado em aprendizado, prototipagem e demonstração técnica.
-
-Este projeto **não disponibiliza nenhum conteúdo protegido diretamente** e é destinado ao uso **pessoal, educativo e de portfólio**.
-
----
-
-## Aviso de Responsabilidade
-
-Este projeto foi criado para fins educacionais e técnicos. O uso do código para **distribuir conteúdo protegido por direitos autorais** sem a devida permissão **não é permitido**. A responsabilidade por quaisquer ações legais decorrentes de **violação de direitos autorais** é exclusivamente do usuário que utilizar o código de maneira imprópria.
-
-Por favor, **respeite os direitos autorais dos criadores de conteúdo** e **não hospede, distribua ou acesse mangás ou outros materiais protegidos sem a devida autorização**.
-
----
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
-
----
-
-## Contato
-
-Para dúvidas ou sugestões, abra uma issue ou entre em contato.
-
-## Configuração manual com Docker (opcional)
-
-O projeto inclui MySQL, Redis e o servidor web em `compose.yaml`. Se o `.env`
-ainda não existir, copie `.env.example` para `.env` e substitua as três
-chaves/senhas por valores aleatórios. O `.env` não é versionado nem copiado
-para a imagem Docker.
-
-```bash
-docker compose up -d --build
-docker compose ps
+```dotenv
+MANGAKA_BIND_ADDRESS=0.0.0.0
 ```
 
-Se o Docker exigir permissão administrativa na sua máquina, use `sudo` antes
-desses comandos. Abra **http://localhost:5000** quando o serviço `web` estiver
-saudável. Você pode criar sua conta pela página de cadastro.
-
-O serviço `init-db` aguarda o MySQL e o Redis e cria as tabelas ausentes antes de
-iniciar o site. Ele termina com código 0; isso é normal. Esse comando não apaga
-dados nem substitui migrações para alterações futuras no esquema.
+Recreate the web service to apply the setting:
 
 ```bash
-# Acompanhar inicialização ou erros
+docker compose up -d web
+```
+
+Open `http://YOUR_COMPUTER_LAN_IP:5000` on a device connected to the same network.
+Sign in with the same local account to use your saved library and reading progress.
+The default installation binds to localhost; this setting enables network access.
+
+## Supported manga sources
+
+| Source | Integration | Reading languages |
+| --- | --- | --- |
+| MangaDex | MangaDex API adapter | Brazilian Portuguese, Portuguese, English |
+| Asura Scans | Local Manga Novel API adapter | English |
+| Qi Scans | Included Python source service | English |
+| Demonic Scans | Included Python source service | English |
+| Thunder Scans | Included Python source service | English |
+
+The installer builds and starts the bundled source services automatically.
+Catalog entries, chapter availability, genres, and pagination depend on each
+provider. Source outages, request limits, or website changes can temporarily
+prevent access. A healthy local source service does not guarantee that its
+upstream website is available.
+
+Chapter language preferences and title metadata are separate: Mangaka preserves
+all title languages supplied by a provider, including Japanese, Korean, Chinese,
+and romanized forms. It does not automatically translate titles or manga pages.
+
+Consumet is not currently integrated. ComicK and WeebCentral are not offered in
+the catalog, and novel reading is outside the current feature set.
+
+## Reading progress that survives source changes
+
+The same work can have different titles and provider IDs. Mangaka assigns it a
+**local canonical identity** and connects the source records to that identity.
+Favorites, reading status, history, and progress use the local work and logical
+chapter, while providers supply the actual pages.
+
+For example:
+
+1. You read chapter 50 on source A and stop at page 32 of 42.
+2. Source A becomes unavailable.
+3. You choose **Continue reading**.
+4. If source B has a mapped equivalent of chapter 50, Mangaka opens it there.
+5. With 57 pages on source B, your position is approximated as page 43 of 57.
+
+The chapter is the reliable reference; page position between editions is an
+approximation. When no equivalent is available, Mangaka keeps your progress and
+reports the problem instead of silently opening a different chapter.
+
+Matching uses known IDs, exact normalized titles and aliases, and compatible
+metadata. Ambiguous matches stay separate; fuzzy similarity alone never merges
+works. Discovery is cached and bounded, rather than a complete crawl of every
+provider. Older reading records that only contain a provider UUID need chapter
+metadata before they can be matched safely elsewhere.
+
+Read the [canonical identity and progress documentation](docs/canonical-reading.md)
+for matching rules, chapter numbering, migration behavior, and limitations.
+
+## Automatic updates and everyday maintenance
+
+The standard installer enables the Docker-based updater. It checks for new
+commits every five minutes by default and handles builds, database migration,
+and service startup. No host cron job or systemd timer is needed.
+
+The updater requires a clean checkout and compatible Git history. Local changes
+or a failed deployment can prevent an update from completing; inspect its logs
+rather than assuming that a new commit is already running.
+
+```bash
+# Check application services and the updater
+docker compose -f compose.yaml -f compose.updater.yaml ps
+
+# Inspect the most recent update activity
+docker compose -f compose.yaml -f compose.updater.yaml logs --tail=100 auto-updater
+
+# Inspect application and database initialization logs
 docker compose logs --tail=100 web init-db mysql redis
-# Parar preservando banco, cache e sessões
-docker compose down
-# Retomar
-docker compose up -d
+
+# Stop the installation while preserving its data volumes
+docker compose -f compose.yaml -f compose.updater.yaml down
+
+# Start the installed services again
+docker compose -f compose.yaml -f compose.updater.yaml up -d
 ```
 
-Os dados ficam em volumes persistentes. Não use `down -v` se quiser preservá-los.
-MySQL e Redis ficam acessíveis apenas na rede interna do Compose; o site é
-publicado apenas no endereço local. Para mudar a porta, ajuste `MANGAKA_PORT`
-no `.env`. As senhas do MySQL no `.env` são aplicadas na primeira inicialização
-do volume; alterá-las depois exige também atualizar as credenciais no banco.
+Keep your `.env` file and back up your database before manual maintenance.
+**Do not use `docker compose down -v` if you want to preserve your data.** Database
+passwords are initialized with the MySQL volume; editing `.env` alone does not
+change credentials inside an existing database.
 
-Para acessar pelo celular ou tablet na mesma rede, descubra o IP do computador
-(`hostname -I` no Linux), ajuste `MANGAKA_BIND_ADDRESS=0.0.0.0` no `.env` e
-reinicie o site. Abra `http://IP_DO_COMPUTADOR:5000` no outro dispositivo.
-Consulte [docs/self-hosting.md](docs/self-hosting.md) para instalação em uma
-máquina nova, atualização, backup e publicação atrás de HTTPS.
+See the [automatic update guide](docs/auto-update.md) for configuration and
+recovery, and the [self-hosting guide](docs/self-hosting.md) for manual updates,
+backups, and deployment behind HTTPS. The installer and updater use the Docker
+socket to manage services; the web application does not receive that access.
 
-Para atualizar automaticamente a instalação a partir de novos commits, consulte
-[Atualizações automáticas](docs/auto-update.md). O serviço opcional roda no Docker,
-inclusive no Docker Desktop do Windows, sem agendamento no sistema operacional.
+## How Mangaka works
 
-## Catálogo e busca entre fontes
+| Component | Purpose |
+| --- | --- |
+| Python 3.13 and Flask | Web application and provider coordination |
+| SQLAlchemy, MySQL, and Alembic | Accounts, canonical catalog, reading data, and migrations |
+| Redis | Shared metadata/page-URL cache and request cooldowns |
+| Source adapters | Fetch catalog metadata, chapter listings, and page URLs |
+| Background worker | Check favorites for unread chapter updates |
+| Docker Compose | Run the application and supporting services |
 
-Com mais de uma fonte configurada, a busca e o catálogo abrem em **Todas as
-fontes**. Cada página consulta uma página de cada provedor e agrupa títulos
-correspondentes nessa seleção. A paginação não representa um índice completo
-deduplicado: uma obra pode reaparecer em outra página de outro provedor.
+Redis helps reduce repeated provider requests; it does not guarantee that every
+concurrent request stays within upstream limits. User-specific reading data stays
+outside shared catalog caches. Chapter-page URLs are cached separately because
+they can expire.
 
-As obras possuem uma identidade local independente dos provedores. Todos os títulos
-e aliases fornecidos são preservados na grafia original, com idioma e fonte quando
-informados, incluindo títulos asiáticos e romanizações. Isso é independente do
-filtro de capítulos em português e inglês. Títulos e
-aliases exatos, metadados compatíveis e IDs externos opcionais ajudam a associar
-fontes à mesma obra. Casos ambíguos permanecem separados; fuzzy matching não faz
-uniões automáticas.
+Mangaka stores reading metadata and source mappings. It does **not** provide a
+permanent manga-image archive or an offline chapter downloader.
 
-Favoritos, status e progresso pertencem à obra. **Continuar lendo** procura o
-mesmo capítulo lógico em outra fonte quando a última falha ou é removida.
-A página é aproximada pelo percentual quando o número de páginas muda. Histórico
-e mapeamentos antigos são preservados. As rotas e integrações anteriores continuam
-funcionando; a migração é aditiva e executada pelo instalador/auto-updater.
+## Documentation
 
-A descoberta consulta uma página por provider, com cache; não é uma varredura dos
-catálogos. Capítulos antigos sem número/volume só podem ser associados a outra
-fonte depois do enriquecimento de seus metadados. Detalhes, schema, contratos e
-limitações estão em [Identidade canônica e leitura](docs/canonical-reading.md).
+The README is in English. Some linked guides and integration notes are currently
+available only in Portuguese.
 
-## Testes da integração MangaDex
+| Guide | What it covers |
+| --- | --- |
+| [Self-hosting Mangaka](docs/self-hosting.md) | Installation, local-network access, backup, restoration, and HTTPS deployment |
+| [Automatic updates](docs/auto-update.md) | Updater configuration, Git behavior, permissions, and recovery |
+| [Canonical works and reading progress](docs/canonical-reading.md) | Identity, multilingual titles, matching, chapter mappings, and migrations |
+| [Manga Novel API integration](integrations/manga-novel/README.md) | Local API setup and Asura adapter details |
+| [Qi Scans integration](integrations/qiscans/README.md) | Source configuration and behavior |
+| [Demonic Scans integration](integrations/demonicscans/README.md) | Scraper setup and limitations |
+| [Thunder Scans integration](integrations/thunderscans/README.md) | Source service and chapter support |
+
+## Frequently asked questions
+
+### Is Mangaka free and open source?
+
+Yes. The application is released under the MIT license. You can run your own
+instance and modify the software. Source content is separate from the software
+license; running Mangaka does not grant access to restricted chapters.
+
+### Can I use Mangaka without programming knowledge?
+
+Yes. Once Git and Docker are installed, clone the repository and run the installer
+command above. The installer prepares the supporting services for you.
+
+### Can I read manga offline?
+
+Mangaka currently needs access to external sources to retrieve pages. It saves
+library and reading metadata locally, but does not download complete chapters
+for permanent offline reading.
+
+### Will switching sources keep my reading progress?
+
+Yes, when both source records map to the same canonical work and logical chapter.
+The page position is approximated if the editions have different page counts.
+Unavailable or ambiguous chapter mappings do not erase your history.
+
+### Can I host Mangaka outside my home network?
+
+The software can run on your own server. The default setup is local; consult the
+[self-hosting guide](docs/self-hosting.md) before configuring public access and HTTPS.
+
+## Development and tests
+
+For application development, use Python 3.13 and an isolated environment:
 
 ```bash
 python -m venv venv
@@ -154,190 +263,43 @@ python -m pip install -r requirements.txt
 python -m pytest -q
 ```
 
-A suíte usa a biblioteca MangaDex real com respostas HTTP simuladas e bloqueia
-requisições externas inesperadas. Banco SQLite em memória e cache em memória são
-usados **somente nos testes**; a configuração normal continua usando MySQL e Redis.
-O workflow do GitHub Actions executa os testes em Python 3.13.
-
-O fork `doarmario/mangadex` está fixado por commit em `requirements.txt` (o nome da
-distribuição no `pyproject.toml` do fork é `md`; o módulo importado é `mangadex`).
-Ao atualizá-lo, rode os testes de contrato antes de trocar o commit. A listagem do
-fork retorna apenas objetos e descarta `total`: o adaptador usa o transporte e o
-parser da biblioteca separadamente para preservar a paginação da resposta.
-
-### Cache e requisições
-
-- As chaves `mangadex_v5_` incluem página, idioma, tamanho de página e filtros.
-  Entradas antigas expiram normalmente, sem necessidade de limpar o Redis.
-- Listas e capítulos: 15 minutos; metadados e capas: 1 hora; autores e tags: 24 horas.
-- URLs temporárias das páginas: 10 minutos, separadas dos metadados do capítulo.
-- As listagens alimentam o cache de metadados, evitando consultar novamente cada
-  mangá ao abrir seus detalhes ou buscar sua capa.
-- Dados compartilhados são dicionários/listas; favoritos e marcações de leitura
-  são consultados por usuário e não entram no cache compartilhado.
-- Após HTTP 429, uma pausa compartilhada respeita `Retry-After` numérico (60 segundos
-  na ausência de valor válido). Consultas já em cache continuam disponíveis; novas
-  consultas recebem indisponibilidade temporária, sem tentativas automáticas.
-
-Cache reduz requisições, mas não garante sozinho o limite em acessos simultâneos:
-misses concorrentes ainda podem gerar chamadas repetidas. Os testes não validam
-um servidor Redis real nem a disponibilidade atual da API; cobrem contratos da
-biblioteca, paginação, navegação, falhas HTTP e reaproveitamento do cache.
-
-## Idiomas
-
-O catálogo, a busca e as atualizações incluem português brasileiro (`pt-br`),
-português de Portugal (`pt`) e inglês (`en`). Títulos e descrições priorizam
-português, depois inglês; quando não há tradução, o título original continua
-sendo exibido. Isso não traduz automaticamente as páginas dos mangás.
-
-Na página do mangá, cada capítulo indica seu idioma e o seletor permite filtrar
-as traduções. “Começar a ler” prioriza português e usa inglês quando não há
-capítulos em português. Ao selecionar um idioma, o botão acompanha essa seleção.
-No leitor, anterior/próximo mantêm o idioma do capítulo aberto.
-
-Os capítulos são consultados e armazenados no Redis separadamente por idioma,
-porque o endpoint de agregação do MangaDex não identifica o idioma de cada item.
-Números iguais em traduções diferentes continuam disponíveis. A marcação de
-leitura é compartilhada quando representam o mesmo capítulo lógico; as páginas
-e a preferência de idioma continuam específicas da edição consultada.
-
-## Fontes adicionais: Manga Novel API
-
-O catálogo permite escolher **MangaDex**, **AsuraScans**, **Qi Scans**, **Demonic Scans** ou **Thunder Scans**. Ao aplicar uma fonte, o catálogo carrega seus títulos automaticamente; a escolha
-da fonte acompanha a busca e a paginação. Detalhes e leitor mostram a procedência.
-IDs locais dos providers são mantidos como referências de compatibilidade. A camada
-canônica reúne obras e capítulos equivalentes sem atrelar o progresso à fonte.
-
-A integração usa uma cópia local de
-[Raby012/-manga-novel-api](https://github.com/Raby012/-manga-novel-api), commit
-`2e72a110bea5f3327a856a0c7e00233291e5566b`. Para instalar em outra máquina:
+On Windows, activate the environment with `venv\Scripts\Activate.ps1` instead.
+The shell-based installer/updater tests require Bash, Git, and `jq`; run those in
+a Linux environment. JavaScript reader tests run with:
 
 ```bash
-git clone https://github.com/Raby012/-manga-novel-api.git ../manga-novel-api
-git -C ../manga-novel-api checkout 2e72a110bea5f3327a856a0c7e00233291e5566b
-docker compose up -d --build
+node --test tests/reader-progress.test.cjs
 ```
 
-O Compose lê o checkout em `../manga-novel-api`, configurável por
-`MANGA_NOVEL_SOURCE_DIR` no `.env`, e inicia a API apenas na rede interna. O servidor
-web usa `MANGA_NOVEL_API_URL=http://manga-novel:3001`. A inicialização do banco cria
-apenas a nova tabela `source_reference`, preservando os dados existentes.
+The application tests use SQLite and an in-memory cache, mock upstream HTTP
+responses, and block unexpected network requests. Optional MySQL tests exercise
+migration and concurrency against a disposable database; see the
+[database test instructions](docs/canonical-reading.md).
+The source-service contract tests also run during their Docker builds.
 
-Nesta máquina, o código original está em `~/Work/manga-novel-api` e um backup Git
-completo, verificado, está em `~/Work/manga-novel-api-backup.bundle`. O bundle pode
-ser clonado sem acesso ao GitHub, por exemplo com
-`git clone ~/Work/manga-novel-api-backup.bundle ~/Work/manga-novel-api-restaurada`.
+The MangaDex dependency is pinned in `requirements.txt`. Test its adapter contract
+before changing that revision. CI configuration lives in
+[`.github/workflows/tests.yml`](.github/workflows/tests.yml).
 
-As adaptações ficam em `integrations/manga-novel/`, sem modificar o checkout:
+## Contributing
 
-- O ponto de entrada monta as rotas de múltiplos provedores já presentes na API;
-  o servidor original ignorava a escolha da fonte em várias operações.
-- O adaptador Asura usa o domínio atual `asurascans.com` e os dados públicos das
-  páginas; o endereço antigo redirecionava buscas para a página inicial.
-- Capítulos marcados como premium, bloqueados ou ainda em acesso antecipado não
-  são disponibilizados pelo adaptador.
-- Os testes de contrato do adaptador Node rodam durante a construção da imagem.
+Bug reports, documentation improvements, UI fixes, and source-adapter maintenance
+are welcome. For a source issue, include the provider name, reproduction steps,
+and relevant logs with credentials and personal information removed.
 
-O Redis guarda resultados por fonte, URL, página e idioma por 15 minutos e URLs
-de páginas por 10 minutos. Falhas abrem uma pausa de 30 segundos para evitar
-repetir consultas a um provedor indisponível. ComicK e WeebCentral não fazem
-mais parte das fontes exibidas no catálogo.
+- [Report a bug or request a feature](https://github.com/doarmario/mangaka/issues).
+- [Review open pull requests](https://github.com/doarmario/mangaka/pulls).
+- Add regression tests when changing matching, reading progress, migrations, or
+  provider contracts.
 
-O catálogo do MangaDex também permite filtrar a busca e a listagem por idioma
-(português do Brasil, português de Portugal ou inglês) e status da obra. Esses
-filtros permanecem ativos durante a paginação.
+If Mangaka is useful to you, [star the repository](https://github.com/doarmario/mangaka)
+to help other self-hosting readers discover it.
 
-Usuários autenticados também têm as páginas **Minha biblioteca** e **Novidades**.
-A área de novidades consulta os capítulos dos favoritos, usa o cache existente e
-mostra apenas capítulos que ainda não foram marcados como lidos.
-O serviço `updates-worker` verifica esses favoritos a cada 30 minutos e cria
-notificações individuais; o intervalo pode ser ajustado com
-`UPDATES_INTERVAL_SECONDS`.
+## License and content
 
-Consumet **não está integrado**: seus repositórios oficiais estavam indisponíveis
-quando consultados. É necessária uma instância ou documentação acessível para
-validar essa integração. Novels também não fazem parte desta integração de mangás.
-
-## Tags e gêneros
-
-Nas páginas de mangás do MangaDex e do Asura, clique em uma tag (por exemplo,
-**Isekai**, **Action** ou **Fantasy**) para abrir o catálogo dessa fonte filtrado
-pelo gênero. A tag permanece na paginação e nas buscas por título. Use
-**Remover filtro** para voltar ao catálogo da mesma fonte; ao aplicar outra fonte,
-o filtro é reiniciado, pois os identificadores de gênero são específicos de cada
-provedor.
-
-
-## Fonte Qi Scans
-
-O serviço `qiscans` usa o wrapper de `qiscansmanga.org`, incluído em
-`integrations/qiscans/` com o commit de origem em `UPSTREAM.md`. A instalação
-padrão e o atualizador constroem e iniciam essa API automaticamente; não é
-necessário clonar outro repositório. Para atualizar uma instalação existente:
-
-```bash
-docker compose up -d --build qiscans web updates-worker
-```
-
-Selecione **Qi Scans** no catálogo. Busca, gêneros, detalhes, capítulos,
-favoritos, histórico e novidades usam IDs separados das outras fontes.
-A fonte oferece capítulos em inglês; não há tradução automática. Novels
-identificadas e capítulos protegidos não são disponibilizados pelo wrapper.
-
-A API fica na rede interna, em `http://qiscans:3002`. Fora do Compose,
-configure `QISCANS_API_URL` no ambiente do servidor web e do worker. A fonte
-só aparece quando essa configuração estiver presente, independentemente da
-API do Asura. `/status` mostra a saúde do processo do wrapper separadamente;
-isso não garante disponibilidade do site externo.
-
-Qi Scans mostra o total de obras e o total de páginas para o catálogo, buscas
-e filtros por gênero. O wrapper conta a listagem completa, exclui novels e
-duplicatas e serve páginas de 20 obras. A primeira consulta pode demorar mais;
-as demais reutilizam a mesma listagem em cache por 15 minutos. Buscas com
-gênero são filtradas antes da contagem, evitando páginas intermediárias vazias.
-O Redis reutiliza dados por 15 minutos e páginas do leitor por 10 minutos.
-O wrapper também possui cache local e pausa consultas após HTTP 429/falhas.
-Mudanças na estrutura do site ou nos hosts de imagens podem exigir atualização.
-
-Os testes de contrato Python rodam durante a construção da imagem do wrapper.
-Os testes do Mangaka cobrem configuração independente, paginação, gêneros,
-leitor, favoritos, histórico e indisponibilidade da fonte.
-
-## Fonte Demonic Scans
-
-**Demonic Scans** está disponível no catálogo, na busca entre fontes e na aba de
-tags, com detalhes, capítulos em inglês e leitura de imagens. O scraper está
-incluído em [`integrations/demonicscans/`](integrations/demonicscans/README.md).
-O instalador e o atualizador iniciam o serviço automaticamente.
-
-Para atualizar uma instalação manual existente:
-
-```sh
-docker compose up -d --build demonicscans web updates-worker
-```
-
-A API fica na rede interna em `http://demonicscans:3003`. Fora do Compose,
-configure `DEMONICSCANS_API_URL`. O catálogo usa a paginação da fonte; busca com
-um gênero filtra cada página desse gênero e pode ter páginas sem correspondências.
-O wrapper mantém cache e respeita as respostas de limite de requisições; bloqueios
-ou mudanças no site aparecem como indisponibilidade da fonte.
-
-## Fonte Thunder Scans
-
-**Thunder Scans** está integrada ao catálogo, à busca entre fontes, às tags e ao
-leitor, com capítulos públicos em inglês. O scraper está incluído em
-[`integrations/thunderscans/`](integrations/thunderscans/README.md); o instalador e
-o auto-updater iniciam o serviço automaticamente.
-
-Para atualizar uma instalação manual:
-
-```sh
-docker compose up -d --build thunderscans web updates-worker
-```
-
-A API fica na rede interna em `http://thunderscans:3004`. Fora do Compose,
-configure `THUNDERSCANS_API_URL`. A integração mantém a paginação da fonte e o
-cache; não é necessário varrer todo o catálogo. Ao combinar busca e tag, os
-termos filtram os títulos de cada página do gênero. Capítulos bloqueados não são
-apresentados como disponíveis para leitura.
+Mangaka's application code is available under the [MIT license](LICENSE).
+Bundled integrations retain their respective license and attribution files.
+This repository contains software, not a manga collection, and is not affiliated
+with the external content providers. Content remains subject to its owners'
+rights and the sources' terms. Use the software to access content you are
+authorized to read and support creators and official releases.
