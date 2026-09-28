@@ -154,7 +154,7 @@ class MangaNovel:
     def _normalize_list(self, records, total, has_next):
         records = [record for record in records if self._remote(record) and record.get('title')]
         refs = register_many(self.source, 'manga', [(self._remote(r), r) for r in records])
-        return {'itens': [{'id': ref.id, 'title': ref.payload['title'],
+        return {'itens': [{'id': ref.id, 'external_id': ref.remote_id, 'title': ref.payload['title'],
                           'aliases': ref.payload.get('aliases') or [],
                           'titles': ref.payload.get('titles') or [],
                           'source_name': SOURCES[self.source]} for ref in refs],

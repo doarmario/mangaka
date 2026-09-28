@@ -8,11 +8,17 @@ from app import cache
 from app.libs.manga_novel import MangaNovel, SourceUnavailable
 
 
-from app.libs.identity import title_keys as titles, match_confidence
+from app.libs.identity import title_keys as titles, match_confidence, source_work_key
 
 
 def matches(left, right):
     return match_confidence(left, right)[0] == 1.0
+
+
+def same_source_record(left, right):
+    return left['source_id'] == right['source_id'] and source_work_key(
+        left['source_id'], left.get('external_id') or left['id']) == source_work_key(
+        right['source_id'], right.get('external_id') or right['id'])
 
 
 def group_results(items):
@@ -22,7 +28,7 @@ def group_results(items):
         candidates = [g for g in groups if matches(g, item)]
         # Check the entire batch, so duplicate titles within one provider never
         # get silently assigned to an unrelated edition from another provider.
-        ambiguous = any(other['id'] != item['id'] and other['source_id'] == item['source_id']
+        ambiguous = any(not same_source_record(other, item) and other['source_id'] == item['source_id']
                         and matches(other, item) for other in items)
         if len(candidates) == 1 and not ambiguous and not candidates[0]['ambiguous'] and all(
                 source['source_id'] != item['source_id'] for source in candidates[0]['sources']):

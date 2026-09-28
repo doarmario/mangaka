@@ -7,7 +7,8 @@ from app.models import (CatalogLock, Work, WorkAlias, WorkExternalID, SourceWork
                         LogicalChapter, SourceChapter, Manga, Chapter, Favorite,
                         Readed, ReadingProgress, SourceReference, UpdateNotification, utc_now)
 from app.libs.identity import (normalize_title, title_keys, fingerprint, metadata,
-                               compatible, chapter_identity, match_confidence, title_variants)
+                               compatible, chapter_identity, match_confidence, title_variants,
+                               source_work_key)
 
 log = logging.getLogger(__name__)
 
@@ -49,6 +50,46 @@ def _aliases(work, item, source):
             existing.add(digest)
 
 
+def _merge_compatible(left, right):
+    if not compatible(work_data(left), work_data(right)):
+        return False
+    for a in left.sources:
+        for b in right.sources:
+            if a.source == b.source and source_work_key(a.source, a.external_id) != source_work_key(b.source, b.external_id):
+                return False
+    left_ids = {r.provider: r.external_id for r in WorkExternalID.query.filter_by(work_id=left.id)}
+    right_ids = {r.provider: r.external_id for r in WorkExternalID.query.filter_by(work_id=right.id)}
+    return all(left_ids[p] == right_ids[p] for p in left_ids.keys() & right_ids.keys())
+
+
+def _rotated_source_work(item, source, remote, known):
+    """Repair verified URL-token rotations while retaining old source records."""
+    key = source_work_key(source, remote)
+    if key == remote:
+        return known.work if known else None
+    records = SourceWork.query.filter_by(source=source).filter(
+        SourceWork.external_id.startswith(key + '-', autoescape=True)).all()
+    works = {row.work_id: row.work for row in records
+             if source_work_key(source, row.external_id) == key}
+    if not works:
+        return None
+    candidates = list(works.values())
+    incoming_ids = {str(p): str(v) for p, v in (item.get('external_ids') or {}).items() if v}
+    if (not all(match_confidence(work_data(w), item)[0] == 1.0 for w in candidates)
+            or any(r.provider in incoming_ids and incoming_ids[r.provider] != r.external_id
+                   for w in candidates for r in WorkExternalID.query.filter_by(work_id=w.id))
+            or not all(_merge_compatible(a, b) for i, a in enumerate(candidates) for b in candidates[i + 1:])):
+        return known.work if known else None
+    target = known.work if known else candidates[0]
+    for old in candidates:
+        if old.id != target.id:
+            merge_works(target, old)
+            db.session.expire(target, ['sources', 'aliases'])
+            db.session.expire(old, ['sources', 'aliases'])
+            log.debug('Consolidated rotated %s source URL: work %s -> %s', source, old.id, target.id)
+    return target
+
+
 def resolve_work(item, source, *, allow_title_match=True):
     """Resolve under the catalog lock. Caller commits before doing any HTTP."""
     lock_catalog()
@@ -62,9 +103,9 @@ def resolve_work(item, source, *, allow_title_match=True):
     known = db.session.get(SourceWork, identifier)
     if known is None:
         known = SourceWork.query.filter_by(source=source, external_hash=fingerprint(remote)).first()
+    work = _rotated_source_work(item, source, remote, known)
     strong = {r.work_id for p, v in external.items() for r in
               WorkExternalID.query.filter_by(provider=p, external_id=v).all()}
-    work = known.work if known else None
     reason = 'source_mapping' if known else ''
     if len(strong) == 1:
         target = db.session.get(Work, next(iter(strong)))
@@ -79,15 +120,15 @@ def resolve_work(item, source, *, allow_title_match=True):
     candidates = []
     if keys and allow_title_match and (not strong or (work and strong == {work.id})):
         rows = Work.query.join(WorkAlias).filter(WorkAlias.alias_hash.in_([fingerprint(k) for k in keys])).distinct().all()
-        candidates = [w for w in rows if (work is None or w.id != work.id)
+        candidates = [w for w in rows if not w.metadata_json.get('redirect_to') and (work is None or w.id != work.id)
                       and compatible(work_data(w), item)
                       and not any(s.source == source and s.id != identifier for s in w.sources)]
         if len(candidates) == 1:
             if work is None:
                 work, reason = candidates[0], 'exact_alias'
-            elif compatible(work_data(work), work_data(candidates[0])) and not (
-                    {s.source for s in work.sources} & {s.source for s in candidates[0].sources}):
+            elif _merge_compatible(work, candidates[0]):
                 work = merge_works(candidates[0], work)
+                db.session.expire(work, ['sources', 'aliases'])
                 reason = 'exact_alias'
         elif len(candidates) > 1:
             log.debug('Ambiguous match rejected for source work %s', identifier)

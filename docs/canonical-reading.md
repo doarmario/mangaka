@@ -55,10 +55,25 @@ ano ou edição explicitamente divergentes vetam matching por título.
 
 Um único candidato exato e compatível recebe confiança 1.0. Mais de um candidato
 ou dois IDs distintos do mesmo provider com o mesmo título permanecem separados,
-salvo evidência explícita de ID externo. A descoberta em lote verifica a ambiguidade
+salvo evidência explícita de ID externo ou a rotação de URL descrita abaixo. A descoberta em lote verifica a ambiguidade
 antes de resolver cada item. Aliases novos podem consolidar obras previamente
 separadas; os históricos são remapeados, o progresso mais recente é mantido e o
 ID canônico antigo continua funcionando como redirecionamento local.
+
+A Asura altera o token hexadecimal de oito caracteres no final de URLs como
+`comics/nome-da-obra-05c7df14`. `source_work_key` reconhece esse formato somente
+nessa fonte. O restante do slug, títulos/aliases exatos e metadados compatíveis
+precisam concordar para consolidar os registros. IDs externos conflitantes e
+outras obras distintas da mesma fonte vetam a consolidação. Sufixos numéricos
+como `-2` da Qi Scans não são removidos: podem identificar outra edição.
+
+Na próxima consulta de uma URL da Asura nesse formato, duplicatas antigas são
+reconciliadas sob o lock do catálogo, mantendo os IDs das fontes, favoritos,
+histórico e redirecionamentos canônicos. Não há migração de schema ou exclusão
+de registros. O catálogo mostra um cartão por obra resolvida e cada nome de
+fonte apenas uma vez. Isso não transforma a paginação independente dos
+providers em uma paginação global: uma obra ainda pode reaparecer em páginas
+diferentes, e casos sem evidência suficiente continuam separados.
 
 Fuzzy usa `SequenceMatcher`, somente como sugestão: score >= 0.85 e limitado a
 0.94. Nunca autoriza associação automática, mesmo com score alto. Sugestões de

@@ -312,6 +312,53 @@ def test_late_alias_merge_preserves_both_histories(context):
     assert canonical_work(original_b).id == a.work_id
 
 
+def test_rotated_source_repairs_existing_duplicates_and_history(context):
+    from app.libs.identity import fingerprint
+    from app.libs.canonical import canonical_work
+    # Simulate rows created before URL-token rotations were recognized.
+    a, b = work('asura', 'old'), work('asura', 'new')
+    old_work_id = a.work_id
+    for row, token in ((a, '05c7df14'), (b, '3ec3b16f')):
+        row.external_id = 'comics/solo-leveling-' + token
+        row.external_hash = fingerprint(row.external_id)
+    ca, cb = chapter(a, 'old50'), chapter(b, 'new50')
+    reader = user()
+    save_progress(reader.id, ca, 32, 42)
+    save_progress(reader.id, cb, 43, 57)
+    for _ in range(2):
+        resolved = work('asura', 'new', external_id=b.external_id)
+        assert a.work_id == resolved.work_id
+        assert canonical_work(old_work_id).id == resolved.work_id
+        assert ReadingProgress.query.count() == 1
+        assert ReadingProgress.query.one().page_number == 43
+        assert {r.work_id for r in Readed.query.all()} == {resolved.work_id}
+        assert len({r.logical_chapter_id for r in Readed.query.all()}) == 1
+        assert SourceWork.query.count() == 2
+    other = work('qiscans', 'qi')
+    assert other.work_id == resolved.work_id
+
+
+@pytest.mark.parametrize('source,remote,extra', [
+    ('asura', 'comics/solo-leveling-2-3ec3b16f', {}),
+    ('asura', 'comics/solo-leveling-remake-3ec3b16f', {}),
+    ('asura', 'comics/solo-leveling-3ec3b16f', {'type': 'novel'}),
+    ('qiscans', 'solo-leveling-2', {}),
+])
+def test_url_identity_does_not_merge_editions(context, source, remote, extra):
+    first = 'comics/solo-leveling-05c7df14' if source == 'asura' else 'solo-leveling'
+    a = work(source, 'a', external_id=first, type='manga')
+    b = work(source, 'b', external_id=remote, **extra)
+    assert a.work_id != b.work_id
+
+
+def test_rotated_url_respects_conflicting_external_ids(context):
+    a = work('asura', 'a', external_id='comics/solo-leveling-05c7df14',
+             external_ids={'anilist': '1'})
+    b = work('asura', 'b', external_id='comics/solo-leveling-3ec3b16f',
+             external_ids={'anilist': '2'})
+    assert a.work_id != b.work_id
+
+
 def test_provider_failure_falls_back_without_premarking(context, monkeypatch):
     a, b = work('a', 'a'), work('b', 'b')
     reader = user()
