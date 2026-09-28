@@ -700,6 +700,64 @@ svg {
     gap:12px;
     flex-wrap:wrap
 }
+.library-status-control {
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:16px 24px;
+    margin-top:20px;
+    padding:18px 20px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius)
+}
+.library-status-heading {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex:1 1 210px;
+    min-width:0
+}
+.library-status-heading>.icon {
+    flex-shrink:0;
+    color:var(--accent)
+}
+.library-status-heading label {
+    display:block;
+    font-size:14px;
+    font-weight:600;
+    color:var(--text)
+}
+.library-status-heading p {
+    margin:3px 0 0;
+    font-size:12px;
+    color:var(--muted)
+}
+.library-status-control select {
+    flex:1 1 200px;
+    min-width:0;
+    max-width:100%;
+    min-height:46px;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:var(--raised);
+    color:var(--text);
+    font:inherit;
+    font-size:16px;
+    cursor:pointer
+}
+.library-status-control select:hover:not(:disabled) {
+    border-color:var(--muted)
+}
+.library-status-control select:focus-visible {
+    outline:2px solid var(--accent);
+    outline-offset:3px
+}
+.library-status-control select:disabled {
+    opacity:.6;
+    cursor:wait
+}
 .favorite-button[aria-pressed=true] svg {
     fill:var(--accent);
     stroke:var(--accent)
