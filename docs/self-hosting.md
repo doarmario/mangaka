@@ -44,6 +44,29 @@ docker compose -f compose.yaml -f compose.updater.yaml logs --tail=100 auto-upda
 
 Detalhes e limitações estão em [Atualizações automáticas](auto-update.md).
 
+## Operação diária
+
+Para consultar os logs do site e da inicialização do banco:
+
+```bash
+docker compose logs --tail=100 web init-db mysql redis
+```
+
+Para parar a instalação preservando os volumes de dados:
+
+```bash
+docker compose -f compose.yaml -f compose.updater.yaml down
+```
+
+Para iniciar os serviços novamente:
+
+```bash
+docker compose -f compose.yaml -f compose.updater.yaml up -d
+```
+
+Guarde o `.env`. As senhas do MySQL são definidas ao inicializar o volume;
+editar somente o `.env` não altera as credenciais de um banco já existente.
+
 ## Acesso na rede local
 
 Edite `.env`:

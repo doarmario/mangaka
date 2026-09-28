@@ -1,11 +1,14 @@
 # Mangaka — Self-Hosted Manga Reader & Multi-Source Library
 
+<p align="center"><img src="app/static/img/logo.png" alt="Mangaka logo" width="120"></p>
+
 **Your manga library. Your server. Your reading progress.**
 
-Mangaka is a free, open-source **manga reader and manga aggregator** you can
-self-host with Docker. Discover manga, manhwa, and manhua across multiple sources,
-organize your personal library, and read from your computer, phone, or tablet.
-Your reading progress follows the work across content providers.
+Mangaka is an open-source, **self-hosted manga reader and personal library**
+that runs with Docker. Organize manga, manhwa, and manhua from multiple sources
+and read from your computer, phone, or tablet. Your library and reading progress
+belong to your installation, with continuity across providers when equivalent
+chapters are available.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-7c3aed)](LICENSE)
 [![Tests](https://github.com/doarmario/mangaka/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/doarmario/mangaka/actions/workflows/tests.yml)
@@ -28,14 +31,12 @@ Your reading progress follows the work across content providers.
   reading, plan to read, completed, paused, or dropped.
 - **Read comfortably on desktop and mobile.** Use single-page or continuous-scroll
   mode, keyboard navigation, touch gestures, fullscreen, width, and brightness controls.
-- **Find your next read by genre.** Explore tags and filter supported source
-  catalogs by genres such as isekai, action, and fantasy.
-- **Follow new chapters.** A background worker checks favorite titles and creates
-  notifications for unread updates.
+- **Discover and follow works.** Search tags and genres in supported catalogs
+  and receive notifications for new chapters in your favorites.
 - **Preserve multilingual titles.** Store original titles, translated names,
   aliases, and provider-supplied romanizations with their language and source.
-- **Run and maintain it with Docker.** The installer prepares the application,
-  database, cache, source services, and automatic updater.
+- **Install and update with Docker.** One installer command prepares the services
+  and enables automatic updates.
 
 Mangaka is built for readers who want to run their own software at home. The
 reader interface has no advertising or subscription billing built in. You control
@@ -102,6 +103,11 @@ The default installation binds to localhost; this setting enables network access
 
 ## Supported manga sources
 
+These are technical integrations with third-party websites, not partnerships
+or endorsements. Integration support does not establish that a provider is
+authorized to distribute its catalog. Mangaka's software license does not grant
+rights to manga content; use sources and content you are authorized to access.
+
 | Source | Integration | Reading languages |
 | --- | --- | --- |
 | MangaDex | MangaDex API adapter | Brazilian Portuguese, Portuguese, English |
@@ -119,9 +125,6 @@ upstream website is available.
 Chapter language preferences and title metadata are separate: Mangaka preserves
 all title languages supplied by a provider, including Japanese, Korean, Chinese,
 and romanized forms. It does not automatically translate titles or manga pages.
-
-Consumet is not currently integrated. ComicK and WeebCentral are not offered in
-the catalog, and novel reading is outside the current feature set.
 
 ## Reading progress that survives source changes
 
@@ -142,11 +145,8 @@ The chapter is the reliable reference; page position between editions is an
 approximation. When no equivalent is available, Mangaka keeps your progress and
 reports the problem instead of silently opening a different chapter.
 
-Matching uses known IDs, exact normalized titles and aliases, and compatible
-metadata. Ambiguous matches stay separate; fuzzy similarity alone never merges
-works. Discovery is cached and bounded, rather than a complete crawl of every
-provider. Older reading records that only contain a provider UUID need chapter
-metadata before they can be matched safely elsewhere.
+Ambiguous matches stay separate. Matching is not a complete crawl of every
+provider, and older records may need chapter metadata before they can be matched.
 
 Read the [canonical identity and progress documentation](docs/canonical-reading.md)
 for matching rules, chapter numbering, migration behavior, and limitations.
@@ -157,9 +157,8 @@ The standard installer enables the Docker-based updater. It checks for new
 commits every five minutes by default and handles builds, database migration,
 and service startup. No host cron job or systemd timer is needed.
 
-The updater requires a clean checkout and compatible Git history. Local changes
-or a failed deployment can prevent an update from completing; inspect its logs
-rather than assuming that a new commit is already running.
+Local changes or a failed deployment can interrupt updates. Check service status
+and updater logs with:
 
 ```bash
 # Check application services and the updater
@@ -167,42 +166,22 @@ docker compose -f compose.yaml -f compose.updater.yaml ps
 
 # Inspect the most recent update activity
 docker compose -f compose.yaml -f compose.updater.yaml logs --tail=100 auto-updater
-
-# Inspect application and database initialization logs
-docker compose logs --tail=100 web init-db mysql redis
-
-# Stop the installation while preserving its data volumes
-docker compose -f compose.yaml -f compose.updater.yaml down
-
-# Start the installed services again
-docker compose -f compose.yaml -f compose.updater.yaml up -d
 ```
 
 Keep your `.env` file and back up your database before manual maintenance.
-**Do not use `docker compose down -v` if you want to preserve your data.** Database
-passwords are initialized with the MySQL volume; editing `.env` alone does not
-change credentials inside an existing database.
+**Do not use `docker compose down -v` if you want to preserve your data.**
 
 See the [automatic update guide](docs/auto-update.md) for configuration and
 recovery, and the [self-hosting guide](docs/self-hosting.md) for manual updates,
-backups, and deployment behind HTTPS. The installer and updater use the Docker
-socket to manage services; the web application does not receive that access.
+backups, and deployment behind HTTPS. The installer and updater require Docker
+socket access to manage services; use a trusted copy of the project.
 
 ## How Mangaka works
 
-| Component | Purpose |
-| --- | --- |
-| Python 3.13 and Flask | Web application and provider coordination |
-| SQLAlchemy, MySQL, and Alembic | Accounts, canonical catalog, reading data, and migrations |
-| Redis | Shared metadata/page-URL cache and request cooldowns |
-| Source adapters | Fetch catalog metadata, chapter listings, and page URLs |
-| Background worker | Check favorites for unread chapter updates |
-| Docker Compose | Run the application and supporting services |
-
-Redis helps reduce repeated provider requests; it does not guarantee that every
-concurrent request stays within upstream limits. User-specific reading data stays
-outside shared catalog caches. Chapter-page URLs are cached separately because
-they can expire.
+Flask serves the reader, MySQL stores accounts and reading metadata, and Redis
+reduces repeated provider requests. Source adapters retrieve catalog information
+and chapter-page URLs; a background worker checks favorites for updates.
+Docker Compose manages the services.
 
 Mangaka stores reading metadata and source mappings. It does **not** provide a
 permanent manga-image archive or an offline chapter downloader.
@@ -227,8 +206,8 @@ available only in Portuguese.
 ### Is Mangaka free and open source?
 
 Yes. The application is released under the MIT license. You can run your own
-instance and modify the software. Source content is separate from the software
-license; running Mangaka does not grant access to restricted chapters.
+instance and modify the software. That license applies to the application code,
+not to the manga content available through external sources.
 
 ### Can I use Mangaka without programming knowledge?
 
