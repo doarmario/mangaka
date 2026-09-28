@@ -21,7 +21,7 @@ def test_manga_tags_link_to_filtered_catalog(app, api):
     response = app.test_client().get('/manga/m1')
     assert response.status_code == 200
     assert 'source=mangadex&amp;tag=isekai-id' in response.text
-    assert 'Ver mangás de Isekai' in response.text
+    assert 'Browse manga tagged Isekai' in response.text
 
 
 def test_tags_page_lists_and_links_mangadex_tags(app, api):
@@ -40,7 +40,7 @@ def test_tag_filter_keeps_pagination_and_cache(app, api):
     assert first.status_code == 200
     assert 'Tag: <strong>Isekai</strong>' in first.text
     assert '/mangas/2?source=mangadex&amp;tag=isekai-id' in first.text
-    assert 'Remover filtro' in first.text
+    assert 'Remove filter' in first.text
     second = client.get('/mangas/2?tag=isekai-id')
     assert second.status_code == 200
     assert calls[-1][1]['includedTags[]'] == ['isekai-id']

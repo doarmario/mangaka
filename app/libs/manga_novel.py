@@ -69,7 +69,7 @@ class MangaNovel:
         self.source = source
         self.base = source_api_url(source)
         if not self.base:
-            raise SourceUnavailable('A API adicional não está configurada.')
+            raise SourceUnavailable('The source API is not configured.')
 
     def _request(self, path, **params):
         params = {'source': self.source, **params}
@@ -80,7 +80,7 @@ class MangaNovel:
             return deepcopy(cached)
         cooldown = 'manga_novel_unavailable_' + self.source
         if cache.get(cooldown):
-            raise SourceUnavailable(f'{SOURCES[self.source]} indisponível. Tente novamente em instantes.')
+            raise SourceUnavailable(f'{SOURCES[self.source]} is unavailable. Please try again shortly.')
         try:
             response = requests.get(self.base + path, params=params, timeout=(3, 30))
             response.raise_for_status()
@@ -92,7 +92,7 @@ class MangaNovel:
                 raise ValueError('Unexpected provider returned by API')
         except (requests.RequestException, ValueError) as exc:
             cache.set(cooldown, True, timeout=30)
-            raise SourceUnavailable(f'{SOURCES[self.source]} indisponível. Tente novamente em instantes.') from exc
+            raise SourceUnavailable(f'{SOURCES[self.source]} is unavailable. Please try again shortly.') from exc
         cache.set(key, data, timeout=600 if path.endswith('/pages') else 900)
         return deepcopy(data)
 
@@ -109,7 +109,7 @@ class MangaNovel:
         response = self._request('/api/manga/search', q=query, page=1 if self.source == 'asura' else page, limit=self.limit)
         records = response.get('results', [])
         if not isinstance(records, list):
-            raise SourceUnavailable('A fonte retornou uma lista inválida.')
+            raise SourceUnavailable('The source returned an invalid list.')
         total = len(records) if self.source == 'asura' else None
         if self.source == 'qiscans':
             return self._qiscans_list(response)
@@ -135,7 +135,7 @@ class MangaNovel:
         records = response.get('results')
         total = response.get('total')
         if not isinstance(records, list) or (total is not None and (not isinstance(total, int) or total < 0)):
-            raise SourceUnavailable('A fonte retornou um catálogo inválido.')
+            raise SourceUnavailable('The source returned an invalid catalog.')
         return self._normalize_list(records, total, bool(response.get('has_next')))
 
     def _qiscans_list(self, response):
@@ -147,7 +147,7 @@ class MangaNovel:
                 or pages != max(1, (total + size - 1) // size)
                 or type(response.get('has_next')) is not bool
                 or response['has_next'] != (page < pages)):
-            raise SourceUnavailable('A fonte retornou totais ou paginação inválidos.')
+            raise SourceUnavailable('The source returned invalid totals or pagination.')
         result = self._normalize_list(records, total, response['has_next'])
         return {**result, 'total_pages': pages, 'page': page}
 
@@ -164,12 +164,12 @@ class MangaNovel:
         # ComicK accepts the slug for details and hid for chapter lists.
         remote = ref.payload.get('slug') if self.source == 'comick' else None
         raw = self._request('/api/manga/' + quote(remote or ref.remote_id, safe=''))
-        return {'id': ref.id, 'title': raw.get('title') or ref.payload.get('title', 'Sem título'),
-                'sinopse': raw.get('description') or 'Sem descrição', 'tags': raw.get('genres') or [],
+        return {'id': ref.id, 'title': raw.get('title') or ref.payload.get('title', 'Untitled'),
+                'sinopse': raw.get('description') or 'No description available', 'tags': raw.get('genres') or [],
                 'tag_links': raw.get('tagLinks') or [], 'aliases': raw.get('aliases') or [],
                 'titles': title_variants({'titles': [*title_variants(ref.payload), *title_variants(raw)]}),
                 'autor': ', '.join(raw.get('authors') or []), 'ano': raw.get('year'),
-                'status': str(raw.get('status') or 'Não informado'),
+                'status': str(raw.get('status') or 'Unknown'),
                 'cover_url': raw.get('coverUrl') or ref.payload.get('coverUrl'),
                 'source_name': SOURCES[self.source], 'type': raw.get('type') or 'manga',
                 'external_ids': raw.get('external_ids') or {}, 'artist': raw.get('artist'),
@@ -186,7 +186,7 @@ class MangaNovel:
                                          lang=language, page=page, limit=100)
                 batch = response.get('chapters', [])
                 if not isinstance(batch, list):
-                    raise SourceUnavailable('A fonte retornou capítulos inválidos.')
+                    raise SourceUnavailable('The source returned invalid chapters.')
                 fresh = [r for r in batch if self._remote(r) and self._remote(r) not in seen]
                 for item in fresh:
                     seen.add(self._remote(item))
@@ -198,14 +198,14 @@ class MangaNovel:
                         number = item.get('chap')
                     if number is None or number == '':
                         match = re.search(r'(?:chapter|cap[ií]tulo)\s*([\d.]+)', item.get('title', ''), re.I)
-                        number = match.group(1) if match else 'Sem número'
+                        number = match.group(1) if match else 'Unnumbered'
                     records.append((self._remote(item), {'cap': str(number), 'title': item.get('title'), 'volume': item.get('volume'), 'language': actual_language,
                                     'language_name': LANGUAGE_NAMES[actual_language]}))
                 total = response.get('total')
                 if self.source != 'comick' or not batch or (isinstance(total, int) and page * 100 >= total):
                     break
                 if not fresh or page >= 100:
-                    raise SourceUnavailable('A fonte não permitiu carregar todos os capítulos.')
+                    raise SourceUnavailable('The source did not allow all chapters to be loaded.')
                 page += 1
         refs = register_many(self.source, 'chapter', records, parent_id=ref.id)
         result = [{**r.payload, 'cap_id': r.id, 'is_readed': False, 'others': []} for r in refs]

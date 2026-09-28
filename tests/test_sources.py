@@ -96,7 +96,7 @@ def test_source_error_renders_alternative_sources(app, source_api, monkeypatch):
     monkeypatch.setattr(requests, 'get', lambda *args, **kwargs: (_ for _ in ()).throw(requests.Timeout()))
     response = app.test_client().get('/search?query=story&source=weebcentral')
     assert response.status_code == 503
-    assert 'Buscar em MangaDex' in response.text
+    assert 'Search in MangaDex' in response.text
 
 
 def test_external_favorites_and_history_use_local_ids(app, source_api):
@@ -153,5 +153,5 @@ def test_catalog_reports_source_failure_instead_of_empty_success(app, source_api
     monkeypatch.setattr(requests, 'get', unavailable)
     response = app.test_client().get('/mangas?source=comick')
     assert response.status_code == 503
-    assert 'Esta fonte não respondeu.' in response.text
-    assert 'Buscar em MangaDex' in response.text
+    assert 'This source did not respond.' in response.text
+    assert 'Search in MangaDex' in response.text

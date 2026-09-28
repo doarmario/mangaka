@@ -126,6 +126,9 @@ Chapter language preferences and title metadata are separate: Mangaka preserves
 all title languages supplied by a provider, including Japanese, Korean, Chinese,
 and romanized forms. It does not automatically translate titles or manga pages.
 
+The application interface is currently in English. An interface language selector
+is not available yet; Portuguese and English chapter support is unchanged.
+
 ## Reading progress that survives source changes
 
 The same work can have different titles and provider IDs. Mangaka assigns it a

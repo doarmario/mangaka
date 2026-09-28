@@ -133,7 +133,7 @@ def resolve_work(item, source, *, allow_title_match=True):
         elif len(candidates) > 1:
             log.debug('Ambiguous match rejected for source work %s', identifier)
     if work is None:
-        work = Work(canonical_title=str(item.get('title') or 'Sem título')[:255],
+        work = Work(canonical_title=str(item.get('title') or 'Untitled')[:255],
                     normalized_title=normalize_title(item.get('title')), metadata_json={**metadata(item), 'match_candidates': matching_candidates(item)},
                     description=item.get('sinopse'))
         db.session.add(work)
@@ -303,7 +303,7 @@ def backfill():
     for ref in references:
         if db.session.get(SourceWork, ref.id) is not None:
             continue
-        item = {**ref.payload, 'id': ref.id, 'title': ref.payload.get('title') or 'Sem título'}
+        item = {**ref.payload, 'id': ref.id, 'title': ref.payload.get('title') or 'Untitled'}
         ambiguous = any(other.id != ref.id and other.source == ref.source
                         and title_keys(other.payload) & title_keys(item) for other in references)
         sw = resolve_work(item, ref.source, allow_title_match=not ambiguous)

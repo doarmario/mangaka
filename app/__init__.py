@@ -28,6 +28,8 @@ def create_app(config_object=None):
 
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(config_object)
+    from app.presentation import init_presentation
+    init_presentation(app)
 
     # Identity resolution uses a short row mutex. Reads after waiting for it
     # must see the winner's committed aliases/mappings, not an older RR snapshot.
@@ -41,7 +43,7 @@ def create_app(config_object=None):
     csrf.init_app(app)
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
-    login_manager.login_message = 'Entre na sua conta para acessar sua biblioteca.'
+    login_manager.login_message = 'Sign in to access your library.'
     login_manager.login_message_category = 'info'
     migrate.init_app(app,db)
     cache.init_app(app)

@@ -91,7 +91,7 @@ def test_aggregate_accepts_special_and_missing_numbers(context, api):
         str(i): {'chapter': num, 'id': str(i)}
         for i, num in enumerate([None, 'extra', '2.5', '10', 'none'])}}, 'empty': {'chapters': []}}}
     chapters = Mangas(lang='pt-br').getMangaChapterList('m1')
-    assert [c['cap'] for c in chapters] == ['extra', '10', '2.5', 'Sem número', 'Sem número']
+    assert [c['cap'] for c in chapters] == ['extra', '10', '2.5', 'Unnumbered', 'Unnumbered']
 
 
 def test_user_read_state_never_enters_shared_cache(context, api):
@@ -125,7 +125,7 @@ def test_details_description_and_author_cache(context, api, monkeypatch):
     assert service.showManga('m1')['sinopse'] == 'Descrição'
     assert service.showManga('m1')['autor'] == 'Author'
     assert calls == ['a1']
-    assert service.id2Cover('m1') == '/static/img/page.png'
+    assert service.id2Cover('m1') == '/static/img/cover-placeholder.svg'
     json.dumps(cache.get(service._key('manga', 'm1')))
 
 
@@ -170,7 +170,7 @@ def test_listing_primes_metadata_cache(context, api):
     service = Mangas()
     service.listAll(0)
     assert service.getManga('m1')['sinopse'] == 'Descrição'
-    assert service.id2Cover('m1') == '/static/img/page.png'
+    assert service.id2Cover('m1') == '/static/img/cover-placeholder.svg'
     assert len(calls) == 1
 
 

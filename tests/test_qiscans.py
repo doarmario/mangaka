@@ -65,15 +65,15 @@ def test_qiscans_honors_explicit_totals_and_page_count(app, qiscans_api, route):
     result = client.get(route + separator + 'source=qiscans')
     assert result.status_code == 200
     assert 'Qi Story' in result.text and '/2?' in result.text
-    assert '41' in result.text and 'Página 1 de 2' in result.text
+    assert '41' in result.text and 'Page 1 of 2' in result.text
     path, _, query = route.partition('?')
     second = client.get(path + '/2?source=qiscans&' + query)
     assert second.status_code == 200
-    assert 'Página 2 de 2' in second.text
+    assert 'Page 2 of 2' in second.text
     assert path + '/3?' not in second.text
     assert qiscans_api[-1][1]['page'] == 2
     beyond = client.get(path + '/500?source=qiscans&' + query)
-    assert 'Página 2 de 2' in beyond.text
+    assert 'Page 2 of 2' in beyond.text
     assert path + '/3?' not in beyond.text
 
 
@@ -125,7 +125,7 @@ def test_qiscans_failure_uses_existing_unavailable_page(app, qiscans_api, monkey
     monkeypatch.setattr(requests, 'get', unavailable)
     result = app.test_client().get('/mangas?source=qiscans')
     assert result.status_code == 503
-    assert 'Buscar em MangaDex' in result.text
+    assert 'Search in MangaDex' in result.text
 
 
 def test_qiscans_health_is_visible(app, qiscans_api):

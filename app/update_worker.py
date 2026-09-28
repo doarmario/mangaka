@@ -67,7 +67,7 @@ def refresh_once(user_id=None):
                 manga_uuid=favorite.manga.uuid,
                 manga_title=details.get('title', favorite.manga.title),
                 chapter_uuid=latest['cap_id'],
-                chapter_label=str(latest.get('cap', 'Sem número')),
+                chapter_label=str(latest.get('cap', 'Unnumbered')),
                 source_name=details.get('source_name', 'MangaDex'),
             ))
             # Commit each notification independently so one broken provider

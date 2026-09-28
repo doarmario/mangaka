@@ -168,7 +168,7 @@ def test_unavailable_all_preserves_progress(context, monkeypatch):
     reader = user()
     save_progress(reader.id, chapter(a, 'ch'), 32, 42)
     monkeypatch.setattr(Library, 'sources', staticmethod(lambda: {}))
-    with pytest.raises(SourceUnavailable, match='preservado'):
+    with pytest.raises(SourceUnavailable, match='preserved'):
         resolve_source_for_chapter(reader.id, a.work, Library())
     assert ReadingProgress.query.one().page_number == 32
 
@@ -289,7 +289,7 @@ def test_plan_to_read_before_first_chapter(app):
         session['_fresh'] = True
     response = client.post('/work/' + work_id + '/status', json={'status': 'plan_to_read'})
     assert response.status_code == 200
-    assert 'Quero ler' in client.get('/biblioteca').text
+    assert 'Plan to read' in client.get('/biblioteca').text
     with app.app_context():
         row = ReadingProgress.query.one()
         assert row.work_id == work_id and row.logical_chapter_id is None
@@ -413,8 +413,8 @@ def test_canonical_page_survives_all_sources_removed(app, monkeypatch):
         session['_fresh'] = True
     response = client.get('/work/' + work_id)
     assert response.status_code == 200
-    assert 'Continuar lendo' in response.text and 'capítulo 50' in response.text
-    assert 'asura — indisponível' in response.text
+    assert 'Continue reading' in response.text and 'chapter 50' in response.text
+    assert 'asura — unavailable' in response.text
 
 
 def test_worker_unread_state_is_shared_across_sources(app, monkeypatch):

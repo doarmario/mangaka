@@ -1,7 +1,7 @@
 <form class="nav-search" action="{{ url_for('user.searchTitles') }}" method="GET" role="search">
-    <button type="submit" aria-label="Buscar mangás">{{ icon('search') }}</button>
+    <button type="submit" aria-label="Search manga">{{ icon('search') }}</button>
     {% if g.selected_source is defined %}<input type="hidden" name="source" value="{{ g.selected_source }}">{% endif %}
     {% if g.selected_tag is defined %}<input type="hidden" name="tag" value="{{ g.selected_tag.id }}">{% endif %}
-    <input type="search" name="query" placeholder="Qual história você procura?" value="{{ request.args.get('query', '') }}" aria-label="Buscar mangás" required>
+    <input type="search" name="query" placeholder="What story are you looking for?" value="{{ request.args.get('query', '') }}" aria-label="Search manga" required>
     <kbd aria-hidden="true">/</kbd>
 </form>

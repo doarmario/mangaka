@@ -1,7 +1,7 @@
 {
     "name": "Mangaka",
     "short_name": "Mangaka",
-    "description": "Leitor de Manga.",
+    "description": "Self-hosted manga reader.",
     "start_url": "/",
     "scope": "/",
     "id": "/",
