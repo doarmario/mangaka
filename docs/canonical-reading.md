@@ -70,6 +70,33 @@ Homônimos com metadados ausentes não podem ser distinguidos com certeza.
 Traduções sem aliases ou IDs em comum podem continuar separadas. A descoberta
 consulta uma página por provider e mantém os caches existentes; não varre a web.
 
+## Todos os títulos e idiomas
+
+`work.metadata_json.titles` preserva cada grafia original como
+`{title, language, source}`. Por exemplo, `ja`/`ko`/`zh` e variantes romanizadas
+`ja-ro`/`ko-ro` são mantidas junto com `pt`, `pt-br`, `en` e quaisquer outros códigos
+fornecidos. O idioma não é inferido pela escrita; se não veio da fonte, fica nulo.
+Não há tradução ou transliteração automática.
+
+O texto não é normalizado nesse armazenamento. Diferenças de pontuação, caixa ou
+Unicode ficam preservadas; o mesmo texto em dois idiomas também fica registrado
+em ambos. Duplicatas exatas (texto + idioma + fonte) são idempotentes. Quando um
+idioma passa a ser conhecido, a entrada sem idioma do mesmo texto/fonte é
+substituída pela informação mais completa. Atualizações parciais não apagam títulos
+anteriores, e a consolidação de obras preserva as variantes das duas identidades.
+
+`work_alias` continua sendo o índice normalizado de matching, não o inventário de
+grafias. O endpoint `/api/works/<id>` mantém `aliases` e acrescenta `titles` com
+as variantes completas. Adaptadores podem fornecer `titles` estruturado junto
+com os aliases antigos; MangaDex mantém todas as entradas de `title` e `altTitles`,
+inclusive nas listagens, independentemente dos idiomas escolhidos para capítulos.
+
+A revisão `20260928_multilingual_titles` é apenas de dados, sem tabelas/colunas
+novas: recupera aliases e metadados presentes em `source_reference`. Variantes já
+descartadas pelo código antigo e ausentes dos dados locais só podem ser recuperadas
+em uma nova consulta à fonte. O cache MangaDex muda para v5 para buscar metadados
+com idioma. O downgrade conserva os títulos adicionais.
+
 ## Capítulos e páginas
 
 `parse_chapter`, `chapter_order` e `chapter_identity` são funções compartilhadas.
@@ -170,7 +197,7 @@ esses testes criam e removem tabelas somente nesse banco.
 
 ## Novas integrações
 
-Continuam entregando `id`, `title`, `aliases` opcionais, `autor`/`author`, `artist`,
+Continuam entregando `id`, `title`, `aliases` opcionais, `titles` com título/idioma, `autor`/`author`, `artist`,
 `ano`/`year`, `type`, `country`, `edition`, `external_ids` opcionais e `source_url`.
 Capítulos usam `cap_id`, `cap` textual, `volume`, `title`, `language` e URL opcional.
 O adaptador `Library` resolve identidade após receber os dados; não replique matching

@@ -25,7 +25,7 @@ class Mangas:
         self.languages = (lang,) if lang else ("pt-br", "pt", "en")
         self.langs = tuple(dict.fromkeys(langs or self.languages))
         self.limit = limit
-        self.prefix = prefix + "v4_"
+        self.prefix = prefix + "v5_"
         self.mangas = dex.series.Manga()
         self.tags = dex.series.Tag()
         self.covers = dex.series.Cover()
@@ -71,11 +71,14 @@ class Mangas:
         return self._text(values, "Sem título")
 
     def _manga_data(self, manga):
+        titles = [{'title': value, 'language': language}
+                  for values in [dict(manga.title or {}), *(manga.alt_titles or [])]
+                  for language, value in values.items() if isinstance(value, str) and value.strip()]
         aliases = [*dict(manga.title or {}).values(),
                    *(value for alternative in manga.alt_titles or [] for value in alternative.values())]
         english = dict(manga.title or {}).get('en') or next(
             (a['en'] for a in manga.alt_titles or [] if a.get('en')), None)
-        return {"id": manga.manga_id, "title": self._title(manga), "aliases": aliases,
+        return {"id": manga.manga_id, "title": self._title(manga), "aliases": aliases, "titles": titles,
                 "search_title": english or self._title(manga),
                 "sinopse": self._text(manga.description, "Sem descrição"),
                 "tags": [self._text(tag.name) for tag in manga.tags],
@@ -102,7 +105,7 @@ class Mangas:
                 cache.set(self._key("manga", manga.manga_id),
                           self._manga_data(manga), timeout=3600)
             return {"itens": [{key: value for key, value in self._manga_data(m).items()
-                               if key in {'id', 'title', 'aliases', 'ano'}} for m in items],
+                               if key in {'id', 'title', 'aliases', 'titles', 'ano'}} for m in items],
                     "total": response["total"]}
 
         return self._cached("list", (params,), load)

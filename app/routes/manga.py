@@ -342,6 +342,7 @@ def work_metadata(work_id):
                 if current_user.is_authenticated else None)
     response = jsonify(id=work.id, title=work.canonical_title,
         aliases=[alias.alias for alias in work.aliases],
+        titles=work.metadata_json.get('titles', []),
         sources=[{'id': source.id, 'source': source.source,
                   'available': source.available and source.source in manga.sources(),
                   'url': url_for('user.manga_sinopse', manga_id=source.id)} for source in work.sources],
