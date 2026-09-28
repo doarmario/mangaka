@@ -83,3 +83,19 @@ def test_explicit_mangadex_pagination_preserves_provider(unified, monkeypatch):
     assert '/mangas/2?source=mangadex' in result.text
     blank = unified.get('/search?query=&source=mangadex')
     assert blank.location.endswith('/mangas?source=mangadex')
+
+
+def test_rotated_asura_urls_share_one_canonical_card(unified, monkeypatch):
+    def provider(self, source, query, page):
+        if source == 'asura':
+            return {'itens': [item(token, 'Shared title', source,
+                                  external_id='comics/shared-title-' + token)
+                              for token in ('05c7df14', '3ec3b16f')], 'has_next': False}
+        return {'itens': [item('md', 'Shared title')], 'has_next': False}
+    monkeypatch.setattr(UnifiedCatalog, 'provider', provider)
+    for _ in range(2):
+        response = unified.get('/mangas')
+        assert response.status_code == 200
+        assert response.text.count('class="manga-card"') == 1
+        assert 'MangaDex · AsuraScans' in response.text
+        assert 'AsuraScans · AsuraScans' not in response.text

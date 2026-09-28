@@ -17,6 +17,16 @@ def fingerprint(value):
     return sha256(value.encode('utf-8')).hexdigest()
 
 
+def source_work_key(source, remote_id):
+    """Provider-specific identity hints; never strip sequel/edition numbers."""
+    value = str(remote_id)
+    if source == 'asura':
+        match = re.fullmatch(r'comics/(.+)-[0-9a-f]{8}', value)
+        if match:
+            return 'comics/' + match[1]
+    return value
+
+
 def title_keys(item):
     return {key for value in [item.get('title', ''), *title_aliases(item)]
             if isinstance(value, str) and (key := normalize_title(value))
