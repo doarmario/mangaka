@@ -21,10 +21,16 @@
             {% if data.work_sources %}<p class="source-note">{% for source in data.work_sources %}{{ source.source }} — {{ 'disponível' if source.available and source.source in g.sources else 'indisponível' }}{% if not loop.last %} · {% endif %}{% endfor %}</p>{% endif %}
             <div class="detail-actions">{% if data.reading_progress and data.reading_progress.logical_chapter_id %}<a class="button primary" href="{{ url_for('user.continue_work', work_id=data.work_id) }}">{{ icon('book') }} Continuar lendo</a>{% endif %}{% if data.chapters %}<a id="start-reading" class="button primary" href="{{ url_for('user.mangaCap', cap_id=data.first_chapter) }}">{{ icon('book') }} Começar a ler</a>{% endif %}
             {% if current_user.is_authenticated %}<button class="button secondary favorite-button" id="favorite-btn" data-manga-id="{{ data.id }}" aria-pressed="{{ 'true' if data.is_favorite else 'false' }}">{{ icon('heart') }}<span>{{ 'Nos favoritos' if data.is_favorite else 'Favoritar' }}</span></button>{% else %}<a class="button secondary" href="{{ url_for('auth.login') }}">{{ icon('heart') }} Entrar para favoritar</a>{% endif %}</div>
-            {% if current_user.is_authenticated and data.work_id %}<label for="reading-status">Na minha biblioteca</label>
-            <select id="reading-status" data-url="{{ url_for('user.reading_status', work_id=data.work_id) }}" data-csrf="{{ csrf_token() }}">
+            {% if current_user.is_authenticated and data.work_id %}
+            <div class="library-status-control">
+                <div class="library-status-heading">
+                    {{ icon('book') }}
+                    <div><label for="reading-status">Na minha biblioteca</label><p id="reading-status-help">Organize sua leitura desta obra.</p></div>
+                </div>
+            <select id="reading-status" aria-describedby="reading-status-help action-status" data-url="{{ url_for('user.reading_status', work_id=data.work_id) }}" data-csrf="{{ csrf_token() }}">
                 <option value="">Selecionar status</option>{% for value, label in [('plan_to_read', 'Quero ler'), ('reading', 'Lendo'), ('completed', 'Concluído'), ('paused', 'Pausado'), ('dropped', 'Abandonado')] %}<option value="{{ value }}" {% if data.reading_progress and data.reading_progress.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
-            </select>{% endif %}
+            </select>
+            </div>{% endif %}
             <p id="action-status" class="action-status" role="status"></p>
         </div>
     </div>
