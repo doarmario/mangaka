@@ -126,7 +126,10 @@ fontes**. Cada página consulta uma página de cada provedor e agrupa títulos
 correspondentes nessa seleção. A paginação não representa um índice completo
 deduplicado: uma obra pode reaparecer em outra página de outro provedor.
 
-As obras possuem uma identidade local independente dos provedores. Títulos e
+As obras possuem uma identidade local independente dos provedores. Todos os títulos
+e aliases fornecidos são preservados na grafia original, com idioma e fonte quando
+informados, incluindo títulos asiáticos e romanizações. Isso é independente do
+filtro de capítulos em português e inglês. Títulos e
 aliases exatos, metadados compatíveis e IDs externos opcionais ajudam a associar
 fontes à mesma obra. Casos ambíguos permanecem separados; fuzzy matching não faz
 uniões automáticas.
@@ -164,7 +167,7 @@ parser da biblioteca separadamente para preservar a paginação da resposta.
 
 ### Cache e requisições
 
-- As chaves `mangadex_v3_` incluem página, idioma, tamanho de página e filtros.
+- As chaves `mangadex_v5_` incluem página, idioma, tamanho de página e filtros.
   Entradas antigas expiram normalmente, sem necessidade de limpar o Redis.
 - Listas e capítulos: 15 minutos; metadados e capas: 1 hora; autores e tags: 24 horas.
 - URLs temporárias das páginas: 10 minutos, separadas dos metadados do capítulo.

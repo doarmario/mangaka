@@ -24,8 +24,39 @@ def title_keys(item):
 
 
 def title_aliases(item):
-    aliases = item.get('aliases') or []
-    return [aliases] if isinstance(aliases, str) else aliases
+    return list(dict.fromkeys(entry['title'] for entry in title_variants(item)))
+
+
+def title_variants(item, source=None):
+    """Lossless titles for storage; language is supplied by the provider, never guessed."""
+    entries = []
+
+    def collect(value, language=None):
+        if isinstance(value, str):
+            if value.strip():
+                entries.append({'title': value, 'language': language, 'source': source})
+        elif isinstance(value, (list, tuple)):
+            for entry in value:
+                collect(entry, language)
+        elif isinstance(value, dict):
+            if isinstance(value.get('title'), str):
+                if value['title'].strip():
+                    entries.append({'title': value['title'],
+                                    'language': value.get('language') or value.get('lang') or language,
+                                    'source': source or value.get('source')})
+            else:
+                for lang, title in value.items():
+                    collect(title, lang)
+
+    for field in ('title', 'aliases', 'titles'):
+        collect(item.get(field))
+    localized = {(entry['title'], entry['source']) for entry in entries if entry['language']}
+    unique = {}
+    for entry in entries:
+        if not entry['language'] and (entry['title'], entry['source']) in localized:
+            continue
+        unique.setdefault((entry['title'], entry['language'], entry['source']), entry)
+    return list(unique.values())
 
 
 def metadata(item):

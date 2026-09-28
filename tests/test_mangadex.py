@@ -23,7 +23,9 @@ def test_lists_keep_totals_and_cache_each_page(context, api, method, args):
     first, second = call(*args, 0), call(*args, 20)
     assert first['total'] == second['total'] == 47
     assert first['itens'][0] == {'id': '0', 'title': 'Título traduzido',
-                                 'aliases': ['Original', 'Título traduzido'], 'ano': 2024}
+                                 'aliases': ['Original', 'Título traduzido'], 'ano': 2024,
+                                 'titles': [{'title': 'Original', 'language': 'ja'},
+                                            {'title': 'Título traduzido', 'language': 'pt-br'}]}
     assert second['itens'][0]['id'] == '20'
     assert call(*args, 0) == first
     assert len(calls) == 2

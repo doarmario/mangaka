@@ -7,7 +7,7 @@ from app.models import (CatalogLock, Work, WorkAlias, WorkExternalID, SourceWork
                         LogicalChapter, SourceChapter, Manga, Chapter, Favorite,
                         Readed, ReadingProgress, SourceReference, UpdateNotification, utc_now)
 from app.libs.identity import (normalize_title, title_keys, fingerprint, metadata,
-                               compatible, chapter_identity, match_confidence, title_aliases)
+                               compatible, chapter_identity, match_confidence, title_variants)
 
 log = logging.getLogger(__name__)
 
@@ -30,9 +30,16 @@ def work_data(work):
 
 
 def _aliases(work, item, source):
+    variants = title_variants(item, source)
+    # Keep raw spellings and language/source provenance separately from the
+    # deduplicated matching index. Punctuation/case variants must not be lost.
+    work.metadata_json = {**work.metadata_json, 'titles': title_variants({
+        'titles': [*work.metadata_json.get('titles', []), *variants]})}
     existing = {a.alias_hash for a in work.aliases}
-    for value in [item.get('title', ''), *title_aliases(item)]:
-        if not isinstance(value, str) or normalize_title(value) not in title_keys(item):
+    keys = title_keys(item)
+    for entry in variants:
+        value = entry['title']
+        if normalize_title(value) not in keys:
             continue
         normalized = normalize_title(value)
         digest = fingerprint(normalized)
@@ -140,6 +147,7 @@ def merge_works(target, old):
     for alias in list(old.aliases):
         _aliases(target, {'title': alias.alias}, alias.origin)
         db.session.delete(alias)
+    _aliases(target, {'titles': old.metadata_json.get('titles', [])}, None)
     db.session.flush()
     # Keep a redirect so previously issued canonical URLs remain valid.
     old.metadata_json = {**old.metadata_json, 'redirect_to': target.id}

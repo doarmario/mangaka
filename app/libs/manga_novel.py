@@ -13,6 +13,7 @@ from sqlalchemy.exc import IntegrityError
 from app import cache, db
 from app.models import SourceReference
 from app.libs.md import LANGUAGE_NAMES, Mangas
+from app.libs.identity import title_variants
 
 SOURCES = {'comick': 'ComicK', 'weebcentral': 'WeebCentral', 'asura': 'AsuraScans',
            'qiscans': 'Qi Scans', 'demonicscans': 'Demonic Scans', 'thunderscans': 'Thunder Scans'}
@@ -153,7 +154,10 @@ class MangaNovel:
     def _normalize_list(self, records, total, has_next):
         records = [record for record in records if self._remote(record) and record.get('title')]
         refs = register_many(self.source, 'manga', [(self._remote(r), r) for r in records])
-        return {'itens': [{'id': ref.id, 'title': ref.payload['title'], 'source_name': SOURCES[self.source]} for ref in refs],
+        return {'itens': [{'id': ref.id, 'title': ref.payload['title'],
+                          'aliases': ref.payload.get('aliases') or [],
+                          'titles': ref.payload.get('titles') or [],
+                          'source_name': SOURCES[self.source]} for ref in refs],
                 'total': total, 'has_next': has_next}
 
     def info(self, ref):
@@ -163,6 +167,7 @@ class MangaNovel:
         return {'id': ref.id, 'title': raw.get('title') or ref.payload.get('title', 'Sem título'),
                 'sinopse': raw.get('description') or 'Sem descrição', 'tags': raw.get('genres') or [],
                 'tag_links': raw.get('tagLinks') or [], 'aliases': raw.get('aliases') or [],
+                'titles': title_variants({'titles': [*title_variants(ref.payload), *title_variants(raw)]}),
                 'autor': ', '.join(raw.get('authors') or []), 'ano': raw.get('year'),
                 'status': str(raw.get('status') or 'Não informado'),
                 'cover_url': raw.get('coverUrl') or ref.payload.get('coverUrl'),
