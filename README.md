@@ -25,6 +25,7 @@ chapters are available.
 
 - **Search multiple manga sources together.** Browse a shared catalog and find
   matching works without choosing a provider for every search.
+  Results appear progressively, so you can browse while slower sources respond.
 - **Keep your place when a source changes.** Resume the same logical chapter from
   another available provider when an equivalent chapter is known.
 - **Build your own reading library.** Save favorites and organize works as
@@ -198,6 +199,7 @@ available only in Portuguese.
 | --- | --- |
 | [Self-hosting Mangaka](docs/self-hosting.md) | Installation, local-network access, backup, restoration, and HTTPS deployment |
 | [Automatic updates](docs/auto-update.md) | Updater configuration, Git behavior, permissions, and recovery |
+| [Progressive catalog loading](docs/catalog-loading.md) | Incremental results, shared cache, concurrency limits, and proxy streaming |
 | [Canonical works and reading progress](docs/canonical-reading.md) | Identity, multilingual titles, matching, chapter mappings, and migrations |
 | [Manga Novel API integration](integrations/manga-novel/README.md) | Local API setup and Asura adapter details |
 | [Qi Scans integration](integrations/qiscans/README.md) | Source configuration and behavior |
@@ -250,7 +252,7 @@ The shell-based installer/updater tests require Bash, Git, and `jq`; run those i
 a Linux environment. JavaScript reader tests run with:
 
 ```bash
-node --test tests/reader-progress.test.cjs
+node --test tests/*.test.cjs
 ```
 
 The application tests use SQLite and an in-memory cache, mock upstream HTTP

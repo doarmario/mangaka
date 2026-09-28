@@ -700,6 +700,26 @@ svg {
     gap:12px;
     flex-wrap:wrap
 }
+.catalog-loading progress {
+    width:100%;
+    height:6px;
+    margin:0 0 20px;
+    accent-color:var(--accent)
+}
+.catalog-loading #catalog-retry { margin-bottom:20px }
+.catalog-skeleton div {
+    aspect-ratio:256/360;
+    background:var(--raised);
+    border-radius:var(--radius)
+}
+.catalog-skeleton span {
+    display:block;
+    height:14px;
+    width:75%;
+    margin:12px 0 24px;
+    border-radius:4px;
+    background:var(--line)
+}
 .library-status-control {
     display:flex;
     align-items:center;

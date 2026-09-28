@@ -19,11 +19,18 @@
     {% if g.selected_source == 'all' %}<p class="source-note">Results are grouped by work. Open a manga to see other sources. Choose a source to filter by genre and language.</p>{% endif %}
     {% if unavailable %}<p class="source-note" role="status">Could not reach: {{ unavailable | join(', ') }}. Other sources are still available.</p>{% endif %}
     <div class="catalog-toolbar"><span>{{ 'All manga' if not query else 'Manga found' }}</span><span>Page {{ paginator.page }}{% if paginator.total_pages %} of {{ paginator.total_pages }}{% endif %}</span></div>
-    <div class="card-grid">{% for item in data %}{{ card(item) }}{% else %}<div class="empty-state">{{ icon('search') }}<h2>No stories found.</h2><p>Search by title or choose another source.</p><a class="button secondary" href="{{ url_for('user.mangaList') }}">Back to catalog</a></div>{% endfor %}</div>
-    {% if paginator.active %}<nav class="paginator" aria-label="Catalog pages">
-        {% if paginator.page > 1 %}<a class="button secondary" rel="prev" href="{{ url_for('user.searchTitles', page=paginator.page-1, query=query, source=g.selected_source, tag=selected_tag.id if selected_tag else none, language=filters.language, status=filters.status) if query else url_for('user.mangaList', page=paginator.page-1, source=g.selected_source, tag=selected_tag.id if selected_tag else none, language=filters.language, status=filters.status) }}">{{ icon('left') }} Previous</a>{% endif %}
-        <span>{{ paginator.page }} {% if paginator.total_pages %}<span class="muted">/ {{ paginator.total_pages }}</span>{% endif %}</span>
-        {% if paginator.has_next or (paginator.total_pages and paginator.page < paginator.total_pages) %}<a class="button secondary" rel="next" href="{{ url_for('user.searchTitles', page=paginator.page+1, query=query, source=g.selected_source, tag=selected_tag.id if selected_tag else none, language=filters.language, status=filters.status) if query else url_for('user.mangaList', page=paginator.page+1, source=g.selected_source, tag=selected_tag.id if selected_tag else none, language=filters.language, status=filters.status) }}">Next {{ icon('right') }}</a>{% endif %}
-    </nav>{% endif %}
+    {% if progressive %}
+    <div class="catalog-loading" data-catalog-stream="{{ url_for('user.catalog_stream', page=paginator.page, query=query, source='all') }}">
+        <p class="source-note" id="catalog-load-status" role="status">Finding your next read. Results will appear as sources respond…</p>
+        <progress id="catalog-load-progress" value="0" max="{{ g.sources|length }}" aria-label="Sources checked"></progress>
+        <button type="button" class="button secondary" id="catalog-retry" hidden>Try again</button>
+        <noscript><p><a class="button secondary" href="{{ url_for('user.searchTitles', page=paginator.page, query=query, source='all', load='sync') if query else url_for('user.mangaList', page=paginator.page, source='all', load='sync') }}">Load catalog without JavaScript</a></p></noscript>
+        <div id="catalog-results" aria-busy="true">
+            <div class="card-grid catalog-skeletons" aria-hidden="true">{% for n in range(8) %}<div class="catalog-skeleton"><div></div><span></span></div>{% endfor %}</div>
+        </div>
+    </div>
+    {% else %}{% include '_catalog_results.html' %}{% endif %}
 </section>
 {% endblock %}
+
+{% block scripts %}{% if progressive %}<script src="{{ url_for('static', filename='js/catalog.js', v='1') }}" defer></script>{% endif %}{% endblock %}

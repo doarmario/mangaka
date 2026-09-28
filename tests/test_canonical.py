@@ -123,6 +123,9 @@ def test_page_approximation():
 
 
 def test_removed_source_resume_and_route(app, monkeypatch):
+    def unnecessary_discovery(*args):
+        pytest.fail('Known available chapters must not wait for cross-source searches')
+    monkeypatch.setattr(Library, 'discover_work_sources', unnecessary_discovery)
     with app.app_context():
         a, b = work('a', 'a'), work('b', 'b')
         ca, cb = chapter(a, 'a50'), chapter(b, 'b50')

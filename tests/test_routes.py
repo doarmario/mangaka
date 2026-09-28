@@ -86,7 +86,7 @@ def test_service_worker_is_available(app):
     response = app.test_client().get('/service-worker.js')
     assert response.status_code == 200
     assert 'Service-Worker-Allowed' in response.headers
-    assert 'mangaka-shell-v2-en' in response.text
+    assert 'mangaka-shell-v3-progressive' in response.text
 
 
 def test_security_headers_are_present(app):

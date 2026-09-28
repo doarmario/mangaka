@@ -1,4 +1,6 @@
 import pytest
+import json
+from threading import Event
 from app.libs.catalog import UnifiedCatalog, group_results, matches
 from app.libs.library import Library
 from app.libs.manga_novel import MangaNovel, SourceUnavailable
@@ -28,7 +30,7 @@ def unified(app, monkeypatch):
 
 
 def test_default_search_and_catalog_combine_sources(unified):
-    for path in ('/search?query=Shared', '/mangas'):
+    for path in ('/search?query=Shared&load=sync', '/mangas?load=sync'):
         result = unified.get(path)
         assert result.status_code == 200
         assert result.text.count('class="manga-card"') == 1
@@ -42,7 +44,7 @@ def test_partial_failure_keeps_working_source(unified, monkeypatch):
             raise SourceUnavailable('down')
         return {'itens': [item('a', 'Still available')], 'has_next': False}
     monkeypatch.setattr(UnifiedCatalog, 'provider', provider)
-    result = unified.get('/search?query=test')
+    result = unified.get('/search?query=test&load=sync')
     assert result.status_code == 200
     assert 'Still available' in result.text
     assert 'Could not reach: AsuraScans' in result.text
@@ -52,7 +54,7 @@ def test_all_failures_report_unavailability(unified, monkeypatch):
     def fail(*args):
         raise SourceUnavailable('down')
     monkeypatch.setattr(UnifiedCatalog, 'provider', fail)
-    assert unified.get('/mangas').status_code == 503
+    assert unified.get('/mangas?load=sync').status_code == 503
 
 
 def test_clamped_provider_page_does_not_repeat_titles(unified, monkeypatch, context):
@@ -94,8 +96,116 @@ def test_rotated_asura_urls_share_one_canonical_card(unified, monkeypatch):
         return {'itens': [item('md', 'Shared title')], 'has_next': False}
     monkeypatch.setattr(UnifiedCatalog, 'provider', provider)
     for _ in range(2):
-        response = unified.get('/mangas')
+        response = unified.get('/mangas?load=sync')
         assert response.status_code == 200
         assert response.text.count('class="manga-card"') == 1
         assert 'MangaDex · AsuraScans' in response.text
         assert 'AsuraScans · AsuraScans' not in response.text
+
+
+def test_catalog_shell_does_not_wait_for_providers(unified, monkeypatch):
+    def forbidden(*args):
+        pytest.fail('The HTML shell must not make provider requests')
+    monkeypatch.setattr(UnifiedCatalog, 'provider', forbidden)
+    for path in ('/mangas', '/search?query=Shared'):
+        response = unified.get(path)
+        assert response.status_code == 200
+        assert 'data-catalog-stream=' in response.text
+        assert 'Load catalog without JavaScript' in response.text
+
+
+def test_stream_exposes_fast_results_before_slow_source_and_then_deduplicates(unified, monkeypatch):
+    release = Event()
+    slow_started = Event()
+    def provider(self, source, query, page):
+        if source == 'asura':
+            slow_started.set()
+            assert release.wait(5), 'Slow source was not released'
+        return {'itens': [item(source, 'Shared title', source)], 'has_next': False}
+    monkeypatch.setattr(UnifiedCatalog, 'provider', provider)
+    response = unified.get('/api/catalog/stream', buffered=False)
+    events = iter(response.response)
+    try:
+        assert json.loads(next(events))['started']
+        first = json.loads(next(events))
+        assert slow_started.wait(1)
+        assert not release.is_set()
+        assert not first['done'] and first['completed'] == 1
+        assert 'Shared title' in first['html']
+        release.set()
+        final = json.loads(next(events))
+        assert final['done']
+        assert final['html'].count('class="manga-card"') == 1
+        assert 'MangaDex · AsuraScans' in final['html']
+        assert list(events) == []
+    finally:
+        release.set()
+        response.close()
+
+
+def test_completed_catalog_cache_avoids_provider_calls(unified, monkeypatch):
+    first = unified.get('/api/catalog/stream?query=Shared').text
+    def forbidden(*args):
+        pytest.fail('Completed results should reuse the shared cache')
+    monkeypatch.setattr(UnifiedCatalog, 'provider', forbidden)
+    second = unified.get('/api/catalog/stream?query=Shared').text
+    assert json.loads(first.splitlines()[-1])['html'] == json.loads(second.splitlines()[-1])['html']
+    assert len(second.splitlines()) == 2
+
+
+def test_stream_reports_failure_without_hiding_working_sources(unified, monkeypatch):
+    def provider(self, source, query, page):
+        if source == 'asura':
+            raise SourceUnavailable('down')
+        return {'itens': [item('md', 'Available title')], 'has_next': False}
+    monkeypatch.setattr(UnifiedCatalog, 'provider', provider)
+    response = unified.get('/api/catalog/stream')
+    final = json.loads(response.text.splitlines()[-1])
+    assert final['done'] and final['unavailable'] == ['AsuraScans']
+    assert 'Available title' in final['html']
+    assert response.headers['Content-Encoding'] == 'identity'
+
+
+def test_stream_all_failed_has_retryable_error(unified, monkeypatch):
+    def failed(*args):
+        raise SourceUnavailable('down')
+    monkeypatch.setattr(UnifiedCatalog, 'provider', failed)
+    final = json.loads(unified.get('/api/catalog/stream').text.splitlines()[-1])
+    assert final['done'] and 'unavailable' in final['error']
+
+
+def test_simultaneous_readers_share_the_inflight_refresh(unified, context, monkeypatch):
+    calls = []
+    def provider(self, source, query, page):
+        calls.append(source)
+        return {'itens': [item(source, 'Shared title', source)], 'has_next': False}
+    monkeypatch.setattr(UnifiedCatalog, 'provider', provider)
+    catalog = UnifiedCatalog(Library())
+    owner, follower = catalog.iter_listing(), catalog.iter_listing()
+    try:
+        first = next(owner)
+        assert not first['done']
+        assert next(follower) == {'waiting': True}
+        assert next(follower)['completed'] == 1
+        final = next(owner)
+        assert final['done']
+        shared = next(follower)
+        assert shared['done'] and len(shared['itens']) == 1
+        assert sorted(calls) == ['asura', 'mangadex']
+    finally:
+        owner.close()
+        follower.close()
+
+
+def test_shared_cache_separates_query_and_page(unified, context, monkeypatch):
+    calls = []
+    def provider(self, source, query, page):
+        calls.append((source, query, page))
+        return {'itens': [], 'has_next': False}
+    monkeypatch.setattr(UnifiedCatalog, 'provider', provider)
+    catalog = UnifiedCatalog(Library())
+    catalog.listing('first', 1)
+    catalog.listing('second', 1)
+    catalog.listing('first', 2)
+    catalog.listing('first', 1)
+    assert len(calls) == 6

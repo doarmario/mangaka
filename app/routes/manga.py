@@ -395,11 +395,50 @@ def reading_status(work_id):
 def unified_listing(page, query=None):
     from app.libs.catalog import UnifiedCatalog
     page = max(1, min(page, 500))
+    if request.args.get('load') != 'sync':
+        return render_template('list.html', data=[], query=query, progressive=True,
+                               filters=catalog_filters(), paginator={'page': page, 'total': None,
+                               'total_pages': None, 'active': False, 'has_next': False})
     result = UnifiedCatalog(manga).listing(query, page)
     return render_template('list.html', data=result['itens'], query=query,
                            unavailable=result['unavailable'], filters=catalog_filters(),
                            paginator={'page': page, 'total': None, 'total_pages': None,
                                       'active': page > 1 or result['has_next'], 'has_next': result['has_next']})
+
+
+@site.route('/api/catalog/stream')
+def catalog_stream():
+    import json
+    from app.libs.catalog import UnifiedCatalog
+    page = max(1, min(request.args.get('page', 1, type=int), 500))
+    query = ' '.join(request.args.get('query', '').split())[:120] or None
+    # Cards and navigation belong to the combined catalog regardless of defaults.
+    g.selected_source = 'all'
+
+    @stream_with_context
+    def events():
+        yield json.dumps({'started': True}) + '\n'
+        try:
+            for result in UnifiedCatalog(manga).iter_listing(query, page):
+                if result.get('waiting'):
+                    yield json.dumps(result) + '\n'
+                    continue
+                html = render_template('_catalog_results.html', data=result['itens'], query=query,
+                    filters={}, paginator={'page': page, 'total_pages': None,
+                    'active': page > 1 or result['has_next'], 'has_next': result['has_next']}) if result['itens'] or result['done'] else None
+                yield json.dumps({key: value for key, value in {**result, 'html': html}.items()
+                                  if key != 'itens'}) + '\n'
+        except SourceUnavailable as exc:
+            yield json.dumps({'error': str(exc), 'done': True}) + '\n'
+        except Exception:
+            current_app.logger.exception('Progressive catalog failed')
+            db.session.rollback()
+            yield json.dumps({'error': 'Could not finish loading the catalog. Please try again.', 'done': True}) + '\n'
+
+    return Response(events(), mimetype='application/x-ndjson', headers={
+        'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no',
+        'Content-Encoding': 'identity',
+    })
 
 
 @site.route('/manga/<manga_id>/sources')

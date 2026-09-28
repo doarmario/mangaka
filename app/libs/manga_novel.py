@@ -1,5 +1,6 @@
 """Adapters for locally hosted external manga sources."""
 from copy import deepcopy
+from contextvars import ContextVar
 from hashlib import sha256
 import json
 import re
@@ -19,6 +20,10 @@ SOURCES = {'comick': 'ComicK', 'weebcentral': 'WeebCentral', 'asura': 'AsuraScan
            'qiscans': 'Qi Scans', 'demonicscans': 'Demonic Scans', 'thunderscans': 'Thunder Scans'}
 VISIBLE_SOURCES = {'asura': 'AsuraScans', 'qiscans': 'Qi Scans',
                    'demonicscans': 'Demonic Scans', 'thunderscans': 'Thunder Scans'}
+
+# Parallel fetches return raw listings. The coordinating request registers IDs
+# sequentially so database writes never run in provider I/O workers.
+defer_source_registration = ContextVar('defer_source_registration', default=False)
 
 
 def source_api_url(source):
@@ -153,6 +158,8 @@ class MangaNovel:
 
     def _normalize_list(self, records, total, has_next):
         records = [record for record in records if self._remote(record) and record.get('title')]
+        if defer_source_registration.get():
+            return {'_records': records, 'total': total, 'has_next': has_next, 'itens': []}
         refs = register_many(self.source, 'manga', [(self._remote(r), r) for r in records])
         return {'itens': [{'id': ref.id, 'external_id': ref.remote_id, 'title': ref.payload['title'],
                           'aliases': ref.payload.get('aliases') or [],
