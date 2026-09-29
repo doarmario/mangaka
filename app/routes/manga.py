@@ -137,27 +137,45 @@ def home():
     # Definindo a chave do cache para `dall`
     cache_key = manga._key('home')
 
-    # Tenta pegar o conteúdo de `dall` do cache
+    stale_key = cache_key + ':stale'
+    unavailable_key = cache_key + ':unavailable'
     dall = cache.get(cache_key)
-    
-    # Se não estiver no cache, gera o conteúdo e coloca no cache
     if dall is None:
         dall = {}
-        r = manga.recentes()
-        dall[r['tag']] = r['itens']
-        for i in range(3):
-            c = manga.choiceTags()
-            dall[c['tag']] = c['itens']
-        
-        # Armazena `dall` no cache por 5 minutos
-        cache.set(cache_key, dall, timeout=1800)  # timeout=300 para 5 minutos
+        if cache.get(unavailable_key):
+            dall = cache.get(stale_key) or {}
+        else:
+            try:
+                r = manga.recentes()
+                dall[r['tag']] = r['itens']
+            except Exception:
+                # The landing page must remain usable when MangaDex is rate-limited
+                # or temporarily offline. Reuse the last complete snapshot when
+                # possible, otherwise render the shell with no remote shelves.
+                current_app.logger.warning('MangaDex recent feed unavailable for home page')
+                cache.set(unavailable_key, True, timeout=60)
+                dall = cache.get(stale_key) or {}
+            else:
+                for _ in range(3):
+                    try:
+                        c = manga.choiceTags()
+                    except Exception:
+                        continue
+                    if c.get('itens'):
+                        dall[c['tag']] = c['itens']
+                cache.set(cache_key, dall, timeout=1800)
+                cache.set(stale_key, dall, timeout=7 * 24 * 3600)
 
     if current_user.is_authenticated:
-        d = {
-            'Recently read':manga.continuar_lendo(0),
-            'Favorites':manga.lista_ultimos_favoritos(0),
-            'Updates':manga.favorite_updates(20),
-        }
+        d = {}
+        for title, loader in (
+                ('Recently read', lambda: manga.continuar_lendo(0)),
+                ('Favorites', lambda: manga.lista_ultimos_favoritos(0)),
+                ('Updates', lambda: manga.favorite_updates(20))):
+            try:
+                d[title] = loader()
+            except Exception:
+                current_app.logger.warning('%s shelf unavailable for home page', title)
     else:
         d = {}
 

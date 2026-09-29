@@ -91,6 +91,14 @@ def test_mangadex_cover_is_fetched_through_server_proxy(app, monkeypatch):
     assert response.text == 'proxied'
 
 
+def test_home_renders_when_mangadex_is_unavailable(app, monkeypatch):
+    monkeypatch.setattr(routes.manga, 'recentes', lambda: (_ for _ in ()).throw(RuntimeError('offline')))
+    monkeypatch.setattr(routes.manga, 'choiceTags', lambda: (_ for _ in ()).throw(RuntimeError('offline')))
+    response = app.test_client().get('/')
+    assert response.status_code == 200
+    assert 'Your next chapter starts here' in response.text
+
+
 def test_service_worker_is_available(app):
     response = app.test_client().get('/service-worker.js')
     assert response.status_code == 200
