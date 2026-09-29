@@ -11,12 +11,18 @@ def compile_services(directory):
     packages, errors = load_packages(directory)
     if errors:
         raise ValueError('; '.join(f"{e['package']}: {e['message']}" for e in errors))
-    return {'services': {
-        f'source-{s.id}': {'image': s.image, 'restart': 'unless-stopped',
-                         'security_opt': ['no-new-privileges:true'],
-                         'cap_drop': ['ALL']}
-        for s in packages if s.enabled and s.image
-    }}
+    root = Path(__file__).resolve().parents[1]
+    services = {}
+    for source in packages:
+        if not source.enabled or not source.image:
+            continue
+        service = {'image': source.image, 'restart': 'unless-stopped',
+                   'security_opt': ['no-new-privileges:true'], 'cap_drop': ['ALL']}
+        context = root / 'integrations' / source.id
+        if (context / 'Dockerfile').is_file():
+            service['build'] = f'./integrations/{source.id}'
+        services[f'source-{source.id}'] = service
+    return {'services': services}
 
 
 if __name__ == '__main__':

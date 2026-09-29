@@ -6,6 +6,17 @@ if [[ "$ROOT_DIR" == /workspace && -z "${MANGAKA_HOST_WORKSPACE:-}" ]]; then
 fi
 source_state="$(git rev-parse --absolute-git-dir)/mangaka-update"
 mkdir -p "$source_state"
+# Provision bundled source manifests on a clean checkout. Existing manifests,
+# including an explicit enabled=false choice, are preserved.
+for bundled_manifest in "$ROOT_DIR"/integrations/*/source.json; do
+    [[ -f "$bundled_manifest" ]] || continue
+    bundled_id="$(basename "$(dirname "$bundled_manifest")")"
+    installed_dir="$ROOT_DIR/sources/$bundled_id"
+    if [[ ! -f "$installed_dir/source.json" ]]; then
+        mkdir -p "$installed_dir"
+        cp "$bundled_manifest" "$installed_dir/source.json"
+    fi
+done
 source_overlay="$source_state/sources.compose.json"
 if command -v python3 >/dev/null; then
     python3 "$ROOT_DIR/scripts/source-compose.py" > "$source_overlay.pending"
