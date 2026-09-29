@@ -18,24 +18,25 @@ Supported features:
 
 ## Install from this repository
 
-The package's image is currently built locally, not downloaded from a public
-container registry. From the Mangaka checkout:
+The package's image is built locally from the checkout, not downloaded from a
+public container registry. The installer and automatic updater discover the
+bundled manifest, build the Docker context and start the service automatically.
+To build it manually:
 
 ```sh
 docker build -t mangaka-source-mangafire:0.1.0 integrations/mangafire
 ```
 
-Create `sources/mangafire/` and copy `integrations/mangafire/source.json` into it
-as `source.json`. This is the only installation configuration; do not edit the
-main Compose or Python source registry. On Linux:
+The updater creates `sources/mangafire/source.json` automatically when it is
+missing. Manual installation remains available when needed:
 
 ```sh
 mkdir -p sources/mangafire
 cp integrations/mangafire/source.json sources/mangafire/source.json
 ```
 
-The running automatic updater discovers and starts `source-mangafire` on its next
-successful cycle, even at the same Mangaka commit. To start it immediately:
+The running automatic updater discovers, builds and starts `source-mangafire` on
+its next successful cycle, even at the same Mangaka commit. To start it immediately:
 
 ```sh
 docker compose -f compose.install.yaml run --build --rm installer
@@ -45,13 +46,11 @@ Open **Sources → MangaFire → Browse source**. The source is also included in
 **All sources** and canonical alternate-source discovery. The API listens on
 port 3010 inside Docker, with no port exposed on the host.
 
-This source is optional: pulling the repository alone does not activate it on
-other machines. Build the image and install the manifest on each installation.
-For future source revisions, rebuild the image with the version declared in the
-updated manifest and replace the installed manifest. The updater does not watch
-this source's Docker build context or rebuild a locally tagged image by itself.
-A release maintainer may instead distribute the image through a trusted registry
-and set `service.image` to that versioned image/digest.
+This source is bundled with the repository and is activated automatically on a
+fresh installation. For future source revisions, the updater rebuilds the local
+context using the version declared in the manifest. A release maintainer may
+instead distribute the image through a trusted registry and set `service.image`
+to that versioned image or digest.
 
 To disable it, set `enabled` to `false` in the installed manifest or remove its
 folder. The updater stops its service; canonical works and user progress remain.
