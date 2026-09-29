@@ -20,8 +20,9 @@ class TestConfig:
 
 
 @pytest.fixture
-def app():
+def app(tmp_path):
     app = create_app(TestConfig)
+    app.config['SOURCE_PACKAGES_DIR'] = str(tmp_path / 'sources')
     with app.app_context():
         db.create_all()
         cache.clear()

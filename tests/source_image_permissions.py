@@ -47,5 +47,5 @@ def verify(source):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('source', choices=['qiscans', 'demonicscans', 'thunderscans'])
+    parser.add_argument('source', choices=['qiscans', 'demonicscans', 'thunderscans', 'mangafire'])
     verify(parser.parse_args().source)
