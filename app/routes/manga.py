@@ -80,13 +80,16 @@ def Etag(content):
 
 def proxy(url):
     try:
-        r = session.get(url, headers=header, timeout=(5, 20))
+        r = session.get(url, headers={**header, 'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8'}, timeout=(5, 20))
 
         if r.status_code == 200:
+            content_type = r.headers.get('Content-Type', '').split(';', 1)[0].lower()
+            if not content_type.startswith('image/'):
+                return send_from_directory(current_app.static_folder, 'img/cover-placeholder.svg', mimetype='image/svg+xml'), 503
             content = r.content
             etag_value = Etag(url)  # Geração de um ETag único
 
-            response = send_file(BytesIO(content), mimetype='image/jpeg')
+            response = send_file(BytesIO(content), mimetype=content_type)
             response.cache_control.max_age = 3600 * 24  # 1 dia
             response.cache_control.public = True
             response.cache_control.immutable = True     # adiciona o immutable
@@ -119,11 +122,6 @@ def coverproxy(uuid):
         return 'Invalid cover size', 400
     url = manga.id2Cover(uuid, size=size)
     if url.startswith("/static/"):
-        return redirect(url)
-    # MangaDex cover URLs are already public, immutable CDN assets. Let the
-    # browser fetch them directly because some self-hosted Docker networks
-    # cannot reliably reach uploads.mangadex.org from the web container.
-    if url.startswith('https://uploads.mangadex.org/covers/'):
         return redirect(url)
     return proxy(url)
 
