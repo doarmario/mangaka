@@ -1,12 +1,38 @@
 document.addEventListener('DOMContentLoaded', () => {
     let imageObserver;
+    const COVER_PLACEHOLDER = '/static/img/cover-placeholder.svg';
+    const COVER_RETRIES = 3;
+    const COVER_RETRY_DELAY = 900;
     function initializeImages() {
         imageObserver?.disconnect();
         const images = document.querySelectorAll('img[data-src]');
         const load = img => {
+            img.dataset.coverUrl = img.dataset.src;
             img.src = img.dataset.src;
             img.removeAttribute('data-src');
         };
+        const retryCover = img => {
+            if (!img.dataset.coverUrl || img.dataset.coverRetrying === 'true') return;
+            const attempts = Number.parseInt(img.dataset.coverRetries || '0', 10);
+            if (attempts >= COVER_RETRIES) return;
+            img.dataset.coverRetries = String(attempts + 1);
+            img.dataset.coverRetrying = 'true';
+            img.src = COVER_PLACEHOLDER;
+            window.setTimeout(() => {
+                if (img.isConnected === false) return;
+                const separator = img.dataset.coverUrl.includes('?') ? '&' : '?';
+                img.dataset.coverRetrying = 'false';
+                img.src = `${img.dataset.coverUrl}${separator}retry=${attempts + 1}`;
+            }, COVER_RETRY_DELAY * (attempts + 1));
+        };
+        document.querySelectorAll('img').forEach(img => {
+            if (img.dataset.coverRetryBound === 'true') return;
+            img.dataset.coverRetryBound = 'true';
+            img.addEventListener('load', () => { img.dataset.coverRetrying = 'false'; });
+            img.addEventListener('error', () => {
+                if (img.dataset.coverUrl && !img.src.endsWith(COVER_PLACEHOLDER)) retryCover(img);
+            });
+        });
         if ('IntersectionObserver' in window) {
             const observer = imageObserver = new IntersectionObserver(entries => {
                 entries.forEach(entry => {
@@ -15,10 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }, { rootMargin: '150px' });
             images.forEach(img => observer.observe(img));
         } else { images.forEach(load); }
-        document.querySelectorAll('img').forEach(img => img.addEventListener('error', () => {
-            if (!img.src.endsWith('/static/img/cover-placeholder.svg')) img.src = '/static/img/cover-placeholder.svg';
-        }, { once: true }));
-
     }
     initializeImages();
     document.addEventListener('mangaka:content-updated', initializeImages);

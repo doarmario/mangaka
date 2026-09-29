@@ -66,7 +66,7 @@ class UnifiedCatalog:
         from app.libs.source_loading import provider_results
         sources = self.library.sources()
         settings = configuration_signature()
-        key = 'unified-listing-v1:' + sha256(repr((query, page, sources, settings,
+        key = 'unified-listing-v2:' + sha256(repr((query, page, sources, settings,
             self.library.languages, self.library.langs, self.library.limit)).encode()).hexdigest()
         stored = cache.get(key)
         if stored is not None:
@@ -115,7 +115,8 @@ class UnifiedCatalog:
                             'completed': len(completed), 'total_sources': len(sources), 'done': final}
                 cache.set(key + ':progress', {'owner': token, 'result': snapshot}, timeout=120)
                 if final:
-                    cache.set(key, snapshot, timeout=30 if unavailable else 120)
+                    timeout = current_app.config.get('CATALOG_FAILURE_CACHE_TTL', 180) if unavailable else current_app.config.get('CATALOG_CACHE_TTL', 1800)
+                    cache.set(key, snapshot, timeout=timeout)
                 yield snapshot
         finally:
             if cache.get(lock) == token:

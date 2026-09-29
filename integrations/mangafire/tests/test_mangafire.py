@@ -122,6 +122,30 @@ def test_image_proxy_restricts_hosts(url):
         checked_url(url, image=True)
 
 
+def test_image_proxy_accepts_legacy_jpg_mime(monkeypatch):
+    class Response:
+        status_code = 200
+        headers = {'Content-Type': 'image/jpg', 'Content-Length': '4'}
+        content = b'\xff\xd8\xff\xd9'
+
+        def raise_for_status(self):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def iter_content(self, _chunk_size):
+            yield self.content
+
+    monkeypatch.setattr('requests.get', lambda *args, **kwargs: Response())
+    body, content_type = Transport().get('https://static.mfcdn.nl/cover.jpg', image=True)
+    assert body == b'\xff\xd8\xff\xd9'
+    assert content_type == 'image/jpg'
+
+
 @pytest.mark.parametrize('value', ['../x', 'abc/def', 'a?b', '%2f', '', 'x' * 65])
 def test_ids_cannot_escape_api_path(value):
     with pytest.raises(SourceError):

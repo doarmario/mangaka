@@ -12,13 +12,22 @@ forcibly killed. Requests beyond the task limit are treated as unavailable for
 that refresh. Reference registration and canonical identity writes run sequentially
 in the coordinating request, outside the provider I/O workers.
 
-Complete results are shared in Redis for 120 seconds; partial results for 30
-seconds. Concurrent readers of the same page follow the existing refresh rather
-than start another provider batch. Cache keys include the query, page, configured
-sources and API endpoints, content languages and page size. No reading progress,
-favorites, account details or personalized HTML enters this cache. Existing
-per-provider caches and cooldowns remain active. Retrying during the partial-result
-cache window can return the same snapshot until it expires.
+Complete results are shared in Redis for 30 minutes by default; a result with one
+or more unavailable providers is retained for 3 minutes. Set `CATALOG_CACHE_TTL`
+and `CATALOG_FAILURE_CACHE_TTL` when a deployment needs different freshness. The
+provider adapters keep their own bounded caches as well, so a catalog refresh does
+not necessarily cause another upstream request. Concurrent readers of the same
+page follow the existing refresh rather than start another provider batch. Cache
+keys include the query, page, configured sources and API endpoints, content
+languages and page size. No reading progress, favorites, account details or
+personalized HTML enters this cache. Retrying during a cache window can return the
+same snapshot until it expires.
+
+As sources finish, the browser treats each card as a stable canonical-work slot.
+An already visible work keeps its position and its loaded cover; a newly discovered
+source is merged into that card's source caption. Only a work that was not present
+in an earlier snapshot is appended. This means a slower provider cannot reshuffle
+the page while the user is browsing.
 
 The stream disables compression and sends `X-Accel-Buffering: no`. Reverse proxies
 must preserve streaming and disable response buffering for this endpoint; otherwise

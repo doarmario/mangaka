@@ -78,7 +78,9 @@ class Transport:
                             self.cooldown_until = monotonic() + wait
                         raise SourceError('MangaFire rejected the request. Please try again later.', 503, wait)
                     content_type = response.headers.get('Content-Type', '').split(';')[0].lower()
-                    allowed = {'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'} if image else {'application/json'}
+                    # Some MangaFire CDN edges use the legacy but common
+                    # `image/jpg` spelling instead of `image/jpeg`.
+                    allowed = {'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/avif'} if image else {'application/json'}
                     if content_type not in allowed:
                         raise SourceError('MangaFire returned an unexpected content type.')
                     maximum = 20 * 1024 * 1024 if image else 4 * 1024 * 1024

@@ -78,26 +78,45 @@ def Etag(content):
     return hashlib.sha1(content.encode()).hexdigest()
 
 
-def proxy(url):
+def proxy(url, cache_namespace=None):
     try:
-        r = session.get(url, headers=header, timeout=(5, 20))
-
-        if r.status_code == 200:
-            content = r.content
-            etag_value = Etag(url)  # Geração de um ETag único
-
-            response = send_file(BytesIO(content), mimetype='image/jpeg')
-            response.cache_control.max_age = 3600 * 24  # 1 dia
-            response.cache_control.public = True
-            response.cache_control.immutable = True     # adiciona o immutable
-            response.set_etag(etag_value)
-
-            # Torna a resposta condicional
-            response.make_conditional(request)
-
-            return response
+        cache_key = None
+        cached = None
+        if cache_namespace:
+            cache_key = f'{cache_namespace}-v1:' + hashlib.sha256(url.encode()).hexdigest()
+            try:
+                cached = cache.get(cache_key)
+            except Exception:
+                cached = None
+        if isinstance(cached, dict) and cached.get('content') and cached.get('content_type'):
+            content, content_type = cached['content'], cached['content_type']
         else:
-            return send_from_directory(current_app.static_folder, 'img/cover-placeholder.svg', mimetype='image/svg+xml'),503
+            r = session.get(url, headers={**header, 'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8'}, timeout=(5, 20))
+
+            if r.status_code != 200:
+                return send_from_directory(current_app.static_folder, 'img/cover-placeholder.svg', mimetype='image/svg+xml'), 503
+            content_type = r.headers.get('Content-Type', '').split(';', 1)[0].lower()
+            if not content_type.startswith('image/'):
+                return send_from_directory(current_app.static_folder, 'img/cover-placeholder.svg', mimetype='image/svg+xml'), 503
+            content = r.content
+            if cache_key and len(content) <= current_app.config.get('COVER_CACHE_MAX_BYTES', 10 * 1024 * 1024):
+                try:
+                    cache.set(cache_key, {'content': content, 'content_type': content_type},
+                              timeout=current_app.config.get('COVER_CACHE_TTL', 604800))
+                except Exception:
+                    pass
+
+        etag_value = Etag(url)  # Geração de chave estável para o cache do navegador
+        response = send_file(BytesIO(content), mimetype=content_type)
+        response.cache_control.max_age = current_app.config.get('COVER_CACHE_TTL', 604800) if cache_namespace else 3600 * 24
+        response.cache_control.public = True
+        response.cache_control.immutable = True
+        response.set_etag(etag_value)
+
+        # Torna a resposta condicional
+        response.make_conditional(request)
+
+        return response
 
     except Exception:
         return send_from_directory(current_app.static_folder, 'img/cover-placeholder.svg', mimetype='image/svg+xml'),503
@@ -120,7 +139,7 @@ def coverproxy(uuid):
     url = manga.id2Cover(uuid, size=size)
     if url.startswith("/static/"):
         return redirect(url)
-    return proxy(url)
+    return proxy(url, cache_namespace='cover')
 
 
 #routes
@@ -134,27 +153,45 @@ def home():
     # Definindo a chave do cache para `dall`
     cache_key = manga._key('home')
 
-    # Tenta pegar o conteúdo de `dall` do cache
+    stale_key = cache_key + ':stale'
+    unavailable_key = cache_key + ':unavailable'
     dall = cache.get(cache_key)
-    
-    # Se não estiver no cache, gera o conteúdo e coloca no cache
     if dall is None:
         dall = {}
-        r = manga.recentes()
-        dall[r['tag']] = r['itens']
-        for i in range(3):
-            c = manga.choiceTags()
-            dall[c['tag']] = c['itens']
-        
-        # Armazena `dall` no cache por 5 minutos
-        cache.set(cache_key, dall, timeout=1800)  # timeout=300 para 5 minutos
+        if cache.get(unavailable_key):
+            dall = cache.get(stale_key) or {}
+        else:
+            try:
+                r = manga.recentes()
+                dall[r['tag']] = r['itens']
+            except Exception:
+                # The landing page must remain usable when MangaDex is rate-limited
+                # or temporarily offline. Reuse the last complete snapshot when
+                # possible, otherwise render the shell with no remote shelves.
+                current_app.logger.warning('MangaDex recent feed unavailable for home page')
+                cache.set(unavailable_key, True, timeout=60)
+                dall = cache.get(stale_key) or {}
+            else:
+                for _ in range(3):
+                    try:
+                        c = manga.choiceTags()
+                    except Exception:
+                        continue
+                    if c.get('itens'):
+                        dall[c['tag']] = c['itens']
+                cache.set(cache_key, dall, timeout=1800)
+                cache.set(stale_key, dall, timeout=7 * 24 * 3600)
 
     if current_user.is_authenticated:
-        d = {
-            'Recently read':manga.continuar_lendo(0),
-            'Favorites':manga.lista_ultimos_favoritos(0),
-            'Updates':manga.favorite_updates(20),
-        }
+        d = {}
+        for title, loader in (
+                ('Recently read', lambda: manga.continuar_lendo(0)),
+                ('Favorites', lambda: manga.lista_ultimos_favoritos(0)),
+                ('Updates', lambda: manga.favorite_updates(20))):
+            try:
+                d[title] = loader()
+            except Exception:
+                current_app.logger.warning('%s shelf unavailable for home page', title)
     else:
         d = {}
 
@@ -625,13 +662,16 @@ def searchTitles(page):
 @site.errorhandler(ApiError)
 def mangadex_error(error):
     status = 503 if str(error.code) == "429" else 502
-    response = make_response('MangaDex is currently unavailable. Please try again later.', status)
-    return response
+    return render_template('source_error.html', title='MangaDex unavailable',
+                           heading='MangaDex is temporarily unavailable.',
+                           message='MangaDex could not complete this request. Please try again in a moment.'), status
 
 
 @site.errorhandler(requests.RequestException)
 def mangadex_network_error(error):
-    return 'Could not connect to MangaDex. Please try again later.', 503
+    return render_template('source_error.html', title='MangaDex unavailable',
+                           heading='MangaDex is temporarily unavailable.',
+                           message='Could not connect to MangaDex. Please try again in a moment.'), 503
 
 
 @site.errorhandler(SourceUnavailable)
