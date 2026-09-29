@@ -662,13 +662,16 @@ def searchTitles(page):
 @site.errorhandler(ApiError)
 def mangadex_error(error):
     status = 503 if str(error.code) == "429" else 502
-    response = make_response('MangaDex is currently unavailable. Please try again later.', status)
-    return response
+    return render_template('source_error.html', title='MangaDex unavailable',
+                           heading='MangaDex is temporarily unavailable.',
+                           message='MangaDex could not complete this request. Please try again in a moment.'), status
 
 
 @site.errorhandler(requests.RequestException)
 def mangadex_network_error(error):
-    return 'Could not connect to MangaDex. Please try again later.', 503
+    return render_template('source_error.html', title='MangaDex unavailable',
+                           heading='MangaDex is temporarily unavailable.',
+                           message='Could not connect to MangaDex. Please try again in a moment.'), 503
 
 
 @site.errorhandler(SourceUnavailable)

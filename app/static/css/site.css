@@ -706,6 +706,50 @@ svg {
     gap:12px;
     flex-wrap:wrap
 }
+.source-error-page {
+    max-width:760px;
+    margin:clamp(55px,10vw,120px) auto 55px;
+    text-align:center
+}
+.source-error-mark {
+    display:grid;
+    place-items:center;
+    width:58px;
+    height:58px;
+    margin:0 auto 25px;
+    border:1px solid var(--accent);
+    border-radius:50%;
+    color:var(--accent);
+    font-size:28px;
+    font-weight:700
+}
+.source-error-page h1 {
+    margin:12px 0 15px;
+    font-size:clamp(28px,4vw,48px)
+}
+.source-error-lead {
+    max-width:560px;
+    margin:0 auto;
+    color:var(--muted);
+    line-height:1.8
+}
+.source-error-page .status-error-message {
+    margin:25px auto;
+    text-align:left
+}
+.source-error-actions {
+    justify-content:center
+}
+.source-error-alternatives {
+    max-width:760px;
+    margin:0 auto 80px;
+    padding:25px 0;
+    border-top:1px solid var(--line)
+}
+.source-error-alternatives h2 {
+    margin:8px 0 18px;
+    font-size:22px
+}
 .catalog-loading progress {
     width:100%;
     height:6px;

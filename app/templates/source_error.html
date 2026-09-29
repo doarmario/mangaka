@@ -1,6 +1,22 @@
 {% extends 'base.html' %}
-{% set page_title = 'Source unavailable' %}
+{% from 'ui.html' import icon %}
+{% set page_title = title | default('Source unavailable') %}
 {% block content %}
-<section class="page-heading"><span class="eyebrow">Let us try another story</span><h1>This source did not respond.</h1><p role="alert">{{ message }}</p></section>
-<div class="detail-actions">{% for key, label in g.sources.items() %}<a class="button secondary" href="{{ url_for('user.searchTitles', query=request.args.get('query'), source=key) if request.args.get('query') else url_for('user.mangaList', source=key) }}">Search in {{ label }}</a>{% endfor %}</div>
+<section class="source-error-page">
+    <div class="source-error-mark" aria-hidden="true">!</div>
+    <span class="eyebrow">The source is taking a break</span>
+    <h1>{{ heading | default('This source did not respond.') }}</h1>
+    <p class="source-error-lead">Mangaka could not connect to this provider. Your library and reading progress are safe.</p>
+    <p class="status-error-message" role="alert">{{ message }}</p>
+    <div class="detail-actions source-error-actions">
+        <a class="button primary" href="{{ request.full_path }}">Try again</a>
+        <a class="button secondary" href="{{ url_for('user.mangaList') }}">Back to catalog</a>
+        <a class="button secondary" href="{{ url_for('user.home') }}">Go home</a>
+    </div>
+</section>
+<section class="source-error-alternatives">
+    <span class="eyebrow">Keep reading</span>
+    <h2>Try another source</h2>
+    <div class="detail-actions">{% for key, label in g.sources.items() %}<a class="button secondary" href="{{ url_for('user.searchTitles', query=request.args.get('query'), source=key) if request.args.get('query') else url_for('user.mangaList', source=key) }}">Search in {{ label }}</a>{% endfor %}</div>
+</section>
 {% endblock %}
