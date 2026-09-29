@@ -8,6 +8,7 @@ from app.models import User, Manga, Favorite, Readed, Chapter, UpdateNotificatio
 
 from app.libs.library import Library as Mangas
 from app.libs.manga_novel import MangaNovel, SourceUnavailable
+from app.libs.source_registry import definitions, supports_tags, package_errors
 
 from app.forms import SearchForm
 
@@ -39,6 +40,7 @@ manga = Mangas()
 def before_request():
     g.form = SearchForm()
     g.sources = manga.sources()
+    g.tag_sources = {key: label for key, label in g.sources.items() if supports_tags(key)}
     g.catalog_sources = {'all': 'All sources', **g.sources}
     g.selected_source = manga.selected_source()
     g.unread_notifications = 0
@@ -173,9 +175,11 @@ def status():
         checks.append({'name': 'Cache', 'state': 'ok' if cache.get(probe) else 'error', 'detail': 'Redis is running'})
     except Exception:
         checks.append({'name': 'Cache', 'state': 'error', 'detail': 'Unavailable'})
-    for key, name in [('MANGA_NOVEL_API_URL', 'Source API'), ('QISCANS_API_URL', 'Qi Scans'),
-                      ('DEMONICSCANS_API_URL', 'Demonic Scans'), ('THUNDERSCANS_API_URL', 'Thunder Scans')]:
-        api_url = current_app.config.get(key, '').rstrip('/')
+    for definition in definitions().values():
+        if not definition.visible or not definition.enabled or definition.adapter == 'mangadex':
+            continue
+        name = definition.name
+        api_url = definition.endpoint(current_app.config)
         if api_url:
             try:
                 response = requests.get(f'{api_url}/api/health', timeout=(1, 3))
@@ -455,7 +459,7 @@ def catalog_tag():
         return None
     if g.selected_source == 'mangadex':
         tags = manga.listTags()
-    elif g.selected_source in {'asura', 'qiscans', 'demonicscans', 'thunderscans'}:
+    elif supports_tags(g.selected_source):
         tags = MangaNovel(g.selected_source).tags()
     else:
         abort(400, 'This source does not support genre filters yet.')
@@ -482,7 +486,7 @@ def tags():
     """List every tag available for the currently selected provider."""
     if g.selected_source == 'mangadex':
         available = manga.listTags()
-    elif g.selected_source in {'asura', 'qiscans', 'demonicscans', 'thunderscans'}:
+    elif supports_tags(g.selected_source):
         available = MangaNovel(g.selected_source).tags()
     else:
         abort(400, 'This source does not support tags.')
@@ -633,3 +637,9 @@ def mangadex_network_error(error):
 @site.errorhandler(SourceUnavailable)
 def source_unavailable(error):
     return render_template('source_error.html', message=str(error)), 503
+
+
+@site.route("/sources")
+def sources_page():
+    return render_template("sources.html", source_definitions=definitions().values(),
+                           package_errors=package_errors())

@@ -1,6 +1,6 @@
 FROM docker:28-cli AS base
 
-RUN apk add --no-cache bash git util-linux openssl jq
+RUN apk add --no-cache bash git util-linux openssl jq python3
 
 COPY --chmod=755 loop.sh /opt/mangaka-update-loop.sh
 COPY --chmod=755 install.sh /opt/mangaka-install.sh

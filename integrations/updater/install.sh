@@ -58,15 +58,24 @@ if [[ ! -f "$API_DIR/package.json" ]]; then
     # The entrypoint already selected the checkout owner; new files inherit it.
 fi
 export MANGA_NOVEL_SOURCE_DIR="$API_DIR"
-compose() { docker compose --project-directory "$ROOT_DIR" -f "$ROOT_DIR/compose.yaml" "$@"; }
+source "$ROOT_DIR/scripts/source-compose.sh"
+compose() { docker compose --project-directory "$ROOT_DIR" -f "$ROOT_DIR/compose.yaml" "${source_compose_args[@]}" "$@"; }
 echo "[3/5] Construindo o site (a primeira instalação pode demorar)..."
 compose config --quiet
-compose build web manga-novel qiscans demonicscans thunderscans
+configured="$(compose config --services)"
+services=()
+while IFS= read -r service; do
+    case "$service" in ''|init-db|auto-updater) continue ;; esac
+    services+=("$service")
+done <<< "$configured"
+((${#services[@]})) || { echo "No services configured." >&2; exit 1; }
+compose build "${services[@]}"
 compose up -d --wait mysql redis
 echo "[4/5] Preparando o banco e iniciando o site..."
 compose run --rm --no-deps web flask --app app init-db
 compose run --rm --no-deps web flask --app app db upgrade
-compose up -d --wait --wait-timeout 180 web updates-worker manga-novel qiscans demonicscans thunderscans
+compose up -d --wait --wait-timeout 180 "${services[@]}"
+finish_source_deployment
 echo "[5/5] Ativando as atualizações automáticas..."
 docker compose --project-directory "$ROOT_DIR" -f "$ROOT_DIR/compose.yaml" -f "$ROOT_DIR/compose.updater.yaml" up -d --build auto-updater
 port="$(compose config --format json | jq -r '.services.web.ports[0].published')"

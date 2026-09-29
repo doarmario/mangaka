@@ -25,9 +25,12 @@ class AutoUpdateTests(unittest.TestCase):
         (self.repo / "scripts").mkdir()
         shutil.copy(ROOT / "scripts/auto-update.sh", self.repo / "scripts")
         shutil.copy(ROOT / "scripts/deploy-update.sh", self.repo / "scripts")
+        for name in ("source-compose.py", "source-compose.sh"):
+            shutil.copy(ROOT / "scripts" / name, self.repo / "scripts")
+        shutil.copy(ROOT / "source_registry.py", self.repo)
         self.services = ["web", "updates-worker", "manga-novel", "qiscans", "demonicscans", "thunderscans", "mysql", "redis"]
         (self.repo / "services.txt").write_text("\n".join(self.services + ["init-db"]))
-        (self.repo / ".gitignore").write_text(".env\n")
+        (self.repo / ".gitignore").write_text(".env\n__pycache__/\nsources/\n")
         (self.repo / ".env").touch()
         self.git("add", ".")
         self.git("commit", "-m", "initial")
@@ -43,6 +46,9 @@ args = sys.argv[1:]
 with open(os.environ['CALL_LOG'], 'a') as f:
     f.write(json.dumps(args) + '\\n')
 services = Path('services.txt').read_text().splitlines()
+for arg in args:
+    if arg.endswith('.compose.json'):
+        services += list(json.loads(Path(arg).read_text())['services'])
 running = Path(os.environ['RUNNING_STATE'])
 if args[-2:] == ['config', '--services']: print('\\n'.join(services))
 if args[-3:] == ['ps', '--format', 'json']:
@@ -91,6 +97,60 @@ if args[-2:] == ['db', 'upgrade'] and os.environ.get('FAIL_MIGRATION'): sys.exit
         new_calls = [json.loads(line) for line in self.calls.read_text()[len(before):].splitlines()]
         self.assertTrue(any(call[-3:] == ["ps", "--format", "json"] for call in new_calls))
         self.assertFalse(any("build" in call or "stop" in call for call in new_calls))
+
+    def test_package_changes_deploy_without_new_commit_and_removed_service_stops(self):
+        self.assertEqual(self.update().returncode, 0)
+        commit = self.marker.read_text()
+        folder = self.repo / 'sources' / 'fixture'
+        folder.mkdir(parents=True)
+        manifest = {'schema_version': 1, 'id': 'fixture', 'name': 'Fixture',
+                    'service': {'image': 'example/provider:1', 'port': 3010}}
+        path = folder / 'source.json'
+        path.write_text(json.dumps(manifest))
+        result = self.update()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.marker.read_text(), commit)
+        self.assertIn('source-fixture', Path(self.env['RUNNING_STATE']).read_text())
+        fingerprint = (self.marker.parent / 'sources-deployed').read_text()
+        manifest['service']['image'] = 'example/provider:2'
+        path.write_text(json.dumps(manifest))
+        result = self.update()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotEqual((self.marker.parent / 'sources-deployed').read_text(), fingerprint)
+        path.unlink()
+        result = self.update()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        calls = [json.loads(line) for line in self.calls.read_text().splitlines()]
+        self.assertTrue(any(call[-2:] == ['stop', 'source-fixture'] for call in calls))
+        self.assertEqual(self.marker.read_text(), commit)
+
+    def test_removed_package_is_stopped_after_failed_first_start(self):
+        self.assertEqual(self.update().returncode, 0)
+        folder = self.repo / 'sources' / 'fixture'
+        folder.mkdir(parents=True)
+        path = folder / 'source.json'
+        path.write_text(json.dumps({'schema_version': 1, 'id': 'fixture', 'name': 'Fixture',
+                                    'service': {'image': 'example/provider:1', 'port': 3010}}))
+        result = self.update(UNHEALTHY_SERVICE='source-fixture')
+        self.assertNotEqual(result.returncode, 0)
+        path.unlink()
+        result = self.update()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        calls = [json.loads(line) for line in self.calls.read_text().splitlines()]
+        self.assertTrue(any(call[-2:] == ['stop', 'source-fixture'] for call in calls))
+
+    def test_invalid_package_leaves_running_services_untouched(self):
+        self.assertEqual(self.update().returncode, 0)
+        before = self.calls.read_text()
+        marker = self.marker.read_text()
+        folder = self.repo / 'sources' / 'broken'
+        folder.mkdir(parents=True)
+        (folder / 'source.json').write_text('invalid JSON')
+        result = self.update()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('Source package error', result.stderr)
+        self.assertEqual(self.calls.read_text(), before)
+        self.assertEqual(self.marker.read_text(), marker)
 
     def test_dirty_checkout_does_not_touch_docker(self):
         (self.repo / "local-change").touch()

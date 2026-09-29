@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="catalog status-page">
+    <div class="page-heading"><span class="eyebrow">Your reading providers</span><h1>Sources</h1><p>Installed sources appear automatically in the catalog, search and reader.</p></div>
+    <div class="status-grid">
+    {% for source in source_definitions if source.visible %}
+        {% set active = source.enabled and (source.adapter == 'mangadex' or source.endpoint(config)) %}
+        <article class="status-card status-{{ 'ok' if active else 'warning' }}"><span class="status-dot"></span><div>
+            <h2>{{ source.name }}</h2><p>{{ 'Enabled' if active else 'Disabled or not configured' }} · {{ 'Package' if source.package else 'Built-in' }}</p>
+            <p>{{ 'Tag browsing · ' if source.tags else '' }}Catalog · Search · Reader</p>
+            {% if active %}<a href="{{ url_for('user.mangaList', source=source.id) }}">Browse source</a>{% endif %}
+        </div></article>
+    {% endfor %}
+    </div>
+    {% for error in package_errors %}<p class="status-error-message" role="alert">{{ error.package }}: {{ error.message }}</p>{% endfor %}
+    <div class="page-heading"><h2>Add a source package</h2><p>Place a compatible package in the installation's <code>sources</code> folder. Remote APIs are discovered automatically. For packages with a Docker service, run the installer again or wait for the next automatic update.</p><p>Source packages need a compatible API; a website URL alone is not a source package. Disabling or removing a package preserves your library and reading progress.</p></div>
+</section>
+{% endblock %}

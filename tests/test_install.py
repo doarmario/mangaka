@@ -25,6 +25,10 @@ class InstallTests(unittest.TestCase):
                         HOSTNAME="installer-test", CALL_LOG=str(self.calls))
         subprocess.run(["git", "init", str(self.repo)], check=True, capture_output=True)
         shutil.copy(ROOT / ".env.example", self.repo)
+        (self.repo / "scripts").mkdir()
+        for name in ("source-compose.py", "source-compose.sh"):
+            shutil.copy(ROOT / "scripts" / name, self.repo / "scripts")
+        shutil.copy(ROOT / "source_registry.py", self.repo)
         upstream = root / "upstream"
         subprocess.run(["git", "init", str(upstream)], check=True, capture_output=True)
         (upstream / "package.json").write_text('{"name":"fixture"}')
@@ -50,6 +54,8 @@ class InstallTests(unittest.TestCase):
             "                      for x in ['/workspace', '/upstream', '/var/run/docker.sock']]))\n"
             "elif args[-3:] == ['config', '--format', 'json']:\n"
             "    print(json.dumps({'services': {'web': {'ports': [{'published': '5000'}]}}}))\n"
+            "elif args[-2:] == ['config', '--services']:\n"
+            "    print('web\\nupdates-worker\\nmanga-novel\\nqiscans\\ndemonicscans\\nthunderscans\\nsource-fixture')\n"
             "if args[-2:] == ['db', 'upgrade'] and os.getenv('FAIL_MIGRATION'): sys.exit(1)\n"
         )
         fake.chmod(0o755)
@@ -68,8 +74,8 @@ class InstallTests(unittest.TestCase):
         self.assertEqual((self.repo / ".env").stat().st_mode & 0o777, 0o600)
         self.assertTrue((self.api / "package.json").is_file())
         calls = [json.loads(line) for line in self.calls.read_text().splitlines()]
-        self.assertTrue(any(c['args'][-6:] == ['build', 'web', 'manga-novel', 'qiscans', 'demonicscans', 'thunderscans'] for c in calls))
-        self.assertTrue(any(c['args'][-6:] == ['web', 'updates-worker', 'manga-novel', 'qiscans', 'demonicscans', 'thunderscans'] for c in calls))
+        self.assertTrue(any('build' in c['args'] and 'source-fixture' in c['args'] for c in calls))
+        self.assertTrue(any('--wait-timeout' in c['args'] and 'source-fixture' in c['args'] for c in calls))
         updater = next(c for c in calls if c['args'][-1] == 'auto-updater')
         self.assertEqual(updater['host'], '/host/workspace')
         self.assertEqual(updater['api'], '/host/upstream')

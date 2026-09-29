@@ -10,6 +10,7 @@ from flask import current_app
 from mangadex.errors import ApiError
 from app import cache
 from app.libs.manga_novel import MangaNovel, SourceUnavailable
+from app.libs.source_registry import configuration_signature
 
 
 from app.libs.identity import title_keys as titles, match_confidence, source_work_key
@@ -64,8 +65,7 @@ class UnifiedCatalog:
     def iter_listing(self, query=None, page=1):
         from app.libs.source_loading import provider_results
         sources = self.library.sources()
-        settings = [current_app.config.get(key, '') for key in (
-            'MANGA_NOVEL_API_URL', 'QISCANS_API_URL', 'DEMONICSCANS_API_URL', 'THUNDERSCANS_API_URL')]
+        settings = configuration_signature()
         key = 'unified-listing-v1:' + sha256(repr((query, page, sources, settings,
             self.library.languages, self.library.langs, self.library.limit)).encode()).hexdigest()
         stored = cache.get(key)
@@ -147,7 +147,8 @@ class UnifiedCatalog:
 
     def alternatives(self, identifier):
         sources = self.library.sources()
-        key = 'cross-source-v2:' + sha256(repr((identifier, sources)).encode()).hexdigest()
+        signature = (identifier, sources, configuration_signature())
+        key = 'cross-source-v2:' + sha256(repr(signature).encode()).hexdigest()
         stored = cache.get(key)
         if stored is not None:
             return stored

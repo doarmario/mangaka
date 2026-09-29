@@ -11,3 +11,5 @@ __pycache__
 instance
 *.log
 tests
+
+sources/*/
