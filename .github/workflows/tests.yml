@@ -86,6 +86,22 @@ jobs:
       - run: python -m pip check
       - run: python -m pytest -q
 
+  mangafire:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: integrations/mangafire
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: integrations/mangafire/pyproject.toml
+      - run: python -m pip install '.[test]'
+      - run: python -m pip check
+      - run: python -m pytest -q
+
   updater-permissions:
     runs-on: ubuntu-latest
     steps:
@@ -97,7 +113,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        source: [qiscans, demonicscans, thunderscans]
+        source: [qiscans, demonicscans, thunderscans, mangafire]
     steps:
       - uses: actions/checkout@v4
       - run: python3 tests/source_image_permissions.py "${{ matrix.source }}"

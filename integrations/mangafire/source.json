@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "id": "mangafire",
+  "name": "MangaFire",
+  "enabled": true,
+  "tags": true,
+  "search": "catalog",
+  "pagination": "strict",
+  "chapter_languages": ["pt-br", "en"],
+  "chapter_pagination": true,
+  "service": {
+    "image": "mangaka-source-mangafire:0.1.0",
+    "port": 3010
+  }
+}

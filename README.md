@@ -117,6 +117,9 @@ rights to manga content; use sources and content you are authorized to access.
 | Demonic Scans | Included Python source service | English |
 | Thunder Scans | Included Python source service | English |
 
+MangaFire is available as an [optional source package](integrations/mangafire/README.md)
+with English and Brazilian Portuguese chapters.
+
 Additional compatible APIs can be installed as [source packages](docs/source-packages.md):
 place a package in `sources/` and let Mangaka discover it. Packages with Docker
 services are started by the installer or automatic updater, without editing the
