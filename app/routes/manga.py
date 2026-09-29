@@ -78,29 +78,45 @@ def Etag(content):
     return hashlib.sha1(content.encode()).hexdigest()
 
 
-def proxy(url):
+def proxy(url, cache_namespace=None):
     try:
-        r = session.get(url, headers={**header, 'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8'}, timeout=(5, 20))
+        cache_key = None
+        cached = None
+        if cache_namespace:
+            cache_key = f'{cache_namespace}-v1:' + hashlib.sha256(url.encode()).hexdigest()
+            try:
+                cached = cache.get(cache_key)
+            except Exception:
+                cached = None
+        if isinstance(cached, dict) and cached.get('content') and cached.get('content_type'):
+            content, content_type = cached['content'], cached['content_type']
+        else:
+            r = session.get(url, headers={**header, 'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8'}, timeout=(5, 20))
 
-        if r.status_code == 200:
+            if r.status_code != 200:
+                return send_from_directory(current_app.static_folder, 'img/cover-placeholder.svg', mimetype='image/svg+xml'), 503
             content_type = r.headers.get('Content-Type', '').split(';', 1)[0].lower()
             if not content_type.startswith('image/'):
                 return send_from_directory(current_app.static_folder, 'img/cover-placeholder.svg', mimetype='image/svg+xml'), 503
             content = r.content
-            etag_value = Etag(url)  # Geração de um ETag único
+            if cache_key and len(content) <= current_app.config.get('COVER_CACHE_MAX_BYTES', 10 * 1024 * 1024):
+                try:
+                    cache.set(cache_key, {'content': content, 'content_type': content_type},
+                              timeout=current_app.config.get('COVER_CACHE_TTL', 604800))
+                except Exception:
+                    pass
 
-            response = send_file(BytesIO(content), mimetype=content_type)
-            response.cache_control.max_age = 3600 * 24  # 1 dia
-            response.cache_control.public = True
-            response.cache_control.immutable = True     # adiciona o immutable
-            response.set_etag(etag_value)
+        etag_value = Etag(url)  # Geração de chave estável para o cache do navegador
+        response = send_file(BytesIO(content), mimetype=content_type)
+        response.cache_control.max_age = current_app.config.get('COVER_CACHE_TTL', 604800) if cache_namespace else 3600 * 24
+        response.cache_control.public = True
+        response.cache_control.immutable = True
+        response.set_etag(etag_value)
 
-            # Torna a resposta condicional
-            response.make_conditional(request)
+        # Torna a resposta condicional
+        response.make_conditional(request)
 
-            return response
-        else:
-            return send_from_directory(current_app.static_folder, 'img/cover-placeholder.svg', mimetype='image/svg+xml'),503
+        return response
 
     except Exception:
         return send_from_directory(current_app.static_folder, 'img/cover-placeholder.svg', mimetype='image/svg+xml'),503
@@ -123,7 +139,7 @@ def coverproxy(uuid):
     url = manga.id2Cover(uuid, size=size)
     if url.startswith("/static/"):
         return redirect(url)
-    return proxy(url)
+    return proxy(url, cache_namespace='cover')
 
 
 #routes

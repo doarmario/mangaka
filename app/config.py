@@ -47,6 +47,8 @@ class Config:
     # still explicitly retry after a provider failure.
     CATALOG_CACHE_TTL = int(os.getenv('CATALOG_CACHE_TTL', '1800'))
     CATALOG_FAILURE_CACHE_TTL = int(os.getenv('CATALOG_FAILURE_CACHE_TTL', '180'))
+    COVER_CACHE_TTL = int(os.getenv('COVER_CACHE_TTL', '604800'))
+    COVER_CACHE_MAX_BYTES = int(os.getenv('COVER_CACHE_MAX_BYTES', str(10 * 1024 * 1024)))
 
 
     #session

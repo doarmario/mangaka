@@ -85,10 +85,30 @@ def test_status_page_reports_local_components(app):
 def test_mangadex_cover_is_fetched_through_server_proxy(app, monkeypatch):
     monkeypatch.setattr(routes.manga, 'id2Cover', lambda *args, **kwargs:
                         'https://uploads.mangadex.org/covers/manga/cover.jpg.256.jpg')
-    monkeypatch.setattr(routes, 'proxy', lambda url: ('proxied', 200))
+    monkeypatch.setattr(routes, 'proxy', lambda url, **kwargs: ('proxied', 200))
     response = app.test_client().get('/img/cover/manga?size=256')
     assert response.status_code == 200
     assert response.text == 'proxied'
+
+
+def test_cover_proxy_reuses_redis_cache(app, monkeypatch):
+    calls = []
+
+    class Remote:
+        status_code = 200
+        headers = {'Content-Type': 'image/jpeg'}
+        content = b'jpeg-cover'
+
+    def fetch(*args, **kwargs):
+        calls.append(args[0])
+        return Remote()
+
+    monkeypatch.setattr(routes.manga, 'id2Cover', lambda *args, **kwargs: 'https://uploads.mangadex.org/covers/manga/cache.jpg')
+    monkeypatch.setattr(routes.session, 'get', fetch)
+    client = app.test_client()
+    assert client.get('/img/cover/manga?size=256').status_code == 200
+    assert client.get('/img/cover/manga?size=256').status_code == 200
+    assert calls == ['https://uploads.mangadex.org/covers/manga/cache.jpg']
 
 
 def test_home_renders_when_mangadex_is_unavailable(app, monkeypatch):
