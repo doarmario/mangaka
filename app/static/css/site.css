@@ -475,6 +475,12 @@ svg {
     -webkit-box-orient:vertical;
     overflow:hidden
 }
+.catalog-loading .card-caption {
+    display:block;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap
+}
 .card-caption {
     font-size:10px;
     color:var(--muted)

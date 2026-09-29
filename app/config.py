@@ -42,6 +42,11 @@ class Config:
     CACHE_DEFAULT_TIMEOUT = 3600
     CACHE_REDIS_TIMEOUT = 5
     CACHE_REDIS_SOCKET_TIMEOUT = 10
+    # Completed federated catalog pages are safe to reuse for a while: source
+    # updates are handled by the background worker and a later request can
+    # still explicitly retry after a provider failure.
+    CATALOG_CACHE_TTL = int(os.getenv('CATALOG_CACHE_TTL', '1800'))
+    CATALOG_FAILURE_CACHE_TTL = int(os.getenv('CATALOG_FAILURE_CACHE_TTL', '180'))
 
 
     #session
