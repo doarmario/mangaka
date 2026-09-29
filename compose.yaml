@@ -3,6 +3,11 @@ name: mangaka
 x-app: &app
   image: mangaka-local
   build: .
+  volumes:
+    - type: bind
+      source: ${MANGAKA_HOST_WORKSPACE:-.}/sources
+      target: /app/sources
+      read_only: true
   environment:
     SECRET_KEY: ${SECRET_KEY:?Configure SECRET_KEY no .env}
     DB_HOST: mysql

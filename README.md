@@ -117,6 +117,11 @@ rights to manga content; use sources and content you are authorized to access.
 | Demonic Scans | Included Python source service | English |
 | Thunder Scans | Included Python source service | English |
 
+Additional compatible APIs can be installed as [source packages](docs/source-packages.md):
+place a package in `sources/` and let Mangaka discover it. Packages with Docker
+services are started by the installer or automatic updater, without editing the
+application or the main Compose file. Open **Sources** to inspect installed packages.
+
 The installer builds and starts the bundled source services automatically.
 Catalog entries, chapter availability, genres, and pagination depend on each
 provider. Source outages, request limits, or website changes can temporarily
@@ -199,6 +204,7 @@ available only in Portuguese.
 | --- | --- |
 | [Self-hosting Mangaka](docs/self-hosting.md) | Installation, local-network access, backup, restoration, and HTTPS deployment |
 | [Automatic updates](docs/auto-update.md) | Updater configuration, Git behavior, permissions, and recovery |
+| [Source packages](docs/source-packages.md) | Plug-and-play installation, manifests, API contract, and service lifecycle |
 | [Progressive catalog loading](docs/catalog-loading.md) | Incremental results, shared cache, concurrency limits, and proxy streaming |
 | [Canonical works and reading progress](docs/canonical-reading.md) | Identity, multilingual titles, matching, chapter mappings, and migrations |
 | [Manga Novel API integration](integrations/manga-novel/README.md) | Local API setup and Asura adapter details |

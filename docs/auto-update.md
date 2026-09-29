@@ -130,3 +130,11 @@ simbólicos não são alterados.
 
 Referências: [Docker Desktop no Windows](https://docs.docker.com/desktop/setup/install/windows-install/)
 e [imagem oficial do Docker CLI](https://hub.docker.com/_/docker).
+
+## Source packages
+
+Installed [source packages](source-packages.md) can declare Docker services. The
+updater includes their generated Compose overlay and detects service configuration
+changes even at the same Git commit. Disabled or removed package services are
+stopped after successful deployment; database references and progress are retained.
+Invalid manifests stop the cycle before running services are changed.

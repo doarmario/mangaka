@@ -4,15 +4,15 @@ from flask_login import current_user
 from sqlalchemy.orm import joinedload
 from app import db
 from app.libs.md import Mangas
-from app.libs.manga_novel import MangaNovel, SOURCES, VISIBLE_SOURCES, source_api_url
+from app.libs.manga_novel import MangaNovel
+from app.libs.source_registry import source_api_url, source_definition, source_name, visible_sources
 from app.models import SourceReference, Manga, Chapter, Favorite, Readed, SourceWork
 
 
 class Library(Mangas):
     @staticmethod
     def sources():
-        return {'mangadex': 'MangaDex', **{key: name for key, name in VISIBLE_SOURCES.items()
-                                          if source_api_url(key)}}
+        return visible_sources()
 
     @classmethod
     def selected_source(cls):
@@ -25,7 +25,7 @@ class Library(Mangas):
         # Keep old provider URLs readable for existing bookmarks, while hiding
         # disabled providers from the catalog selector.
         configured = source_api_url(source)
-        if source not in cls.sources() and not (configured and source in SOURCES):
+        if source not in cls.sources() and not (configured and source_definition(source)):
             abort(400, 'Unknown or unconfigured source.')
         return source
 
@@ -39,6 +39,8 @@ class Library(Mangas):
     def id2Cover(self, uuid, size=None):
         ref = self.reference(uuid, 'manga')
         if ref:
+            if not source_api_url(ref.source):
+                return '/static/img/cover-placeholder.svg'
             adapter = MangaNovel(ref.source)
             cover = ref.payload.get('coverUrl') or adapter.info(ref)['cover_url']
             return adapter.image_proxy_url(cover)
@@ -80,7 +82,7 @@ class Library(Mangas):
         chapters = [c for c in adapter.chapters(parent) if c['language'] == ref.payload['language']]
         index = next((i for i, c in enumerate(chapters) if c['cap_id'] == cap_id), None)
         return {**ref.payload, 'id': ref.id, 'manga_id': parent.id, 'manga': info['title'], 'work_metadata': info,
-                'source_name': SOURCES[ref.source], 'source_id': ref.source, 'pages': adapter.pages(ref, parent),
+                'source_name': source_name(ref.source), 'source_id': ref.source, 'pages': adapter.pages(ref, parent),
                 'index': index, 'caps': len(chapters) - 1,
                 'prev': chapters[index + 1]['cap_id'] if index is not None and index + 1 < len(chapters) else None,
                 'next': chapters[index - 1]['cap_id'] if index is not None and index > 0 else None}

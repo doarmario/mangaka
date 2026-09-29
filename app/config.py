@@ -8,6 +8,7 @@ path = Path(__file__).resolve().parent.parent / '.env'
 load_dotenv(path)
 
 class Config:
+    SOURCE_PACKAGES_DIR = os.getenv('SOURCE_PACKAGES_DIR', str(Path(__file__).resolve().parent.parent / 'sources'))
     THUNDERSCANS_API_URL = os.getenv("THUNDERSCANS_API_URL", "")
     DEMONICSCANS_API_URL = os.getenv("DEMONICSCANS_API_URL", "")
     QISCANS_API_URL = os.getenv("QISCANS_API_URL", "")

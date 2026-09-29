@@ -17,7 +17,8 @@ STATE_DIR="$(git rev-parse --absolute-git-dir)/mangaka-update"
 }
 trap 'echo "Implantação incompleta; será tentada novamente no próximo ciclo." >&2' ERR
 # Only the application file: never rebuild or stop the updater itself.
-compose() { docker compose --project-directory "$ROOT_DIR" -f "$ROOT_DIR/compose.yaml" "$@"; }
+source "$ROOT_DIR/scripts/source-compose.sh"
+compose() { docker compose --project-directory "$ROOT_DIR" -f "$ROOT_DIR/compose.yaml" "${source_compose_args[@]}" "$@"; }
 compose config --quiet
 configured="$(compose config --services)"
 services=()
@@ -39,11 +40,13 @@ services_ready() {
         fi
     done
 }
-if [[ -f "$STATE_DIR/deployed" && "$(cat "$STATE_DIR/deployed")" == "$TARGET" ]]; then
+if [[ -f "$STATE_DIR/deployed" && "$(cat "$STATE_DIR/deployed")" == "$TARGET" &&
+      -f "$STATE_DIR/sources-deployed" && "$(cat "$STATE_DIR/sources-deployed")" == "$source_fingerprint" ]]; then
     status=0
     services_ready || status=$?
     case "$status" in
-        0) echo "Instalação já atualizada e serviços ativos: $TARGET"; exit 0 ;;
+        0) finish_source_deployment
+           echo "Instalação já atualizada e serviços ativos: $TARGET"; exit 0 ;;
         1) echo "Reparando a implantação do commit $TARGET..."
            mv "$STATE_DIR/deployed" "$STATE_DIR/deployed.previous" ;;
         *) echo "Não foi possível verificar os containers." >&2; exit 1 ;;
@@ -63,6 +66,8 @@ mv "$BACKUP.partial" "$BACKUP"
 compose run --rm --no-deps web flask --app app db upgrade
 compose up -d --wait --wait-timeout 180 "${services[@]}"
 services_ready
+finish_source_deployment
 printf '%s\n' "$TARGET" > "$STATE_DIR/deployed.pending"
 mv "$STATE_DIR/deployed.pending" "$STATE_DIR/deployed"
+printf '%s\n' "$source_fingerprint" > "$STATE_DIR/sources-deployed"
 echo "Atualização concluída: $TARGET. Backup: $BACKUP"

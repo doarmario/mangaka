@@ -155,4 +155,4 @@ def test_qiscans_rejects_invalid_totals(app, qiscans_api, changes):
         response = {'results': [], 'total': 41, 'total_pages': 3, 'page': 1,
                     'page_size': 20, 'has_next': True, **changes}
         with pytest.raises(SourceUnavailable):
-            MangaNovel('qiscans')._qiscans_list(response)
+            MangaNovel('qiscans')._paginated_list(response)

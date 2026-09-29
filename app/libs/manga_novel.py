@@ -8,7 +8,6 @@ from urllib.parse import quote, urlencode
 from uuid import NAMESPACE_URL, uuid5
 
 import requests
-from flask import current_app
 from sqlalchemy.exc import IntegrityError
 
 from app import cache, db
@@ -16,21 +15,11 @@ from app.models import SourceReference
 from app.libs.md import LANGUAGE_NAMES, Mangas
 from app.libs.identity import title_variants
 
-SOURCES = {'comick': 'ComicK', 'weebcentral': 'WeebCentral', 'asura': 'AsuraScans',
-           'qiscans': 'Qi Scans', 'demonicscans': 'Demonic Scans', 'thunderscans': 'Thunder Scans'}
-VISIBLE_SOURCES = {'asura': 'AsuraScans', 'qiscans': 'Qi Scans',
-                   'demonicscans': 'Demonic Scans', 'thunderscans': 'Thunder Scans'}
+from app.libs.source_registry import source_api_url, source_definition
 
 # Parallel fetches return raw listings. The coordinating request registers IDs
 # sequentially so database writes never run in provider I/O workers.
 defer_source_registration = ContextVar('defer_source_registration', default=False)
-
-
-def source_api_url(source):
-    key = {'qiscans': 'QISCANS_API_URL', 'demonicscans': 'DEMONICSCANS_API_URL',
-           'thunderscans': 'THUNDERSCANS_API_URL'}.get(
-        source, 'MANGA_NOVEL_API_URL')
-    return current_app.config.get(key, '').rstrip('/')
 
 
 class SourceUnavailable(Exception):
@@ -69,8 +58,10 @@ class MangaNovel:
     limit = 20
 
     def __init__(self, source):
-        if source not in SOURCES:
-            raise ValueError('Unknown source')
+        self.definition = source_definition(source)
+        if not self.definition or self.definition.adapter != 'manga-api-v1':
+            raise SourceUnavailable('This source is no longer installed.')
+        self.name = self.definition.name
         self.source = source
         self.base = source_api_url(source)
         if not self.base:
@@ -79,13 +70,13 @@ class MangaNovel:
     def _request(self, path, **params):
         params = {'source': self.source, **params}
         digest = sha256(json.dumps([self.base, path, params], sort_keys=True).encode()).hexdigest()
-        key = ('manga_novel_v3_' if self.source == 'qiscans' else 'manga_novel_v2_') + digest
+        key = ('manga_novel_v3_' if self.definition.pagination == 'strict' else 'manga_novel_v2_') + digest
         cached = cache.get(key)
         if cached is not None:
             return deepcopy(cached)
-        cooldown = 'manga_novel_unavailable_' + self.source
+        cooldown = 'manga_novel_unavailable_' + sha256((self.source + self.base).encode()).hexdigest()
         if cache.get(cooldown):
-            raise SourceUnavailable(f'{SOURCES[self.source]} is unavailable. Please try again shortly.')
+            raise SourceUnavailable(f'{self.name} is unavailable. Please try again shortly.')
         try:
             response = requests.get(self.base + path, params=params, timeout=(3, 30))
             response.raise_for_status()
@@ -97,7 +88,7 @@ class MangaNovel:
                 raise ValueError('Unexpected provider returned by API')
         except (requests.RequestException, ValueError) as exc:
             cache.set(cooldown, True, timeout=30)
-            raise SourceUnavailable(f'{SOURCES[self.source]} is unavailable. Please try again shortly.') from exc
+            raise SourceUnavailable(f'{self.name} is unavailable. Please try again shortly.') from exc
         cache.set(key, data, timeout=600 if path.endswith('/pages') else 900)
         return deepcopy(data)
 
@@ -108,22 +99,22 @@ class MangaNovel:
     def search(self, query, page=1, tag=None):
         if tag:
             return self.catalog(page, tag=tag, query=query)
-        if self.source in {'demonicscans', 'thunderscans'}:
+        if self.definition.search == 'catalog':
             return self.catalog(page, query=query)
         # Asura returns a complete search, independent of the page argument.
-        response = self._request('/api/manga/search', q=query, page=1 if self.source == 'asura' else page, limit=self.limit)
+        response = self._request('/api/manga/search', q=query, page=1 if self.definition.search == 'complete' else page, limit=self.limit)
         records = response.get('results', [])
         if not isinstance(records, list):
             raise SourceUnavailable('The source returned an invalid list.')
-        total = len(records) if self.source == 'asura' else None
-        if self.source == 'qiscans':
-            return self._qiscans_list(response)
-        if self.source == 'asura':
+        total = len(records) if self.definition.search == 'complete' else None
+        if self.definition.pagination == 'strict':
+            return self._paginated_list(response)
+        if self.definition.search == 'complete':
             records = records[(page - 1) * self.limit:page * self.limit]
         return self._normalize_list(records, total, page * self.limit < total if total is not None else len(records) >= self.limit)
 
     def tags(self):
-        if self.source not in {'asura', 'qiscans', 'demonicscans', 'thunderscans'}:
+        if not self.definition.tags:
             return []
         response = self._request('/api/manga/tags')
         return response.get('tags', [])
@@ -135,15 +126,15 @@ class MangaNovel:
         if query:
             filters['q'] = query
         response = self._request('/api/manga/catalog', page=page, limit=self.limit, **filters)
-        if self.source == 'qiscans':
-            return self._qiscans_list(response)
+        if self.definition.pagination == 'strict':
+            return self._paginated_list(response)
         records = response.get('results')
         total = response.get('total')
         if not isinstance(records, list) or (total is not None and (not isinstance(total, int) or total < 0)):
             raise SourceUnavailable('The source returned an invalid catalog.')
         return self._normalize_list(records, total, bool(response.get('has_next')))
 
-    def _qiscans_list(self, response):
+    def _paginated_list(self, response):
         records = response.get('results')
         total, pages = response.get('total'), response.get('total_pages')
         page, size = response.get('page'), response.get('page_size')
@@ -164,7 +155,7 @@ class MangaNovel:
         return {'itens': [{'id': ref.id, 'external_id': ref.remote_id, 'title': ref.payload['title'],
                           'aliases': ref.payload.get('aliases') or [],
                           'titles': ref.payload.get('titles') or [],
-                          'source_name': SOURCES[self.source]} for ref in refs],
+                          'source_name': self.name} for ref in refs],
                 'total': total, 'has_next': has_next}
 
     def info(self, ref):
@@ -178,13 +169,13 @@ class MangaNovel:
                 'autor': ', '.join(raw.get('authors') or []), 'ano': raw.get('year'),
                 'status': str(raw.get('status') or 'Unknown'),
                 'cover_url': raw.get('coverUrl') or ref.payload.get('coverUrl'),
-                'source_name': SOURCES[self.source], 'type': raw.get('type') or 'manga',
+                'source_name': self.name, 'type': raw.get('type') or 'manga',
                 'external_ids': raw.get('external_ids') or {}, 'artist': raw.get('artist'),
                 'country': raw.get('country'), 'source_url': raw.get('url')}
 
     def chapters(self, ref):
         records = []
-        languages = ('pt-br', 'pt', 'en') if self.source == 'comick' else ('en',)
+        languages = self.definition.chapter_languages
         for language in languages:
             page = 1
             seen = set()
@@ -209,7 +200,7 @@ class MangaNovel:
                     records.append((self._remote(item), {'cap': str(number), 'title': item.get('title'), 'volume': item.get('volume'), 'language': actual_language,
                                     'language_name': LANGUAGE_NAMES[actual_language]}))
                 total = response.get('total')
-                if self.source != 'comick' or not batch or (isinstance(total, int) and page * 100 >= total):
+                if not self.definition.chapter_pagination or not batch or (isinstance(total, int) and page * 100 >= total):
                     break
                 if not fresh or page >= 100:
                     raise SourceUnavailable('The source did not allow all chapters to be loaded.')

@@ -5,7 +5,8 @@
         <nav class="desktop-nav" aria-label="Main navigation">
             <a href="{{ url_for('user.home') }}" {% if request.endpoint == 'user.home' %}aria-current="page"{% endif %}>Discover</a>
             <a href="{{ url_for('user.mangaList') }}" {% if request.endpoint in ['user.mangaList', 'user.searchTitles'] %}aria-current="page"{% endif %}>Catalog</a>
-            <a href="{{ url_for('user.tags', source=g.selected_source if g.selected_source != 'mangadex' else none) }}" {% if request.endpoint == 'user.tags' %}aria-current="page"{% endif %}>Tags</a>
+            <a href="{{ url_for('user.tags', source=g.selected_source if g.selected_source in g.tag_sources else none) }}" {% if request.endpoint == 'user.tags' %}aria-current="page"{% endif %}>Tags</a>
+            <a href="{{ url_for('user.sources_page') }}" {% if request.endpoint == 'user.sources_page' %}aria-current="page"{% endif %}>Sources</a>
             <a href="{{ url_for('user.status') }}" {% if request.endpoint == 'user.status' %}aria-current="page"{% endif %}>Status</a>
             {% if current_user.is_authenticated %}<a href="{{ url_for('user.library') }}" {% if request.endpoint == 'user.library' %}aria-current="page"{% endif %}>My library</a>{% endif %}
             {% if current_user.is_authenticated %}<a href="{{ url_for('user.updates') }}" {% if request.endpoint == 'user.updates' %}aria-current="page"{% endif %}>Updates</a>{% endif %}
@@ -19,6 +20,6 @@
         <button class="icon-button mobile-toggle" id="drop-btn" aria-label="Open navigation" aria-expanded="false" aria-controls="mobile-nav">{{ icon('menu') }}</button>
     </div>
     <nav id="mobile-nav" class="mobile-nav" aria-label="Mobile navigation" hidden>
-        <a href="{{ url_for('user.home') }}">Discover</a><a href="{{ url_for('user.mangaList') }}">Catalog</a><a href="{{ url_for('user.tags', source=g.selected_source if g.selected_source != 'mangadex' else none) }}">Tags</a><a href="{{ url_for('user.status') }}">Status</a>{% if current_user.is_authenticated %}<a href="{{ url_for('user.library') }}">My library</a><a href="{{ url_for('user.updates') }}">Updates</a><a href="{{ url_for('user.notifications') }}">Notifications{% if g.unread_notifications %} ({{ g.unread_notifications }}){% endif %}</a>{% endif %}
+        <a href="{{ url_for('user.home') }}">Discover</a><a href="{{ url_for('user.mangaList') }}">Catalog</a><a href="{{ url_for('user.tags', source=g.selected_source if g.selected_source in g.tag_sources else none) }}">Tags</a><a href="{{ url_for('user.sources_page') }}" {% if request.endpoint == 'user.sources_page' %}aria-current="page"{% endif %}>Sources</a><a href="{{ url_for('user.status') }}">Status</a>{% if current_user.is_authenticated %}<a href="{{ url_for('user.library') }}">My library</a><a href="{{ url_for('user.updates') }}">Updates</a><a href="{{ url_for('user.notifications') }}">Notifications{% if g.unread_notifications %} ({{ g.unread_notifications }}){% endif %}</a>{% endif %}
     </nav>
 </header>
