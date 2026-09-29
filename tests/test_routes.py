@@ -82,6 +82,14 @@ def test_status_page_reports_local_components(app):
     assert 'Update worker' in response.text
 
 
+def test_mangadex_cover_uses_official_cdn_directly(app, monkeypatch):
+    monkeypatch.setattr(routes.manga, 'id2Cover', lambda *args, **kwargs:
+                        'https://uploads.mangadex.org/covers/manga/cover.jpg.256.jpg')
+    response = app.test_client().get('/img/cover/manga?size=256')
+    assert response.status_code == 302
+    assert response.headers['Location'] == 'https://uploads.mangadex.org/covers/manga/cover.jpg.256.jpg'
+
+
 def test_service_worker_is_available(app):
     response = app.test_client().get('/service-worker.js')
     assert response.status_code == 200

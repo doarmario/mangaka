@@ -120,6 +120,11 @@ def coverproxy(uuid):
     url = manga.id2Cover(uuid, size=size)
     if url.startswith("/static/"):
         return redirect(url)
+    # MangaDex cover URLs are already public, immutable CDN assets. Let the
+    # browser fetch them directly because some self-hosted Docker networks
+    # cannot reliably reach uploads.mangadex.org from the web container.
+    if url.startswith('https://uploads.mangadex.org/covers/'):
+        return redirect(url)
     return proxy(url)
 
 
