@@ -13,7 +13,7 @@ import requests
 from .signature import signed_path
 
 BASE_URL = 'https://mangafire.to'
-CDN_DOMAINS = ('mfcdn.nl', 'mfcdn2.xyz', 'mfcdn3.xyz')
+CDN_DOMAINS = ('mfcdn.nl', 'mfcdn1.xyz', 'mfcdn2.xyz', 'mfcdn3.xyz')
 LANGUAGES = ('pt-br', 'en')
 
 
